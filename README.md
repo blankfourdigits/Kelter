@@ -98,6 +98,15 @@ Grafikbeschleunigung gezeichnet; mit ihr stürzt Chromiums Grafikteil unter
 Wines eingebautem Direct3D ab. Das betrifft nur das Steam-Fenster, nicht die
 Spiele.
 
+### Steam-Overlay
+
+Steam lädt in jedes Spiel seine Overlay-Bibliothek `gameoverlayrenderer.dll`.
+Unter Wine auf dem Mac bleibt das Spiel danach stehen: Half-Life 2 lud nach
+ihr keine weitere Datei mehr und beendete sich nach rund einer Minute. Kelter
+schaltet die Bibliothek deshalb für Steam und alle daraus gestarteten Spiele
+ab (`steam.dllOverrides` in `runtimes.json`). Das Overlay im Spiel (Shift+Tab)
+gibt es dadurch nicht.
+
 "Steam beenden" bittet Steam, sich zu schließen, und beendet danach alle
 Wine-Prozesse der Bottle.
 

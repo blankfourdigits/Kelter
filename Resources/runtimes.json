@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 5,
+  "schemaVersion": 6,
   "wine": {
     "name": "Wine Staging (Gcenx macOS build)",
     "version": "11.21",
@@ -50,6 +50,10 @@
       "browserArguments": [
         "--in-process-gpu"
       ]
+    },
+    "dllOverrides": {
+      "gameoverlayrenderer": "d",
+      "gameoverlayrenderer64": "d"
     }
   }
 }

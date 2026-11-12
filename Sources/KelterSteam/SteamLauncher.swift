@@ -17,6 +17,22 @@ public final class SteamLauncher: @unchecked Sendable {
         settings.steamArguments ?? config.defaultArguments
     }
 
+    /// The environment for Steam: the caller's variables plus the DLL
+    /// overrides from runtimes.json, merged with the bottle's own.
+    public static func environment(
+        for settings: BottleSettings,
+        config: RuntimeConfig.Steam,
+        adding extra: [String: String] = [:]
+    ) -> [String: String] {
+        var environment = extra
+        if let overrides = config.dllOverrides, !overrides.isEmpty {
+            environment["WINEDLLOVERRIDES"] = WineEnvironment.dllOverridesString(
+                WineEnvironment.mergedDllOverrides(settings: settings, additional: overrides)
+            )
+        }
+        return environment
+    }
+
     /// Starts Steam and waits until this `steam.exe` process ends. Steam may
     /// restart itself during an update, so returning does not mean Steam has
     /// quit.
@@ -36,7 +52,7 @@ public final class SteamLauncher: @unchecked Sendable {
             [executable.path] + arguments,
             prefix: prefix,
             settings: settings,
-            extraEnvironment: environment,
+            extraEnvironment: Self.environment(for: settings, config: config, adding: environment),
             workingDirectory: executable.deletingLastPathComponent()
         )
     }

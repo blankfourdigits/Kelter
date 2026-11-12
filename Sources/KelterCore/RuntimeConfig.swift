@@ -159,6 +159,10 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
         public var defaultArguments: [String]
         public var argumentPresets: [ArgumentPreset]
         public var uiFix: UIFix
+        /// DLL overrides for Steam and everything it starts, e.g. switching
+        /// off the Steam overlay library, which stops games from starting
+        /// under Wine on macOS. A bottle's own overrides win.
+        public var dllOverrides: [String: String]?
 
         public init(
             installerURL: URL,
@@ -166,7 +170,8 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
             executablePath: String,
             defaultArguments: [String],
             argumentPresets: [ArgumentPreset],
-            uiFix: UIFix
+            uiFix: UIFix,
+            dllOverrides: [String: String]? = nil
         ) {
             self.installerURL = installerURL
             self.installerArguments = installerArguments
@@ -174,6 +179,7 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
             self.defaultArguments = defaultArguments
             self.argumentPresets = argumentPresets
             self.uiFix = uiFix
+            self.dllOverrides = dllOverrides
         }
     }
 

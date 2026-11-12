@@ -1,6 +1,7 @@
 import Foundation
 import XCTest
 import KelterCore
+import KelterWine
 @testable import KelterSteam
 
 final class SteamTests: XCTestCase {
@@ -50,6 +51,27 @@ final class SteamTests: XCTestCase {
         try Data("MZ".utf8).write(to: executable)
 
         XCTAssertTrue(SteamLocation.isInstalled(prefix: prefix, config: config))
+    }
+
+    func testSteamEnvironmentCarriesDllOverrides() {
+        var config = steamConfig()
+        config.dllOverrides = ["gameoverlayrenderer": "d", "gameoverlayrenderer64": "d"]
+        var settings = BottleSettings()
+        settings.dllOverrides = ["gameoverlayrenderer": "n", "d3d9": "n,b"]
+
+        let environment = SteamLauncher.environment(for: settings, config: config, adding: ["KELTER_CEF_APPEND": "x"])
+
+        XCTAssertEqual(environment["KELTER_CEF_APPEND"], "x")
+        // Sorted; the bottle's own value for gameoverlayrenderer wins.
+        XCTAssertEqual(
+            environment["WINEDLLOVERRIDES"],
+            "d3d9=n,b;gameoverlayrenderer=n;gameoverlayrenderer64=d;winemenubuilder.exe=d"
+        )
+    }
+
+    func testSteamEnvironmentWithoutOverridesLeavesWineDefaults() {
+        let environment = SteamLauncher.environment(for: BottleSettings(), config: steamConfig())
+        XCTAssertNil(environment["WINEDLLOVERRIDES"])
     }
 
     func testArgumentsFallBackToDefaults() {

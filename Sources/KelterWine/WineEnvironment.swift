@@ -34,12 +34,7 @@ public enum WineEnvironment {
             environment["WINEDEBUG"] = "fixme-all"
         }
 
-        // Stop Wine from creating launchers and file associations on the Mac.
-        var overrides = ["winemenubuilder.exe": "d"]
-        for (name, mode) in settings.dllOverrides {
-            overrides[name] = mode
-        }
-        environment["WINEDLLOVERRIDES"] = dllOverridesString(overrides)
+        environment["WINEDLLOVERRIDES"] = dllOverridesString(mergedDllOverrides(settings: settings))
 
         if let support {
             applySupport(support, backend: settings.graphicsBackend, to: &environment)
@@ -92,6 +87,23 @@ public enum WineEnvironment {
         for (key, value) in support.config.environment {
             environment[key] = value
         }
+    }
+
+    /// Kelter's defaults, then `additional` (for example Steam's overrides
+    /// from runtimes.json), then the bottle's own, which win.
+    public static func mergedDllOverrides(
+        settings: BottleSettings,
+        additional: [String: String] = [:]
+    ) -> [String: String] {
+        // Stop Wine from creating launchers and file associations on the Mac.
+        var overrides = ["winemenubuilder.exe": "d"]
+        for (name, mode) in additional {
+            overrides[name] = mode
+        }
+        for (name, mode) in settings.dllOverrides {
+            overrides[name] = mode
+        }
+        return overrides
     }
 
     /// `["d3d11": "n,b", "dxgi": "n"]` becomes `d3d11=n,b;dxgi=n` (sorted, so

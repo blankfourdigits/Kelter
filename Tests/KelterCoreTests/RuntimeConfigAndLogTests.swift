@@ -15,7 +15,7 @@ final class RuntimeConfigTests: XCTestCase {
     func testBundledConfigIsValid() throws {
         let config = try RuntimeConfig.load(from: bundledConfig)
 
-        XCTAssertEqual(config.schemaVersion, 5)
+        XCTAssertEqual(config.schemaVersion, 6)
         XCTAssertFalse(config.wine.version.isEmpty)
         XCTAssertEqual(config.wine.url.scheme, "https")
         // The version becomes a folder name.
