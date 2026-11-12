@@ -52,6 +52,21 @@ public struct AppPaths: Equatable, Sendable {
             .appendingPathComponent(version, isDirectory: true)
     }
 
+    /// A copy of Wine with a graphics layer put into it.
+    public func wineVariantDirectory(name: String) -> URL {
+        runtimesDirectory
+            .appendingPathComponent("wine-variants", isDirectory: true)
+            .appendingPathComponent(name, isDirectory: true)
+    }
+
+    /// Directory one version of a graphics layer is unpacked into.
+    public func graphicsLayerDirectory(id: String, version: String) -> URL {
+        runtimesDirectory
+            .appendingPathComponent("graphics", isDirectory: true)
+            .appendingPathComponent(id, isDirectory: true)
+            .appendingPathComponent(version, isDirectory: true)
+    }
+
     /// Directory one version of the support package is unpacked into.
     public func supportDirectory(version: String) -> URL {
         runtimesDirectory

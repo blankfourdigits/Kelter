@@ -13,7 +13,7 @@ von CrossOver und liefert keine proprietären Bestandteile mit.
 | --- | --- | --- |
 | 1 | Wine-Download, Rosetta-Prüfung, Bottles, Log | läuft |
 | 2 | Steam-Einrichtung und Start | läuft |
-| 3 | Grafik: D9VK, DXMT, DXVK, D3DMetal | offen. Der Versuch mit der Sikarugir-Engine ist gescheitert (siehe unten) |
+| 3 | Grafik | DXMT geschrieben, Test steht aus. D9VK und D3DMetal offen |
 | 4 | Spielebibliothek, Einstellungen pro Spiel, Winetricks | offen |
 
 ## Voraussetzungen
@@ -165,8 +165,21 @@ Bibliotheken, die Wine zur Laufzeit lädt, und die Grafikschichten.
 
 ## Wine-Build und Grafik
 
-Voreingestellt ist Wine Staging 11.21 von Gcenx, ohne Zusatzpaket. Damit steht
-nur Wines eingebaute Grafik (OpenGL) zur Verfügung, und weder ESync noch MSync.
+Voreingestellt ist Wine Staging 11.21 von Gcenx, ohne Zusatzpaket und ohne
+ESync oder MSync. Pro Bottle lässt sich die Grafik wählen:
+
+| Auswahl | DirectX 9 | DirectX 10/11 | DirectX 12 |
+| --- | --- | --- | --- |
+| Wine (eingebaut) | OpenGL | OpenGL | nicht unterstützt |
+| DXMT | OpenGL | DXMT (Metal) | nicht unterstützt |
+
+Wine sucht seine eingebauten Bibliotheken zuerst im eigenen Ordner. Eine
+Grafikschicht, die `d3d11.dll` ersetzt, muss deshalb in einem Wine-Baum liegen.
+Kelter verändert dafür nicht das eine Wine, das alle Bottles benutzen, sondern
+legt pro Schicht eine Kopie an (`Runtimes/wine-variants/`) und startet eine
+Bottle mit dem Baum, der zu ihrer Auswahl passt. Auf APFS ist die Kopie ein
+Klon und belegt kaum zusätzlichen Platz. Welche Schichten es gibt, steht unter
+`graphicsLayers` in `runtimes.json`.
 
 Kelter kann auch ein Wine-Build mit Zusatzpaket benutzen (Abschnitt `support`
 in `runtimes.json`): Dann lässt sich pro Bottle wählen, ob Direct3D über DXMT

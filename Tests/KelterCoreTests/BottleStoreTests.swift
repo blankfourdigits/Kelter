@@ -112,12 +112,12 @@ final class BottleStoreTests: XCTestCase {
     func testUpdateSavesSettings() throws {
         var bottle = try store.create(name: "Steam")
         bottle.settings.retinaMode = true
-        bottle.settings.graphicsBackend = .wined3d
+        bottle.settings.graphicsBackend = .dxmt
         try store.update(bottle)
 
         let reloaded = try store.bottle(id: bottle.id)
         XCTAssertTrue(reloaded.settings.retinaMode)
-        XCTAssertEqual(reloaded.settings.graphicsBackend, .wined3d)
+        XCTAssertEqual(reloaded.settings.graphicsBackend, .dxmt)
     }
 
     func testUpdateUnknownBottleFails() {
@@ -199,7 +199,7 @@ final class BottleStoreTests: XCTestCase {
         let bottle = try store.bottle(id: id)
         XCTAssertEqual(bottle.name, "Alt")
         XCTAssertEqual(bottle.settings.windowsVersion, .win7)
-        XCTAssertEqual(bottle.settings.graphicsBackend, .dxmt)
+        XCTAssertEqual(bottle.settings.graphicsBackend, .wined3d)
         XCTAssertFalse(bottle.settings.retinaMode)
         XCTAssertEqual(bottle.settings.environment, [:])
         XCTAssertNil(bottle.settings.steamArguments)
@@ -228,7 +228,7 @@ final class BottleStoreTests: XCTestCase {
         XCTAssertEqual(GraphicsBackendKind.d3dmetal.rendererIDs, ["d9vk", "dxmt", "d3dmetal"])
     }
 
-    func testNewBottlesUseDXMT() throws {
-        XCTAssertEqual(try store.create(name: "Neu").settings.graphicsBackend, .dxmt)
+    func testNewBottlesUseBuiltInGraphics() throws {
+        XCTAssertEqual(try store.create(name: "Neu").settings.graphicsBackend, .wined3d)
     }
 }

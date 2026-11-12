@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 6,
+  "schemaVersion": 7,
   "wine": {
     "name": "Wine Staging (Gcenx macOS build)",
     "version": "11.21",
@@ -11,6 +11,17 @@
     "supportsESync": false,
     "supportsMSync": false
   },
+  "graphicsLayers": [
+    {
+      "id": "dxmt",
+      "name": "DXMT",
+      "version": "0.80",
+      "url": "https://github.com/3Shain/dxmt/releases/download/v0.80/dxmt-v0.80-builtin.tar.gz",
+      "sha256": "8f260e36b5739e68f3bad613381441385c4dc7b85b78ba8de653d5a6a264529d",
+      "archiveRoot": "v0.80",
+      "libraryTarget": "wine"
+    }
+  ],
   "steam": {
     "installerURL": "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe",
     "installerArguments": [

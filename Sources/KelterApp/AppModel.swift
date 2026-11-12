@@ -24,6 +24,8 @@ final class AppModel: ObservableObject {
     /// Run-time libraries and renderers that belong to the Wine build, if
     /// runtimes.json names such a package.
     @Published private(set) var supportInstallation: SupportInstallation?
+    /// Copies of Wine with a graphics layer built in, by graphics choice.
+    @Published private(set) var wineVariants: [GraphicsBackendKind: WineInstallation] = [:]
     /// What is being downloaded right now ("Wine …", "Laufzeitbibliotheken …").
     @Published private(set) var installLabel: String?
     /// Non-nil while Wine is being downloaded and unpacked.
@@ -69,7 +71,34 @@ final class AppModel: ObservableObject {
     /// The Direct3D choices that can work with what is installed.
     var availableGraphicsBackends: [GraphicsBackendKind] {
         GraphicsBackendKind.allCases.filter { backend in
-            backend.rendererIDs.allSatisfy { supportInstallation?.renderer(id: $0) != nil }
+            if backend == .wined3d { return true }
+            // Either a layer that Kelter builds into a copy of Wine …
+            if config?.graphicsLayer(for: backend) != nil { return true }
+            // … or renderers that come with the Wine build's support package.
+            guard let supportInstallation else { return false }
+            return backend.rendererIDs.allSatisfy { supportInstallation.renderer(id: $0) != nil }
+        }
+    }
+
+    /// Changes a bottle's graphics choice. If the choice needs a layer that
+    /// is not installed yet, it is downloaded and built first.
+    func setGraphicsBackend(_ backend: GraphicsBackendKind, for bottle: Bottle) {
+        guard let config, let wineInstallation, busyMessage == nil else { return }
+        guard let layer = config.graphicsLayer(for: backend), wineVariants[backend] == nil else {
+            updateSettings(of: bottle) { $0.graphicsBackend = backend }
+            return
+        }
+        busyMessage = "\(layer.name) \(layer.version) wird geladen und eingerichtet …"
+        let installer = WineVariantInstaller(paths: paths, wine: config.wine, layer: layer, log: log)
+        Task {
+            do {
+                let variant = try await installer.install(base: wineInstallation) { _ in }
+                self.wineVariants[backend] = variant
+                self.updateSettings(of: bottle) { $0.graphicsBackend = backend }
+            } catch {
+                self.errorMessage = error.localizedDescription
+            }
+            self.busyMessage = nil
         }
     }
 
@@ -88,6 +117,7 @@ final class AppModel: ObservableObject {
             installation: wineInstallation,
             config: config.wine,
             support: supportInstallation,
+            variants: wineVariants,
             log: log
         )
     }
@@ -173,9 +203,18 @@ final class AppModel: ObservableObject {
         if let config {
             wineInstallation = WineInstallation.locate(paths: paths, config: config.wine)
             supportInstallation = config.support.flatMap { SupportInstallation.locate(paths: paths, config: $0) }
+            var variants: [GraphicsBackendKind: WineInstallation] = [:]
+            for backend in GraphicsBackendKind.allCases {
+                if let layer = config.graphicsLayer(for: backend),
+                   let variant = WineVariantInstaller.locate(paths: paths, wine: config.wine, layer: layer) {
+                    variants[backend] = variant
+                }
+            }
+            wineVariants = variants
         } else {
             wineInstallation = nil
             supportInstallation = nil
+            wineVariants = [:]
         }
         let installed = await Task.detached { Rosetta.isInstalled() }.value
         rosettaInstalled = installed

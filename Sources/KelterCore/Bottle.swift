@@ -25,7 +25,7 @@ public enum WindowsVersion: String, Codable, CaseIterable, Sendable {
 public enum GraphicsBackendKind: String, Codable, CaseIterable, Sendable {
     /// Wine's built-in translation (OpenGL). Slowest, but needs nothing else.
     case wined3d
-    /// DirectX 10/11 through Metal. The default.
+    /// DirectX 10/11 through Metal.
     case dxmt
     /// Apple's layer from the Game Porting Toolkit: DirectX 11/12, 64-bit only.
     case d3dmetal
@@ -77,7 +77,7 @@ public struct BottleSettings: Codable, Equatable, Sendable {
 
     public init(
         windowsVersion: WindowsVersion = .win10,
-        graphicsBackend: GraphicsBackendKind = .dxmt,
+        graphicsBackend: GraphicsBackendKind = .wined3d,
         environment: [String: String] = [:],
         dllOverrides: [String: String] = [:],
         esync: Bool = false,

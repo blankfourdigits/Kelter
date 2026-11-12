@@ -71,7 +71,7 @@ struct BottleDetailView: View {
                             }
                         }
                         .frame(maxWidth: 420)
-                        Text("Gilt ab dem nächsten Start. Außer bei \"Wine (eingebaut)\" laufen DirectX-8- und DirectX-9-Spiele über D9VK.")
+                        Text("Gilt ab dem nächsten Start von Steam. DXMT übersetzt DirectX 10 und 11 nach Metal und wird bei der ersten Auswahl geladen (rund 20 MB). DirectX 9 läuft immer über Wines eingebaute Grafik.")
                             .font(.callout)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -80,7 +80,7 @@ struct BottleDetailView: View {
                             Toggle("MSync (schnellere Synchronisation, gilt ab dem nächsten Start)", isOn: msync)
                         }
                         Toggle("Retina-Modus (schärfer, aber langsamer)", isOn: retinaMode)
-                        Toggle("FPS-Anzeige von Metal einblenden", isOn: metalHUD)
+                        Toggle("FPS-Anzeige von Metal einblenden (nur mit DXMT oder D3DMetal)", isOn: metalHUD)
                         Toggle("Ausführliches Wine-Log (zur Fehlersuche, gilt ab dem nächsten Start)", isOn: verboseLogging)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -277,7 +277,7 @@ struct BottleDetailView: View {
         Binding(
             get: { bottle.settings.graphicsBackend },
             set: { newValue in
-                model.updateSettings(of: bottle) { $0.graphicsBackend = newValue }
+                model.setGraphicsBackend(newValue, for: bottle)
             }
         )
     }

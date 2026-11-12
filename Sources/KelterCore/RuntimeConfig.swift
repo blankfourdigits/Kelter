@@ -185,14 +185,59 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
 
     public var schemaVersion: Int
     public var wine: Wine
+    /// A Direct3D translation layer that is put into a copy of the Wine
+    /// build, replacing Wine's own libraries there.
+    public struct GraphicsLayer: Codable, Equatable, Sendable {
+        /// Matches a graphics choice of a bottle, e.g. `dxmt`.
+        public var id: String
+        public var name: String
+        public var version: String
+        public var url: URL
+        public var sha256: String?
+        /// Folder inside the archive that holds `x86_64-windows` and so on.
+        public var archiveRoot: String
+        /// Where those folders go, relative to Wine's `lib` directory.
+        public var libraryTarget: String
+
+        public init(
+            id: String,
+            name: String,
+            version: String,
+            url: URL,
+            sha256: String?,
+            archiveRoot: String,
+            libraryTarget: String
+        ) {
+            self.id = id
+            self.name = name
+            self.version = version
+            self.url = url
+            self.sha256 = sha256
+            self.archiveRoot = archiveRoot
+            self.libraryTarget = libraryTarget
+        }
+    }
+
     public var support: Support?
+    public var graphicsLayers: [GraphicsLayer]?
     public var steam: Steam
 
-    public init(schemaVersion: Int, wine: Wine, support: Support? = nil, steam: Steam) {
+    public init(
+        schemaVersion: Int,
+        wine: Wine,
+        support: Support? = nil,
+        graphicsLayers: [GraphicsLayer]? = nil,
+        steam: Steam
+    ) {
         self.schemaVersion = schemaVersion
         self.wine = wine
         self.support = support
+        self.graphicsLayers = graphicsLayers
         self.steam = steam
+    }
+
+    public func graphicsLayer(for backend: GraphicsBackendKind) -> GraphicsLayer? {
+        graphicsLayers?.first { $0.id == backend.rawValue }
     }
 }
 

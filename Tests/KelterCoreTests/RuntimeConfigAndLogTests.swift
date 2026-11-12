@@ -15,7 +15,7 @@ final class RuntimeConfigTests: XCTestCase {
     func testBundledConfigIsValid() throws {
         let config = try RuntimeConfig.load(from: bundledConfig)
 
-        XCTAssertEqual(config.schemaVersion, 6)
+        XCTAssertEqual(config.schemaVersion, 7)
         XCTAssertFalse(config.wine.version.isEmpty)
         XCTAssertEqual(config.wine.url.scheme, "https")
         // The version becomes a folder name.
@@ -66,6 +66,26 @@ final class RuntimeConfigTests: XCTestCase {
         try JSONEncoder().encode(config).write(to: file)
 
         XCTAssertNil(try RuntimeConfig.load(from: file).support)
+    }
+
+    func testBundledGraphicsLayersAreValid() throws {
+        let config = try RuntimeConfig.load(from: bundledConfig)
+        let layers = config.graphicsLayers ?? []
+
+        XCTAssertEqual(Set(layers.map(\.id)).count, layers.count, "layer ids must be unique")
+        for layer in layers {
+            // Every layer belongs to a graphics choice a bottle can make.
+            XCTAssertNotNil(GraphicsBackendKind(rawValue: layer.id), layer.id)
+            XCTAssertEqual(layer.url.scheme, "https")
+            XCTAssertEqual(layer.sha256?.count, 64)
+            for path in [layer.archiveRoot, layer.libraryTarget] {
+                XCTAssertFalse(path.isEmpty)
+                XCTAssertFalse(path.hasPrefix("/"), path)
+                XCTAssertFalse(path.split(separator: "/").contains(".."), path)
+            }
+        }
+        XCTAssertEqual(config.graphicsLayer(for: .dxmt)?.id, "dxmt")
+        XCTAssertNil(config.graphicsLayer(for: .wined3d))
     }
 
     func testBundledSteamConfigIsValid() throws {

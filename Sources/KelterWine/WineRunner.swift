@@ -21,18 +21,28 @@ public final class WineRunner: @unchecked Sendable {
     public let config: RuntimeConfig.Wine
     /// Run-time libraries and renderers, if the Wine build needs them.
     public let support: SupportInstallation?
+    /// Copies of Wine with a graphics layer built in, by graphics choice.
+    public let variants: [GraphicsBackendKind: WineInstallation]
     public let log: LogFile
 
     public init(
         installation: WineInstallation,
         config: RuntimeConfig.Wine,
         support: SupportInstallation? = nil,
+        variants: [GraphicsBackendKind: WineInstallation] = [:],
         log: LogFile
     ) {
         self.installation = installation
         self.config = config
         self.support = support
+        self.variants = variants
         self.log = log
+    }
+
+    /// The Wine tree a bottle with these settings runs on: the copy with its
+    /// graphics layer if there is one, otherwise the plain installation.
+    public func installation(for settings: BottleSettings) -> WineInstallation {
+        variants[settings.graphicsBackend] ?? installation
     }
 
     // MARK: Running
@@ -48,7 +58,7 @@ public final class WineRunner: @unchecked Sendable {
         workingDirectory: URL? = nil
     ) async throws -> Int32 {
         try await launch(
-            executable: installation.wine,
+            executable: installation(for: settings).wine,
             label: "wine",
             arguments: arguments,
             prefix: prefix,
@@ -121,7 +131,7 @@ public final class WineRunner: @unchecked Sendable {
     @discardableResult
     public func killAll(prefix: URL, settings: BottleSettings) async throws -> Int32 {
         try await launch(
-            executable: installation.wineserver,
+            executable: installation(for: settings).wineserver,
             label: "wineserver",
             arguments: ["-k"],
             prefix: prefix,
