@@ -1,0 +1,11 @@
+.build/
+build/
+.swiftpm/
+DerivedData/
+*.xcodeproj/
+.DS_Store
+steam-logs/
+steam-prozesse.txt
+diagnose/
+Kelter-Diagnose-*/
+wine-test.txt

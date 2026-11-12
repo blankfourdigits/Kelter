@@ -1,0 +1,229 @@
+import Foundation
+
+/// Contents of `runtimes.json`: which builds Kelter downloads and where they
+/// come from. Nothing about versions or URLs is compiled into the app.
+public struct RuntimeConfig: Codable, Equatable, Sendable {
+    public struct Wine: Codable, Equatable, Sendable {
+        /// Human readable name shown in the UI.
+        public var name: String
+        public var version: String
+        /// Download URL of the `.tar.xz` archive.
+        public var url: URL
+        /// Expected SHA-256 of the archive (hex). `nil` skips verification.
+        public var sha256: String?
+        /// Top level directory inside the archive, e.g. `Wine Staging.app`.
+        public var archiveRoot: String
+        /// Directory with `wine` and `wineserver`, relative to `archiveRoot`.
+        public var binDirectory: String
+        /// Wine's `lib` directory, relative to `archiveRoot`.
+        public var libDirectory: String
+        /// Whether this build understands `WINEESYNC`.
+        public var supportsESync: Bool
+        /// Whether this build understands `WINEMSYNC`.
+        public var supportsMSync: Bool
+
+        public init(
+            name: String,
+            version: String,
+            url: URL,
+            sha256: String?,
+            archiveRoot: String,
+            binDirectory: String,
+            libDirectory: String,
+            supportsESync: Bool,
+            supportsMSync: Bool
+        ) {
+            self.name = name
+            self.version = version
+            self.url = url
+            self.sha256 = sha256
+            self.archiveRoot = archiveRoot
+            self.binDirectory = binDirectory
+            self.libDirectory = libDirectory
+            self.supportsESync = supportsESync
+            self.supportsMSync = supportsMSync
+        }
+    }
+
+    /// A second download that belongs to the Wine build: the libraries Wine
+    /// loads at run time and the Direct3D renderers. Optional, because some
+    /// Wine builds bring everything themselves.
+    public struct Support: Codable, Equatable, Sendable {
+        public struct Renderer: Codable, Equatable, Sendable {
+            /// Kelter's name for it: `d9vk`, `dxmt`, `dxvk` or `d3dmetal`.
+            public var id: String
+            /// The environment variable through which the Wine build is told
+            /// where this renderer lives.
+            public var variable: String
+            /// Folder with `x86_64-windows` etc., relative to `archiveRoot`.
+            public var path: String
+
+            public init(id: String, variable: String, path: String) {
+                self.id = id
+                self.variable = variable
+                self.path = path
+            }
+        }
+
+        public var name: String
+        public var version: String
+        public var url: URL
+        public var sha256: String?
+        /// Top level directory inside the archive.
+        public var archiveRoot: String
+        /// Folders with run-time libraries, relative to `archiveRoot`.
+        public var libraryPaths: [String]
+        public var gstreamerPluginPath: String?
+        /// Vulkan driver description (ICD json), relative to `archiveRoot`.
+        public var vulkanDriverFile: String?
+        public var renderers: [Renderer]
+        /// Paths relative to `archiveRoot` that are deleted after unpacking.
+        /// Used for Apple's D3DMetal, which Kelter only takes from a Game
+        /// Porting Toolkit the user downloaded from Apple.
+        public var removeAfterInstall: [String]
+        /// Extra environment variables for every Wine process.
+        public var environment: [String: String]
+
+        public init(
+            name: String,
+            version: String,
+            url: URL,
+            sha256: String?,
+            archiveRoot: String,
+            libraryPaths: [String],
+            gstreamerPluginPath: String?,
+            vulkanDriverFile: String?,
+            renderers: [Renderer],
+            removeAfterInstall: [String],
+            environment: [String: String]
+        ) {
+            self.name = name
+            self.version = version
+            self.url = url
+            self.sha256 = sha256
+            self.archiveRoot = archiveRoot
+            self.libraryPaths = libraryPaths
+            self.gstreamerPluginPath = gstreamerPluginPath
+            self.vulkanDriverFile = vulkanDriverFile
+            self.renderers = renderers
+            self.removeAfterInstall = removeAfterInstall
+            self.environment = environment
+        }
+    }
+
+    public struct Steam: Codable, Equatable, Sendable {
+        /// A named set of start parameters offered in the UI.
+        public struct ArgumentPreset: Codable, Equatable, Sendable {
+            public var name: String
+            public var arguments: [String]
+
+            public init(name: String, arguments: [String]) {
+                self.name = name
+                self.arguments = arguments
+            }
+        }
+
+        /// Makes Steam's window visible under Wine on macOS.
+        ///
+        /// Steam draws its window with an embedded Chromium. Chromium paints
+        /// from a second process, which Wine's Mac driver cannot display, and
+        /// Steam offers no start parameter that changes this. A small helper
+        /// library, loaded only into Steam's browser process, adds the
+        /// Chromium switches listed here.
+        public struct UIFix: Codable, Equatable, Sendable {
+            public var enabled: Bool
+            /// The helper library, relative to Kelter's resources folder.
+            public var library: String
+            /// Wine's own winmm.dll, relative to Wine's `lib` directory.
+            public var builtinLibrary: String
+            /// Chromium switches added to Steam's browser process.
+            public var browserArguments: [String]
+
+            public init(enabled: Bool, library: String, builtinLibrary: String, browserArguments: [String]) {
+                self.enabled = enabled
+                self.library = library
+                self.builtinLibrary = builtinLibrary
+                self.browserArguments = browserArguments
+            }
+        }
+
+        /// Where Valve's Windows installer is downloaded from.
+        public var installerURL: URL
+        /// Arguments for an unattended install, e.g. `/S`.
+        public var installerArguments: [String]
+        /// `steam.exe` relative to the bottle's `drive_c`.
+        public var executablePath: String
+        /// Start parameters used when a bottle has none of its own. The Steam
+        /// client needs workarounds under Wine, and which ones changes with
+        /// client updates, so they live here and not in the code.
+        public var defaultArguments: [String]
+        public var argumentPresets: [ArgumentPreset]
+        public var uiFix: UIFix
+
+        public init(
+            installerURL: URL,
+            installerArguments: [String],
+            executablePath: String,
+            defaultArguments: [String],
+            argumentPresets: [ArgumentPreset],
+            uiFix: UIFix
+        ) {
+            self.installerURL = installerURL
+            self.installerArguments = installerArguments
+            self.executablePath = executablePath
+            self.defaultArguments = defaultArguments
+            self.argumentPresets = argumentPresets
+            self.uiFix = uiFix
+        }
+    }
+
+    public var schemaVersion: Int
+    public var wine: Wine
+    public var support: Support?
+    public var steam: Steam
+
+    public init(schemaVersion: Int, wine: Wine, support: Support? = nil, steam: Steam) {
+        self.schemaVersion = schemaVersion
+        self.wine = wine
+        self.support = support
+        self.steam = steam
+    }
+}
+
+public enum RuntimeConfigError: LocalizedError, Equatable {
+    case notFound([String])
+    case invalid(path: String, reason: String)
+
+    public var errorDescription: String? {
+        switch self {
+        case .notFound(let paths):
+            return "Keine runtimes.json gefunden. Gesucht in:\n" + paths.joined(separator: "\n")
+        case .invalid(let path, let reason):
+            return "Die Konfiguration \(path) ist fehlerhaft: \(reason)"
+        }
+    }
+}
+
+extension RuntimeConfig {
+    public static func load(from url: URL) throws -> RuntimeConfig {
+        do {
+            let data = try Data(contentsOf: url)
+            return try JSONDecoder().decode(RuntimeConfig.self, from: data)
+        } catch {
+            throw RuntimeConfigError.invalid(path: url.path, reason: String(describing: error))
+        }
+    }
+
+    /// Loads the first candidate that exists. A candidate that exists but is
+    /// broken is an error; it is not silently skipped, so a typo in a user
+    /// override does not fall back to the bundled defaults unnoticed.
+    public static func loadFirst(
+        candidates: [URL],
+        fileManager: FileManager = .default
+    ) throws -> (config: RuntimeConfig, source: URL) {
+        for url in candidates where fileManager.fileExists(atPath: url.path) {
+            return (try load(from: url), url)
+        }
+        throw RuntimeConfigError.notFound(candidates.map(\.path))
+    }
+}
