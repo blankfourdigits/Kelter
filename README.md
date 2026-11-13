@@ -13,7 +13,7 @@ von CrossOver und liefert keine proprietären Bestandteile mit.
 | --- | --- | --- |
 | 1 | Wine-Download, Rosetta-Prüfung, Bottles, Log | läuft |
 | 2 | Steam-Einrichtung und Start | läuft |
-| 3 | Grafik | DXMT geschrieben, Test steht aus. D9VK und D3DMetal offen |
+| 3 | Grafik | DXMT lädt, braucht aber einen angepassten Mac-Treiber von Wine (siehe `CLAUDE.md`). D9VK und D3DMetal offen |
 | 4 | Spielebibliothek, Einstellungen pro Spiel, Winetricks | offen |
 
 ## Voraussetzungen
