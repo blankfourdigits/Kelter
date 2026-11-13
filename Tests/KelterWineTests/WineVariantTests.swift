@@ -48,20 +48,23 @@ final class WineVariantTests: XCTestCase {
         )
     }
 
-    private func layerWithWineFiles(wineVersion: String = "11.21") -> RuntimeConfig.GraphicsLayer {
-        var layer = layer()
-        layer.wineFiles = RuntimeConfig.WineFiles(
-            name: "Mac-Treiber",
-            version: "1",
+    private func patches(wineVersion: String = "11.21") -> RuntimeConfig.WinePatches {
+        RuntimeConfig.WinePatches(
+            name: "Wine-Anpassungen",
+            version: "2",
             wineVersion: wineVersion,
-            files: ["x86_64-unix/winemac.so"],
-            buildScript: "Tools/wine-dxmt/build.sh"
+            buildScript: "Tools/wine-patches/build.sh"
         )
+    }
+
+    private func layerWithWineFiles() -> RuntimeConfig.GraphicsLayer {
+        var layer = layer()
+        layer.wineFiles = ["x86_64-unix/winemac.so"]
         return layer
     }
 
     private var wineFilesSource: URL {
-        paths.wineFilesDirectory(layerID: "dxmt", wineVersion: "11.21", version: "1")
+        paths.wineFilesDirectory(wineVersion: "11.21", version: "2")
     }
 
     private func write(_ text: String, to url: URL) throws {
@@ -74,7 +77,7 @@ final class WineVariantTests: XCTestCase {
     }
 
     func testExpectedLocation() {
-        let variant = WineVariantInstaller.expected(paths: paths, wine: wineConfig(), layer: layer())
+        let variant = WineVariantInstaller.expected(paths: paths, wine: wineConfig(), layer: layer(), patches: nil)
         XCTAssertEqual(
             variant.wine.path,
             root.path + "/Runtimes/wine-variants/11.21+dxmt-0.80/Wine.app/bin/wine"
@@ -83,72 +86,179 @@ final class WineVariantTests: XCTestCase {
     }
 
     func testWineFilesRevisionGetsItsOwnCopy() {
-        let variant = WineVariantInstaller.variantDirectory(paths: paths, wine: wineConfig(), layer: layerWithWineFiles())
-        XCTAssertEqual(variant.lastPathComponent, "11.21+dxmt-0.80+wine-1")
-        XCTAssertEqual(wineFilesSource.path, root.path + "/Runtimes/wine-files/dxmt/11.21-1")
+        let variant = WineVariantInstaller.variantDirectory(
+            paths: paths, wine: wineConfig(), layer: layerWithWineFiles(), patches: patches())
+        XCTAssertEqual(variant.lastPathComponent, "11.21+dxmt-0.80+wine-2")
+        XCTAssertEqual(wineFilesSource.path, root.path + "/Runtimes/wine-files/11.21-2")
+        // A layer that needs none of Kelter's Wine files keeps its name.
+        XCTAssertEqual(
+            WineVariantInstaller.variantDirectory(paths: paths, wine: wineConfig(), layer: layer(), patches: patches())
+                .lastPathComponent,
+            "11.21+dxmt-0.80"
+        )
     }
 
     func testLayerWithoutWineFilesNeedsNothing() throws {
-        XCTAssertNil(try WineVariantInstaller.checkWineFiles(layer: layer(), wine: wineConfig(), paths: paths))
+        XCTAssertNil(try WineVariantInstaller.checkWineFiles(
+            layer: layer(), patches: nil, wine: wineConfig(), paths: paths))
+    }
+
+    func testWineFilesWithoutPatchesSectionAreAnError() {
+        XCTAssertThrowsError(try WineVariantInstaller.checkWineFiles(
+            layer: layerWithWineFiles(), patches: nil, wine: wineConfig(), paths: paths)
+        ) { error in
+            XCTAssertEqual(error as? WineFilesError, .notConfigured(layer: "DXMT"))
+        }
     }
 
     func testMissingWineFilesNameTheBuildScript() {
-        XCTAssertThrowsError(
-            try WineVariantInstaller.checkWineFiles(layer: layerWithWineFiles(), wine: wineConfig(), paths: paths)
+        XCTAssertThrowsError(try WineVariantInstaller.checkWineFiles(
+            layer: layerWithWineFiles(), patches: patches(), wine: wineConfig(), paths: paths)
         ) { error in
             XCTAssertEqual(
                 error as? WineFilesError,
-                .missing(name: "Mac-Treiber", layer: "DXMT", files: ["x86_64-unix/winemac.so"],
-                         buildScript: "Tools/wine-dxmt/build.sh")
+                .missing(name: "Wine-Anpassungen", layer: "DXMT", files: ["x86_64-unix/winemac.so"],
+                         buildScript: "Tools/wine-patches/build.sh")
             )
-            XCTAssertTrue(error.localizedDescription.contains("bash Tools/wine-dxmt/build.sh"))
+            XCTAssertTrue(error.localizedDescription.contains("bash Tools/wine-patches/build.sh"))
         }
     }
 
     func testWineFilesForAnotherWineAreRefused() throws {
         // Even if the file is there: a driver for another Wine must not be used.
         try write("driver", to: wineFilesSource.appendingPathComponent("x86_64-unix/winemac.so"))
-        XCTAssertThrowsError(
-            try WineVariantInstaller.checkWineFiles(
-                layer: layerWithWineFiles(wineVersion: "11.20"), wine: wineConfig(), paths: paths)
+        XCTAssertThrowsError(try WineVariantInstaller.checkWineFiles(
+            layer: layerWithWineFiles(), patches: patches(wineVersion: "11.20"), wine: wineConfig(), paths: paths)
         ) { error in
             XCTAssertEqual(
                 error as? WineFilesError,
-                .wrongWineVersion(name: "Mac-Treiber", expected: "11.20", installed: "11.21")
+                .wrongWineVersion(name: "Wine-Anpassungen", expected: "11.20", installed: "11.21")
             )
         }
     }
 
     func testWineFilesReplaceWinesOwn() throws {
+        var layer = layerWithWineFiles()
+        layer.wineFiles = ["x86_64-unix/winemac.so", "x86_64-windows/ntdll.dll"]
         try write("patched driver", to: wineFilesSource.appendingPathComponent("x86_64-unix/winemac.so"))
+        try write("patched ntdll", to: wineFilesSource.appendingPathComponent("x86_64-windows/ntdll.dll"))
         let libraries = root.appendingPathComponent("copy/lib/wine", isDirectory: true)
         try write("gcenx driver", to: libraries.appendingPathComponent("x86_64-unix/winemac.so"))
-        try write("ntdll", to: libraries.appendingPathComponent("x86_64-unix/ntdll.so"))
+        try write("gcenx ntdll", to: libraries.appendingPathComponent("x86_64-windows/ntdll.dll"))
+        try write("win32u", to: libraries.appendingPathComponent("x86_64-unix/win32u.so"))
 
         let count = try WineVariantInstaller.installWineFiles(
-            layer: layerWithWineFiles(), wine: wineConfig(), paths: paths, into: libraries, fileManager: .default)
+            layer: layer, patches: patches(), wine: wineConfig(), paths: paths,
+            into: libraries, fileManager: .default)
 
-        XCTAssertEqual(count, 1)
+        XCTAssertEqual(count, 2)
         XCTAssertEqual(try read(libraries.appendingPathComponent("x86_64-unix/winemac.so")), "patched driver")
-        XCTAssertEqual(try read(libraries.appendingPathComponent("x86_64-unix/ntdll.so")), "ntdll")
+        XCTAssertEqual(try read(libraries.appendingPathComponent("x86_64-windows/ntdll.dll")), "patched ntdll")
+        XCTAssertEqual(try read(libraries.appendingPathComponent("x86_64-unix/win32u.so")), "win32u")
         // The build output stays for the next copy.
         XCTAssertEqual(try read(wineFilesSource.appendingPathComponent("x86_64-unix/winemac.so")), "patched driver")
     }
 
-    func testLocateNeedsMarkerAndExecutable() throws {
-        XCTAssertNil(WineVariantInstaller.locate(paths: paths, wine: wineConfig(), layer: layer()))
+    /// A package laid out like Apple's: a framework with version links and
+    /// libraries that link to one shared library.
+    private func makeFrameworkPackage(at lib: URL) throws {
+        let fm = FileManager.default
+        let framework = lib.appendingPathComponent("external/D3DMetal.framework")
+        try write("binary", to: framework.appendingPathComponent("Versions/A/D3DMetal"))
+        try write("plist", to: framework.appendingPathComponent("Versions/A/Resources/version.plist"))
+        try fm.createSymbolicLink(atPath: framework.appendingPathComponent("Versions/Current").path,
+                                  withDestinationPath: "A")
+        try fm.createSymbolicLink(atPath: framework.appendingPathComponent("D3DMetal").path,
+                                  withDestinationPath: "Versions/Current/D3DMetal")
+        try fm.createSymbolicLink(atPath: framework.appendingPathComponent("Resources").path,
+                                  withDestinationPath: "Versions/Current/Resources")
+        try write("shared", to: lib.appendingPathComponent("external/libd3dshared.dylib"))
+        try write("pe d3d12", to: lib.appendingPathComponent("wine/x86_64-windows/d3d12.dll"))
+        try write("old wine", to: lib.appendingPathComponent("wine/x86_64-windows/kernel32.dll"))
+        try fm.createDirectory(at: lib.appendingPathComponent("wine/x86_64-unix"), withIntermediateDirectories: true)
+        try fm.createSymbolicLink(atPath: lib.appendingPathComponent("wine/x86_64-unix/d3d12.so").path,
+                                  withDestinationPath: "../../external/libd3dshared.dylib")
+    }
 
-        let variant = WineVariantInstaller.expected(paths: paths, wine: wineConfig(), layer: layer())
+    private func linkDestination(_ url: URL) -> String? {
+        try? FileManager.default.destinationOfSymbolicLink(atPath: url.path)
+    }
+
+    func testSelectionKeepsOnlyIncludedPathsAndLinks() throws {
+        let package = root.appendingPathComponent("package/lib", isDirectory: true)
+        try makeFrameworkPackage(at: package)
+        let target = root.appendingPathComponent("selection", isDirectory: true)
+
+        try WineVariantInstaller.copySelection(
+            ["external/D3DMetal.framework", "external/libd3dshared.dylib",
+             "wine/x86_64-windows/d3d12.dll", "wine/x86_64-unix/d3d12.so"],
+            from: package, to: target, layerName: "D3DMetal", fileManager: .default)
+
+        XCTAssertEqual(linkDestination(target.appendingPathComponent("external/D3DMetal.framework/Versions/Current")), "A")
+        XCTAssertEqual(try read(target.appendingPathComponent("external/D3DMetal.framework/D3DMetal")), "binary")
+        XCTAssertEqual(linkDestination(target.appendingPathComponent("wine/x86_64-unix/d3d12.so")),
+                       "../../external/libd3dshared.dylib")
+        XCTAssertEqual(try read(target.appendingPathComponent("wine/x86_64-unix/d3d12.so")), "shared")
+        // The package's own Wine stays behind.
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: target.appendingPathComponent("wine/x86_64-windows/kernel32.dll").path))
+    }
+
+    func testSelectionNamesAMissingFile() throws {
+        let package = root.appendingPathComponent("package/lib", isDirectory: true)
+        try makeFrameworkPackage(at: package)
+        XCTAssertThrowsError(try WineVariantInstaller.copySelection(
+            ["wine/x86_64-windows/dxgi.dll"], from: package,
+            to: root.appendingPathComponent("selection"), layerName: "D3DMetal", fileManager: .default)
+        ) { error in
+            XCTAssertEqual(error as? LayerSourceError, .fileMissing(layer: "D3DMetal", path: "wine/x86_64-windows/dxgi.dll"))
+        }
+    }
+
+    func testOverlayKeepsFrameworkLinks() throws {
+        let source = root.appendingPathComponent("layer", isDirectory: true)
+        try makeFrameworkPackage(at: source)
+        let target = root.appendingPathComponent("wine/lib", isDirectory: true)
+        try write("wine d3d12", to: target.appendingPathComponent("wine/x86_64-unix/d3d12.so"))
+
+        _ = try WineVariantInstaller.overlay(from: source, onto: target, fileManager: .default)
+
+        let framework = target.appendingPathComponent("external/D3DMetal.framework")
+        XCTAssertEqual(linkDestination(framework.appendingPathComponent("Versions/Current")), "A")
+        XCTAssertEqual(linkDestination(framework.appendingPathComponent("Resources")), "Versions/Current/Resources")
+        XCTAssertEqual(try read(framework.appendingPathComponent("Resources/version.plist")), "plist")
+        // Wine's own library is replaced by the link to the layer's.
+        XCTAssertEqual(try read(target.appendingPathComponent("wine/x86_64-unix/d3d12.so")), "shared")
+    }
+
+    func testLayerFilesNeedTheirMarker() throws {
+        var layer = layer()
+        layer.include = ["external/libd3dshared.dylib"]
+        XCTAssertFalse(WineVariantInstaller.hasLayerFiles(paths: paths, layer: layer))
+        // With an include list the files lie directly in the layer's folder.
+        let directory = try WineVariantInstaller.layerFilesDirectory(paths: paths, layer: layer)
+        XCTAssertEqual(directory, paths.graphicsLayerDirectory(id: "dxmt", version: "0.80"))
+        try write("", to: directory.appendingPathComponent(WineVariantInstaller.layerMarkerFileName))
+        XCTAssertTrue(WineVariantInstaller.hasLayerFiles(paths: paths, layer: layer))
+        // Without, below the archive root.
+        XCTAssertEqual(try WineVariantInstaller.layerFilesDirectory(paths: paths, layer: self.layer()).lastPathComponent,
+                       "v0.80")
+    }
+
+    func testLocateNeedsMarkerAndExecutable() throws {
+        XCTAssertNil(WineVariantInstaller.locate(paths: paths, wine: wineConfig(), layer: layer(), patches: nil))
+
+        let variant = WineVariantInstaller.expected(paths: paths, wine: wineConfig(), layer: layer(), patches: nil)
         try write("#!/bin/sh\n", to: variant.wine)
         try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: variant.wine.path)
         XCTAssertNil(
-            WineVariantInstaller.locate(paths: paths, wine: wineConfig(), layer: layer()),
+            WineVariantInstaller.locate(paths: paths, wine: wineConfig(), layer: layer(), patches: nil),
             "a copy without the completion marker is half-built"
         )
 
-        let directory = WineVariantInstaller.variantDirectory(paths: paths, wine: wineConfig(), layer: layer())
+        let directory = WineVariantInstaller.variantDirectory(paths: paths, wine: wineConfig(), layer: layer(), patches: nil)
         try write("", to: directory.appendingPathComponent(WineVariantInstaller.markerFileName))
-        XCTAssertEqual(WineVariantInstaller.locate(paths: paths, wine: wineConfig(), layer: layer()), variant)
+        XCTAssertEqual(WineVariantInstaller.locate(paths: paths, wine: wineConfig(), layer: layer(), patches: nil), variant)
     }
 
     func testOverlayReplacesAndAddsFiles() throws {
@@ -205,7 +315,7 @@ final class WineVariantTests: XCTestCase {
 
     func testRunnerPicksVariantByGraphicsChoice() {
         let plain = WineInstallation.expected(paths: paths, config: wineConfig())
-        let dxmt = WineVariantInstaller.expected(paths: paths, wine: wineConfig(), layer: layer())
+        let dxmt = WineVariantInstaller.expected(paths: paths, wine: wineConfig(), layer: layer(), patches: nil)
         let runner = WineRunner(
             installation: plain,
             config: wineConfig(),

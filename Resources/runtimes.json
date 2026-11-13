@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 9,
+  "schemaVersion": 10,
   "wine": {
     "name": "Wine Staging (Gcenx macOS build)",
     "version": "11.21",
@@ -10,6 +10,12 @@
     "libDirectory": "Contents/Resources/wine/lib",
     "supportsESync": false,
     "supportsMSync": false
+  },
+  "winePatches": {
+    "name": "Kelters Anpassungen an Wine (Mac-Treiber, ntdll)",
+    "version": "2",
+    "wineVersion": "11.21",
+    "buildScript": "Tools/wine-patches/build.sh"
   },
   "graphicsLayers": [
     {
@@ -24,14 +30,53 @@
         "x86_64-windows": "drive_c/windows/system32",
         "i386-windows": "drive_c/windows/syswow64"
       },
-      "wineFiles": {
-        "name": "Wines Mac-Treiber mit DXMT-Schnittstelle",
-        "version": "1",
-        "wineVersion": "11.21",
-        "files": [
-          "x86_64-unix/winemac.so"
-        ],
-        "buildScript": "Tools/wine-dxmt/build.sh"
+      "wineFiles": [
+        "x86_64-unix/winemac.so"
+      ]
+    },
+    {
+      "id": "d3dmetal",
+      "name": "D3DMetal",
+      "version": "3.0",
+      "url": "https://github.com/Gcenx/game-porting-toolkit/releases/download/Game-Porting-Toolkit-3.0-3/game-porting-toolkit-3.0-3.tar.xz",
+      "sha256": "d377683937340f914823dbb2e1252b329cbf834ff58907d0293db8cebf0e392e",
+      "archiveRoot": "Game Porting Toolkit.app/Contents/Resources/wine/lib",
+      "libraryTarget": ".",
+      "include": [
+        "external/D3DMetal.framework",
+        "external/libd3dshared.dylib",
+        "wine/x86_64-windows/atidxx64.dll",
+        "wine/x86_64-windows/d3d10.dll",
+        "wine/x86_64-windows/d3d11.dll",
+        "wine/x86_64-windows/d3d12.dll",
+        "wine/x86_64-windows/dxgi.dll",
+        "wine/x86_64-windows/nvapi64.dll",
+        "wine/x86_64-windows/nvngx.dll",
+        "wine/x86_64-windows/nvngx-on-metalfx.dll",
+        "wine/x86_64-unix/atidxx64.so",
+        "wine/x86_64-unix/d3d10.so",
+        "wine/x86_64-unix/d3d11.so",
+        "wine/x86_64-unix/d3d12.so",
+        "wine/x86_64-unix/dxgi.so",
+        "wine/x86_64-unix/nvapi64.so",
+        "wine/x86_64-unix/nvngx.so",
+        "wine/x86_64-unix/nvngx-on-metalfx.so"
+      ],
+      "prefixLibraries": {
+        "wine/x86_64-windows": "drive_c/windows/system32"
+      },
+      "wineFiles": [
+        "x86_64-unix/winemac.so",
+        "x86_64-windows/ntdll.dll"
+      ],
+      "diskImage": {
+        "root": "redist/lib",
+        "downloadPage": "https://developer.apple.com/download/all/?q=game%20porting%20toolkit"
+      },
+      "license": {
+        "name": "Apple-Lizenz für das Game Porting Toolkit",
+        "url": "https://github.com/user-attachments/files/23971305/License.pdf",
+        "summary": "D3DMetal gehört Apple. Apple erlaubt die Nutzung nur, um Spiele für Apple-Geräte zu entwickeln, zu testen oder zu bewerten, und die Weitergabe nur ohne kommerziellen Zweck. Die Dateien dürfen nicht verändert oder zerlegt werden. Kelter verändert sie nicht, liefert sie nicht mit und lädt sie nur nach deiner Zustimmung."
       }
     }
   ],

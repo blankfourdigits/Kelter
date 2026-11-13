@@ -35,6 +35,16 @@ final class AppModel: ObservableObject {
     @Published private(set) var busyMessage: String?
     @Published var errorMessage: String?
     @Published private(set) var logText = ""
+    /// A graphics layer with licence terms (D3DMetal) waiting for the
+    /// user's consent and choice of source.
+    @Published var pendingLayerConsent: LayerConsent?
+
+    struct LayerConsent: Identifiable {
+        let backend: GraphicsBackendKind
+        let bottleID: Bottle.ID
+        let layer: RuntimeConfig.GraphicsLayer
+        var id: String { "\(bottleID)-\(backend.rawValue)" }
+    }
 
     // MARK: Dependencies
 
@@ -84,8 +94,14 @@ final class AppModel: ObservableObject {
     /// is not installed yet, it is downloaded and built first.
     func setGraphicsBackend(_ backend: GraphicsBackendKind, for bottle: Bottle) {
         guard let config, let wineInstallation, busyMessage == nil else { return }
-        guard config.graphicsLayer(for: backend) != nil, wineVariants[backend] == nil else {
+        guard let layer = config.graphicsLayer(for: backend), wineVariants[backend] == nil else {
             updateSettings(of: bottle) { $0.graphicsBackend = backend }
+            return
+        }
+        // A layer under licence terms is fetched only after the user agreed
+        // and chose where it comes from.
+        if layer.license != nil, !WineVariantInstaller.hasLayerFiles(paths: paths, layer: layer) {
+            pendingLayerConsent = LayerConsent(backend: backend, bottleID: bottle.id, layer: layer)
             return
         }
         Task {
@@ -98,17 +114,37 @@ final class AppModel: ObservableObject {
         }
     }
 
-    /// Downloads a graphics layer and builds the copy of Wine with it.
+    /// The user agreed to the layer's licence and picked a source.
+    func acceptLayerConsent(_ consent: LayerConsent, source: LayerSource) {
+        pendingLayerConsent = nil
+        guard let config, let wineInstallation, busyMessage == nil else { return }
+        log.append("\nZustimmung zur \(consent.layer.license?.name ?? "Lizenz") von \(consent.layer.name) erteilt.\n")
+        Task {
+            do {
+                try await self.installVariant(
+                    for: consent.backend, base: wineInstallation, config: config, source: source)
+                if let bottle = self.bottles.first(where: { $0.id == consent.bottleID }) {
+                    self.updateSettings(of: bottle) { $0.graphicsBackend = consent.backend }
+                }
+            } catch {
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    /// Fetches a graphics layer if needed and builds the copy of Wine with it.
     private func installVariant(
         for backend: GraphicsBackendKind,
         base: WineInstallation,
-        config: RuntimeConfig
+        config: RuntimeConfig,
+        source: LayerSource? = nil
     ) async throws {
         guard let layer = config.graphicsLayer(for: backend) else { return }
         busyMessage = "\(layer.name) \(layer.version) wird geladen und eingerichtet …"
         defer { busyMessage = nil }
-        let installer = WineVariantInstaller(paths: paths, wine: config.wine, layer: layer, log: log)
-        wineVariants[backend] = try await installer.install(base: base) { _ in }
+        let installer = WineVariantInstaller(
+            paths: paths, wine: config.wine, layer: layer, patches: config.winePatches, log: log)
+        wineVariants[backend] = try await installer.install(base: base, source: source) { _ in }
     }
 
     var supportsMSync: Bool {
@@ -215,7 +251,8 @@ final class AppModel: ObservableObject {
             var variants: [GraphicsBackendKind: WineInstallation] = [:]
             for backend in GraphicsBackendKind.allCases {
                 if let layer = config.graphicsLayer(for: backend),
-                   let variant = WineVariantInstaller.locate(paths: paths, wine: config.wine, layer: layer) {
+                   let variant = WineVariantInstaller.locate(
+                       paths: paths, wine: config.wine, layer: layer, patches: config.winePatches) {
                     variants[backend] = variant
                 }
             }
@@ -612,7 +649,12 @@ final class AppModel: ObservableObject {
             do {
                 // Without its copy of Wine (removed, or a new revision of
                 // the layer) the bottle would quietly run on plain Wine.
-                if layer != nil, self.wineVariants[backend] == nil {
+                if let layer, self.wineVariants[backend] == nil {
+                    // Licensed layers are fetched only with the user's consent.
+                    if layer.license != nil,
+                       !WineVariantInstaller.hasLayerFiles(paths: paths, layer: layer) {
+                        throw LayerNotSetUp(layer: layer.name)
+                    }
                     try await self.installVariant(for: backend, base: wineInstallation, config: config)
                 }
                 guard let runner = self.runner else { return }
@@ -693,5 +735,13 @@ final class AppModel: ObservableObject {
         let driveC = store.prefixURL(for: bottle.id).appendingPathComponent("drive_c", isDirectory: true)
         let target = FileManager.default.fileExists(atPath: driveC.path) ? driveC : store.directory(for: bottle.id)
         NSWorkspace.shared.activateFileViewerSelecting([target])
+    }
+}
+
+/// A bottle uses a licensed layer whose files were never fetched.
+struct LayerNotSetUp: LocalizedError {
+    let layer: String
+    var errorDescription: String? {
+        "\(layer) ist noch nicht eingerichtet. Bitte bei der Bottle unter „Grafik“ \(layer) auswählen und der Lizenz zustimmen."
     }
 }

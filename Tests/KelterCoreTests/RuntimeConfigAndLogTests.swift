@@ -15,7 +15,7 @@ final class RuntimeConfigTests: XCTestCase {
     func testBundledConfigIsValid() throws {
         let config = try RuntimeConfig.load(from: bundledConfig)
 
-        XCTAssertEqual(config.schemaVersion, 9)
+        XCTAssertEqual(config.schemaVersion, 10)
         XCTAssertFalse(config.wine.version.isEmpty)
         XCTAssertEqual(config.wine.url.scheme, "https")
         // The version becomes a folder name.
@@ -88,28 +88,57 @@ final class RuntimeConfigTests: XCTestCase {
         XCTAssertNil(config.graphicsLayer(for: .wined3d))
     }
 
-    func testBundledWineFilesMatchWineAndScript() throws {
+    func testBundledWinePatchesMatchWineAndScript() throws {
         let config = try RuntimeConfig.load(from: bundledConfig)
         let packageRoot = bundledConfig.deletingLastPathComponent().deletingLastPathComponent()
-        let dxmtFiles = try XCTUnwrap(config.graphicsLayer(for: .dxmt)?.wineFiles, "DXMT needs Wine's driver")
+        let patches = try XCTUnwrap(config.winePatches)
+
+        // Built for exactly the Wine Kelter downloads, by a script in the repository.
+        XCTAssertEqual(patches.wineVersion, config.wine.version)
+        XCTAssertFalse(patches.version.isEmpty)
+        XCTAssertTrue(FileManager.default.isExecutableFile(
+            atPath: packageRoot.appendingPathComponent(patches.buildScript).path), patches.buildScript)
 
         for layer in config.graphicsLayers ?? [] {
-            guard let wineFiles = layer.wineFiles else { continue }
-            // Built for exactly the Wine Kelter downloads.
-            XCTAssertEqual(wineFiles.wineVersion, config.wine.version, layer.id)
-            XCTAssertFalse(wineFiles.version.isEmpty)
-            XCTAssertFalse(wineFiles.files.isEmpty)
-            for path in wineFiles.files + [wineFiles.buildScript] {
+            for path in layer.wineFiles ?? [] {
                 XCTAssertFalse(path.hasPrefix("/"), path)
                 XCTAssertFalse(path.split(separator: "/").contains(".."), path)
             }
-            XCTAssertTrue(
-                FileManager.default.isExecutableFile(
-                    atPath: packageRoot.appendingPathComponent(wineFiles.buildScript).path),
-                wineFiles.buildScript
-            )
         }
-        XCTAssertEqual(dxmtFiles.files, ["x86_64-unix/winemac.so"])
+        XCTAssertEqual(config.graphicsLayer(for: .dxmt)?.wineFiles, ["x86_64-unix/winemac.so"])
+        XCTAssertEqual(config.graphicsLayer(for: .d3dmetal)?.wineFiles,
+                       ["x86_64-unix/winemac.so", "x86_64-windows/ntdll.dll"])
+    }
+
+    func testBundledD3DMetalNeedsConsentAndShipsNothing() throws {
+        let config = try RuntimeConfig.load(from: bundledConfig)
+        let layer = try XCTUnwrap(config.graphicsLayer(for: .d3dmetal))
+        let packageRoot = bundledConfig.deletingLastPathComponent().deletingLastPathComponent()
+
+        // Apple's terms are shown and agreed to before anything is fetched.
+        let license = try XCTUnwrap(layer.license)
+        XCTAssertEqual(license.url.scheme, "https")
+        XCTAssertFalse(license.summary.isEmpty)
+        // Apple's own disk image is offered, the download is the alternative.
+        let diskImage = try XCTUnwrap(layer.diskImage)
+        XCTAssertEqual(diskImage.downloadPage.host, "developer.apple.com")
+        XCTAssertEqual(layer.sha256?.count, 64)
+
+        // Only D3DMetal's own files are taken from a package with a whole Wine.
+        let include = try XCTUnwrap(layer.include)
+        XCTAssertTrue(include.contains("external/D3DMetal.framework"))
+        XCTAssertTrue(include.contains("wine/x86_64-windows/d3d12.dll"))
+        XCTAssertTrue(include.contains("wine/x86_64-unix/d3d12.so"))
+        XCTAssertFalse(include.contains { $0.contains("ntdll") || $0.contains("kernel32") })
+        for path in include + [diskImage.root] {
+            XCTAssertFalse(path.hasPrefix("/"), path)
+            XCTAssertFalse(path.split(separator: "/").contains(".."), path)
+        }
+        // Nothing of Apple's is in the repository.
+        let found = FileManager.default.enumerator(atPath: packageRoot.appendingPathComponent("Resources").path)?
+            .compactMap { $0 as? String }
+            .filter { $0.contains("D3DMetal") || $0.contains("d3dshared") } ?? []
+        XCTAssertEqual(found, [])
     }
 
     func testBundledSteamConfigIsValid() throws {

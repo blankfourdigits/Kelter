@@ -185,28 +185,54 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
 
     public var schemaVersion: Int
     public var wine: Wine
-    /// Files of Wine itself that a graphics layer needs changed, for example
-    /// Wine's macOS driver with the functions DXMT looks up. They are built
-    /// on the Mac by a script from the repository (no foreign binaries are
-    /// shipped) and copied into the layer's copy of Wine.
-    public struct WineFiles: Codable, Equatable, Sendable {
-        /// Shown in messages, e.g. `Wines Mac-Treiber für DXMT`.
+    /// Kelter's own changes to Wine (Tools/wine-patches), which some
+    /// graphics layers need, for example Wine's macOS driver with the
+    /// functions DXMT and D3DMetal look up. They are built on the Mac by a
+    /// script from the repository (no foreign binaries are shipped) into
+    /// `Runtimes/wine-files/<wineVersion>-<version>/`.
+    public struct WinePatches: Codable, Equatable, Sendable {
+        /// Shown in messages.
         public var name: String
-        /// Revision of the change; a new one builds a new copy of Wine.
+        /// Revision of the changes; a new one builds new copies of Wine.
         public var version: String
-        /// The Wine version the files were built for.
+        /// The Wine version the files are built for.
         public var wineVersion: String
-        /// Paths relative to Wine's `lib/wine` and to the build output.
-        public var files: [String]
         /// The script that builds the files, relative to the project folder.
         public var buildScript: String
 
-        public init(name: String, version: String, wineVersion: String, files: [String], buildScript: String) {
+        public init(name: String, version: String, wineVersion: String, buildScript: String) {
             self.name = name
             self.version = version
             self.wineVersion = wineVersion
-            self.files = files
             self.buildScript = buildScript
+        }
+    }
+
+    /// A disk image the user downloads from the layer's vendor and picks in
+    /// Kelter, as an alternative to `url`.
+    public struct DiskImage: Codable, Equatable, Sendable {
+        /// Folder inside the mounted image that corresponds to `archiveRoot`.
+        public var root: String
+        /// Where the user gets the image.
+        public var downloadPage: URL
+
+        public init(root: String, downloadPage: URL) {
+            self.root = root
+            self.downloadPage = downloadPage
+        }
+    }
+
+    /// Terms the user has to agree to before Kelter fetches a layer.
+    public struct License: Codable, Equatable, Sendable {
+        public var name: String
+        public var url: URL
+        /// Short plain-language summary shown next to the link.
+        public var summary: String
+
+        public init(name: String, url: URL, summary: String) {
+            self.name = name
+            self.url = url
+            self.summary = summary
         }
     }
 
@@ -221,14 +247,23 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
         public var sha256: String?
         /// Folder inside the archive that holds `x86_64-windows` and so on.
         public var archiveRoot: String
-        /// Where those folders go, relative to Wine's `lib` directory.
+        /// Where those folders go, relative to Wine's `lib` directory
+        /// (`.` for the `lib` directory itself).
         public var libraryTarget: String
         /// Libraries a bottle needs in its own Windows folders as well,
         /// because Wine only loads a built-in library that also exists
         /// there: folder below `archiveRoot` → folder inside the prefix.
         public var prefixLibraries: [String: String]?
-        /// Changed Wine files the layer needs, if any.
-        public var wineFiles: WineFiles?
+        /// Files from `winePatches` the layer needs, relative to Wine's
+        /// `lib/wine`, e.g. `x86_64-unix/winemac.so`.
+        public var wineFiles: [String]?
+        /// If set, only these paths below `archiveRoot` are kept, for
+        /// packages that bring a whole Wine of their own.
+        public var include: [String]?
+        /// Another way to get the files: a disk image from the vendor.
+        public var diskImage: DiskImage?
+        /// Terms to agree to before the layer is fetched.
+        public var license: License?
 
         public init(
             id: String,
@@ -239,7 +274,10 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
             archiveRoot: String,
             libraryTarget: String,
             prefixLibraries: [String: String]? = nil,
-            wineFiles: WineFiles? = nil
+            wineFiles: [String]? = nil,
+            include: [String]? = nil,
+            diskImage: DiskImage? = nil,
+            license: License? = nil
         ) {
             self.id = id
             self.name = name
@@ -250,10 +288,14 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
             self.libraryTarget = libraryTarget
             self.prefixLibraries = prefixLibraries
             self.wineFiles = wineFiles
+            self.include = include
+            self.diskImage = diskImage
+            self.license = license
         }
     }
 
     public var support: Support?
+    public var winePatches: WinePatches?
     public var graphicsLayers: [GraphicsLayer]?
     public var steam: Steam
 
@@ -261,12 +303,14 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
         schemaVersion: Int,
         wine: Wine,
         support: Support? = nil,
+        winePatches: WinePatches? = nil,
         graphicsLayers: [GraphicsLayer]? = nil,
         steam: Steam
     ) {
         self.schemaVersion = schemaVersion
         self.wine = wine
         self.support = support
+        self.winePatches = winePatches
         self.graphicsLayers = graphicsLayers
         self.steam = steam
     }

@@ -57,6 +57,10 @@ struct ContentView: View {
         } message: {
             Text("Eine Bottle ist eine eigene, abgeschlossene Windows-Umgebung.")
         }
+        .sheet(item: $model.pendingLayerConsent) { consent in
+            LayerConsentView(consent: consent)
+                .environmentObject(model)
+        }
         .alert("Fehler", isPresented: errorIsPresented) {
             Button("OK", role: .cancel) {}
         } message: {

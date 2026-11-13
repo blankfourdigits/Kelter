@@ -1,19 +1,23 @@
 import Foundation
 import KelterCore
 
-/// Problems with the changed Wine files a graphics layer needs.
+/// Problems with Kelter's changed Wine files that a graphics layer needs.
 public enum WineFilesError: LocalizedError, Equatable {
+    /// runtimes.json names files for a layer but no `winePatches`.
+    case notConfigured(layer: String)
     /// The build script has not been run (or not for this revision).
     case missing(name: String, layer: String, files: [String], buildScript: String)
-    /// The files were made for another Wine than the one in runtimes.json.
+    /// The files are made for another Wine than the one in runtimes.json.
     case wrongWineVersion(name: String, expected: String, installed: String)
 
     public var errorDescription: String? {
         switch self {
+        case .notConfigured(let layer):
+            return "\(layer) braucht angepasste Wine-Dateien, aber runtimes.json enthält keinen Abschnitt \"winePatches\"."
         case .missing(let name, let layer, let files, let buildScript):
             return """
                 Für \(layer) fehlt noch: \(name) (\(files.joined(separator: ", "))).
-                Diese Datei wird auf deinem Mac gebaut. Im Terminal im Kelter-Ordner ausführen:
+                Diese Dateien werden auf deinem Mac gebaut. Im Terminal im Kelter-Ordner ausführen:
 
                 bash \(buildScript)
 
@@ -22,10 +26,42 @@ public enum WineFilesError: LocalizedError, Equatable {
         case .wrongWineVersion(let name, let expected, let installed):
             return """
                 \(name) ist für Wine \(expected) gedacht, eingestellt ist aber Wine \(installed). \
-                Bitte runtimes.json anpassen und die Datei für Wine \(installed) neu bauen.
+                Bitte runtimes.json anpassen und die Dateien für Wine \(installed) neu bauen.
                 """
         }
     }
+}
+
+/// Problems with getting a graphics layer's own files.
+public enum LayerSourceError: LocalizedError, Equatable {
+    /// The layer offers no disk image.
+    case noDiskImage(layer: String)
+    /// hdiutil could not open the image (or it asks for a licence first).
+    case cannotMount(name: String)
+    /// A file the layer needs is not in the package.
+    case fileMissing(layer: String, path: String)
+
+    public var errorDescription: String? {
+        switch self {
+        case .noDiskImage(let layer):
+            return "Für \(layer) ist kein Disk-Image vorgesehen."
+        case .cannotMount(let name):
+            return """
+                \(name) konnte nicht geöffnet werden. Bitte die Datei im Finder per Doppelklick öffnen, \
+                die Lizenz bestätigen und dann das geöffnete Laufwerk statt der Datei auswählen.
+                """
+        case .fileMissing(let layer, let path):
+            return "Im ausgewählten Paket fehlt \(path). Ist das wirklich das Paket für \(layer)?"
+        }
+    }
+}
+
+/// Where a graphics layer's own files come from.
+public enum LayerSource: Equatable, Sendable {
+    /// The archive at the layer's `url`.
+    case download
+    /// A disk image (`.dmg`) or an already opened volume or folder.
+    case diskImage(URL)
 }
 
 /// A copy of the Wine installation with one graphics layer (for example
@@ -45,21 +81,35 @@ public final class WineVariantInstaller: @unchecked Sendable {
     private let log: LogFile
     private let fileManager = FileManager.default
 
-    public init(paths: AppPaths, wine: RuntimeConfig.Wine, layer: RuntimeConfig.GraphicsLayer, log: LogFile) {
+    private let patches: RuntimeConfig.WinePatches?
+
+    public init(
+        paths: AppPaths,
+        wine: RuntimeConfig.Wine,
+        layer: RuntimeConfig.GraphicsLayer,
+        patches: RuntimeConfig.WinePatches?,
+        log: LogFile
+    ) {
         self.paths = paths
         self.wine = wine
         self.layer = layer
+        self.patches = patches
         self.log = log
     }
 
     // MARK: Locations
 
-    /// One folder per Wine version, layer version and revision of the
-    /// changed Wine files, so that a new revision builds a new copy.
-    static func variantDirectory(paths: AppPaths, wine: RuntimeConfig.Wine, layer: RuntimeConfig.GraphicsLayer) -> URL {
+    /// One folder per Wine version, layer version and revision of Kelter's
+    /// Wine changes, so that a new revision builds a new copy.
+    static func variantDirectory(
+        paths: AppPaths,
+        wine: RuntimeConfig.Wine,
+        layer: RuntimeConfig.GraphicsLayer,
+        patches: RuntimeConfig.WinePatches?
+    ) -> URL {
         var name = "\(wine.version)+\(layer.id)-\(layer.version)"
-        if let wineFiles = layer.wineFiles {
-            name += "+wine-\(wineFiles.version)"
+        if let patches, layer.wineFiles?.isEmpty == false {
+            name += "+wine-\(patches.version)"
         }
         return paths.wineVariantDirectory(name: name)
     }
@@ -68,9 +118,10 @@ public final class WineVariantInstaller: @unchecked Sendable {
     public static func expected(
         paths: AppPaths,
         wine: RuntimeConfig.Wine,
-        layer: RuntimeConfig.GraphicsLayer
+        layer: RuntimeConfig.GraphicsLayer,
+        patches: RuntimeConfig.WinePatches?
     ) -> WineInstallation {
-        let root = variantDirectory(paths: paths, wine: wine, layer: layer)
+        let root = variantDirectory(paths: paths, wine: wine, layer: layer, patches: patches)
             .appendingPathComponent(wine.archiveRoot, isDirectory: true)
         return WineInstallation(
             root: root,
@@ -85,43 +136,58 @@ public final class WineVariantInstaller: @unchecked Sendable {
         paths: AppPaths,
         wine: RuntimeConfig.Wine,
         layer: RuntimeConfig.GraphicsLayer,
+        patches: RuntimeConfig.WinePatches?,
         fileManager: FileManager = .default
     ) -> WineInstallation? {
-        let directory = variantDirectory(paths: paths, wine: wine, layer: layer)
-        let candidate = expected(paths: paths, wine: wine, layer: layer)
+        let directory = variantDirectory(paths: paths, wine: wine, layer: layer, patches: patches)
+        let candidate = expected(paths: paths, wine: wine, layer: layer, patches: patches)
         guard fileManager.fileExists(atPath: directory.appendingPathComponent(markerFileName).path),
               fileManager.isExecutableFile(atPath: candidate.wine.path)
         else { return nil }
         return candidate
     }
 
+    static let layerMarkerFileName = ".kelter-layer-complete"
+
+    /// The folder that holds the layer's files as they go into Wine's `lib`
+    /// (below `libraryTarget`). A layer with an `include` list keeps only
+    /// those paths, directly in its folder.
+    static func layerFilesDirectory(paths: AppPaths, layer: RuntimeConfig.GraphicsLayer) throws -> URL {
+        let directory = paths.graphicsLayerDirectory(id: layer.id, version: layer.version)
+        if layer.include != nil { return directory }
+        return directory.appendingPathComponent(try ArchiveInstaller.safeRelativePath(layer.archiveRoot), isDirectory: true)
+    }
+
+    /// Whether the layer's own files were fetched completely before, so a
+    /// new copy of Wine can be built without fetching them again.
+    public static func hasLayerFiles(
+        paths: AppPaths,
+        layer: RuntimeConfig.GraphicsLayer,
+        fileManager: FileManager = .default
+    ) -> Bool {
+        let directory = paths.graphicsLayerDirectory(id: layer.id, version: layer.version)
+        return fileManager.fileExists(atPath: directory.appendingPathComponent(layerMarkerFileName).path)
+    }
+
     // MARK: Installing
 
-    /// Downloads the layer, copies `base` and puts the layer's files into
-    /// the copy.
+    /// Fetches the layer if needed (or from `source` if one is given),
+    /// copies `base` and puts the layer's files into the copy.
     public func install(
         base: WineInstallation,
+        source: LayerSource? = nil,
         onPhase: @escaping @Sendable (WineInstallPhase) -> Void
     ) async throws -> WineInstallation {
-        let libraryTarget = try ArchiveInstaller.safeRelativePath(layer.libraryTarget)
-        let archiveRoot = try ArchiveInstaller.safeRelativePath(layer.archiveRoot)
-        // Fail before downloading anything if the changed Wine files are missing.
-        try Self.checkWineFiles(layer: layer, wine: wine, paths: paths, fileManager: fileManager)
+        let libraryTarget = layer.libraryTarget == "."
+            ? nil : try ArchiveInstaller.safeRelativePath(layer.libraryTarget)
+        // Fail before downloading anything if Kelter's Wine files are missing.
+        try Self.checkWineFiles(layer: layer, patches: patches, wine: wine, paths: paths, fileManager: fileManager)
 
         // 1. The layer itself.
-        let layerDirectory = paths.graphicsLayerDirectory(id: layer.id, version: layer.version)
-        let installer = ArchiveInstaller(paths: paths, log: log)
-        try await installer.install(
-            ArchivePackage(
-                name: layer.name,
-                version: layer.version,
-                url: layer.url,
-                sha256: layer.sha256,
-                target: layerDirectory
-            ),
-            onPhase: onPhase
-        )
-        let layerFiles = layerDirectory.appendingPathComponent(archiveRoot, isDirectory: true)
+        if source != nil || !Self.hasLayerFiles(paths: paths, layer: layer, fileManager: fileManager) {
+            try await fetchLayer(from: source ?? .download, onPhase: onPhase)
+        }
+        let layerFiles = try Self.layerFilesDirectory(paths: paths, layer: layer)
         guard fileManager.fileExists(atPath: layerFiles.path) else {
             throw WineInstallError.binaryMissing(layerFiles.path)
         }
@@ -129,7 +195,7 @@ public final class WineVariantInstaller: @unchecked Sendable {
         // 2. A copy of Wine, built next to its final place and moved there
         //    only when complete.
         onPhase(.extracting)
-        let directory = Self.variantDirectory(paths: paths, wine: wine, layer: layer)
+        let directory = Self.variantDirectory(paths: paths, wine: wine, layer: layer, patches: patches)
         let staging = directory.deletingLastPathComponent()
             .appendingPathComponent(directory.lastPathComponent + ".partial", isDirectory: true)
         try? fileManager.removeItem(at: staging)
@@ -139,20 +205,22 @@ public final class WineVariantInstaller: @unchecked Sendable {
             try await cloneTree(from: base.root, to: copy)
 
             // 3. The layer's files over Wine's own.
-            let target = copy
-                .appendingPathComponent(wine.libDirectory, isDirectory: true)
-                .appendingPathComponent(libraryTarget, isDirectory: true)
+            var target = copy.appendingPathComponent(wine.libDirectory, isDirectory: true)
+            if let libraryTarget {
+                target = target.appendingPathComponent(libraryTarget, isDirectory: true)
+            }
             let replaced = try Self.overlay(from: layerFiles, onto: target, fileManager: fileManager)
             log.append("\(layer.name) \(layer.version): \(replaced) Dateien in die Wine-Kopie gelegt.\n")
 
-            // 4. Changed files of Wine itself, e.g. its macOS driver.
-            if let wineFiles = layer.wineFiles {
+            // 4. Kelter's changed files of Wine itself, e.g. its macOS driver.
+            if let patches, layer.wineFiles?.isEmpty == false {
                 let wineLibraries = copy
                     .appendingPathComponent(wine.libDirectory, isDirectory: true)
                     .appendingPathComponent("wine", isDirectory: true)
                 let count = try Self.installWineFiles(
-                    layer: layer, wine: wine, paths: paths, into: wineLibraries, fileManager: fileManager)
-                log.append("\(wineFiles.name) (Revision \(wineFiles.version)): \(count) Dateien in die Wine-Kopie gelegt.\n")
+                    layer: layer, patches: patches, wine: wine, paths: paths,
+                    into: wineLibraries, fileManager: fileManager)
+                log.append("\(patches.name) (Revision \(patches.version)): \(count) Dateien in die Wine-Kopie gelegt.\n")
             }
 
             try Data().write(to: staging.appendingPathComponent(Self.markerFileName))
@@ -163,11 +231,128 @@ public final class WineVariantInstaller: @unchecked Sendable {
             throw error
         }
 
-        guard let installation = Self.locate(paths: paths, wine: wine, layer: layer) else {
-            throw WineInstallError.binaryMissing(Self.expected(paths: paths, wine: wine, layer: layer).wine.path)
+        guard let installation = Self.locate(paths: paths, wine: wine, layer: layer, patches: patches) else {
+            throw WineInstallError.binaryMissing(
+                Self.expected(paths: paths, wine: wine, layer: layer, patches: patches).wine.path)
         }
         log.append("Wine mit \(layer.name) ist bereit: \(installation.root.path)\n")
         return installation
+    }
+
+    /// Gets the layer's files into its folder and marks them complete.
+    private func fetchLayer(from source: LayerSource, onPhase: @escaping @Sendable (WineInstallPhase) -> Void) async throws {
+        let layerDirectory = paths.graphicsLayerDirectory(id: layer.id, version: layer.version)
+        try? fileManager.removeItem(at: layerDirectory.appendingPathComponent(Self.layerMarkerFileName))
+        switch source {
+        case .download:
+            let installer = ArchiveInstaller(paths: paths, log: log)
+            try await installer.install(
+                ArchivePackage(
+                    name: layer.name,
+                    version: layer.version,
+                    url: layer.url,
+                    sha256: layer.sha256,
+                    target: layerDirectory
+                ),
+                onPhase: onPhase
+            )
+            if let include = layer.include {
+                // Keep only what the layer needs from a package that brings
+                // a whole Wine of its own.
+                let root = layerDirectory.appendingPathComponent(
+                    try ArchiveInstaller.safeRelativePath(layer.archiveRoot), isDirectory: true)
+                try replaceLayerDirectory(layerDirectory, withSelection: include, from: root)
+            }
+        case .diskImage(let image):
+            guard let diskImage = layer.diskImage else { throw LayerSourceError.noDiskImage(layer: layer.name) }
+            onPhase(.extracting)
+            try await withMountedVolume(image) { volume in
+                let root = volume.appendingPathComponent(
+                    try ArchiveInstaller.safeRelativePath(diskImage.root), isDirectory: true)
+                if let include = layer.include {
+                    try replaceLayerDirectory(layerDirectory, withSelection: include, from: root)
+                } else {
+                    let selection = layerDirectory.deletingLastPathComponent()
+                        .appendingPathComponent(layerDirectory.lastPathComponent + ".partial", isDirectory: true)
+                    try? fileManager.removeItem(at: selection)
+                    let target = selection.appendingPathComponent(
+                        try ArchiveInstaller.safeRelativePath(layer.archiveRoot), isDirectory: true)
+                    try fileManager.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+                    try fileManager.copyItem(at: root, to: target)
+                    try? fileManager.removeItem(at: layerDirectory)
+                    try fileManager.moveItem(at: selection, to: layerDirectory)
+                }
+            }
+            _ = try? await ProcessWaiter.runTool(
+                "/usr/bin/xattr", ["-dr", "com.apple.quarantine", layerDirectory.path], log: log)
+            log.append("\(layer.name) aus \(image.lastPathComponent) übernommen.\n")
+        }
+        try Data().write(to: layerDirectory.appendingPathComponent(Self.layerMarkerFileName))
+    }
+
+    /// Replaces `layerDirectory` with only the `include` paths found below `root`.
+    private func replaceLayerDirectory(_ layerDirectory: URL, withSelection include: [String], from root: URL) throws {
+        let selection = layerDirectory.deletingLastPathComponent()
+            .appendingPathComponent(layerDirectory.lastPathComponent + ".selection", isDirectory: true)
+        try? fileManager.removeItem(at: selection)
+        do {
+            try Self.copySelection(include, from: root, to: selection, layerName: layer.name, fileManager: fileManager)
+        } catch {
+            try? fileManager.removeItem(at: selection)
+            throw error
+        }
+        try? fileManager.removeItem(at: layerDirectory)
+        try fileManager.moveItem(at: selection, to: layerDirectory)
+    }
+
+    /// Copies the `include` paths (files, folders or symbolic links) from
+    /// `root` to the same places below `target`. Links stay links.
+    static func copySelection(
+        _ include: [String],
+        from root: URL,
+        to target: URL,
+        layerName: String,
+        fileManager: FileManager
+    ) throws {
+        try fileManager.createDirectory(at: target, withIntermediateDirectories: true)
+        for path in include {
+            let relative = try ArchiveInstaller.safeRelativePath(path)
+            let source = root.appendingPathComponent(relative)
+            // attributesOfItem does not follow symbolic links.
+            guard (try? fileManager.attributesOfItem(atPath: source.path)) != nil else {
+                throw LayerSourceError.fileMissing(layer: layerName, path: relative)
+            }
+            let destination = target.appendingPathComponent(relative)
+            try fileManager.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try fileManager.copyItem(at: source, to: destination)
+        }
+    }
+
+    /// Runs `body` with the opened volume: a `.dmg` is mounted read-only
+    /// (without accepting any licence on the user's behalf) and detached
+    /// afterwards; a folder is used as it is.
+    private func withMountedVolume(_ image: URL, _ body: (URL) throws -> Void) async throws {
+        guard image.pathExtension.lowercased() == "dmg" else {
+            try body(image)
+            return
+        }
+        let mountPoint = paths.downloadsDirectory
+            .appendingPathComponent("mount-\(UUID().uuidString)", isDirectory: true)
+        try fileManager.createDirectory(at: mountPoint, withIntermediateDirectories: true)
+        defer { try? fileManager.removeItem(at: mountPoint) }
+        let attached = try await ProcessWaiter.runTool(
+            "/usr/bin/hdiutil",
+            ["attach", "-readonly", "-nobrowse", "-noautoopen", "-mountpoint", mountPoint.path, image.path],
+            log: log
+        )
+        guard attached == 0 else { throw LayerSourceError.cannotMount(name: image.lastPathComponent) }
+        do {
+            try body(mountPoint)
+        } catch {
+            _ = try? await ProcessWaiter.runTool("/usr/bin/hdiutil", ["detach", "-quiet", mountPoint.path], log: log)
+            throw error
+        }
+        _ = try? await ProcessWaiter.runTool("/usr/bin/hdiutil", ["detach", "-quiet", mountPoint.path], log: log)
     }
 
     /// Copies a folder. `cp -c` asks APFS for clones, which share their data
@@ -181,26 +366,28 @@ public final class WineVariantInstaller: @unchecked Sendable {
         guard copied == 0 else { throw WineInstallError.extractionFailed(name: layer.name, status: copied) }
     }
 
-    // MARK: Changed Wine files
+    // MARK: Kelter's Wine files
 
-    /// Checks that the changed Wine files of a layer fit the configured Wine
-    /// and exist. Returns their folder, or `nil` if the layer needs none.
+    /// Checks that Kelter's changed Wine files the layer needs fit the
+    /// configured Wine and exist. Returns their folder, or `nil` if the
+    /// layer needs none.
     @discardableResult
     public static func checkWineFiles(
         layer: RuntimeConfig.GraphicsLayer,
+        patches: RuntimeConfig.WinePatches?,
         wine: RuntimeConfig.Wine,
         paths: AppPaths,
         fileManager: FileManager = .default
     ) throws -> URL? {
-        guard let wineFiles = layer.wineFiles else { return nil }
-        guard wineFiles.wineVersion == wine.version else {
+        guard let files = layer.wineFiles, !files.isEmpty else { return nil }
+        guard let patches else { throw WineFilesError.notConfigured(layer: layer.name) }
+        guard patches.wineVersion == wine.version else {
             throw WineFilesError.wrongWineVersion(
-                name: wineFiles.name, expected: wineFiles.wineVersion, installed: wine.version)
+                name: patches.name, expected: patches.wineVersion, installed: wine.version)
         }
-        let source = paths.wineFilesDirectory(
-            layerID: layer.id, wineVersion: wineFiles.wineVersion, version: wineFiles.version)
+        let source = paths.wineFilesDirectory(wineVersion: patches.wineVersion, version: patches.version)
         var missing: [String] = []
-        for file in wineFiles.files {
+        for file in files {
             let url = source.appendingPathComponent(try ArchiveInstaller.safeRelativePath(file))
             var isDirectory: ObjCBool = false
             if !fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory) || isDirectory.boolValue {
@@ -209,24 +396,26 @@ public final class WineVariantInstaller: @unchecked Sendable {
         }
         guard missing.isEmpty else {
             throw WineFilesError.missing(
-                name: wineFiles.name, layer: layer.name, files: missing, buildScript: wineFiles.buildScript)
+                name: patches.name, layer: layer.name, files: missing, buildScript: patches.buildScript)
         }
         return source
     }
 
-    /// Copies the changed Wine files of a layer over the ones in `wineLibraries`
-    /// (a copy's `lib/wine`). Returns the number of files.
+    /// Copies the changed Wine files the layer needs over the ones in
+    /// `wineLibraries` (a copy's `lib/wine`). Returns the number of files.
     static func installWineFiles(
         layer: RuntimeConfig.GraphicsLayer,
+        patches: RuntimeConfig.WinePatches?,
         wine: RuntimeConfig.Wine,
         paths: AppPaths,
         into wineLibraries: URL,
         fileManager: FileManager
     ) throws -> Int {
-        guard let wineFiles = layer.wineFiles,
-              let source = try checkWineFiles(layer: layer, wine: wine, paths: paths, fileManager: fileManager)
+        guard let files = layer.wineFiles,
+              let source = try checkWineFiles(
+                layer: layer, patches: patches, wine: wine, paths: paths, fileManager: fileManager)
         else { return 0 }
-        for file in wineFiles.files {
+        for file in files {
             let relative = try ArchiveInstaller.safeRelativePath(file)
             let destination = wineLibraries.appendingPathComponent(relative)
             try fileManager.createDirectory(
@@ -236,7 +425,7 @@ public final class WineVariantInstaller: @unchecked Sendable {
             }
             try fileManager.copyItem(at: source.appendingPathComponent(relative), to: destination)
         }
-        return wineFiles.files.count
+        return files.count
     }
 
     // MARK: Bottle
@@ -254,8 +443,7 @@ public final class WineVariantInstaller: @unchecked Sendable {
         fileManager: FileManager = .default
     ) throws -> [String] {
         guard let folders = layer.prefixLibraries, !folders.isEmpty else { return [] }
-        let layerFiles = paths.graphicsLayerDirectory(id: layer.id, version: layer.version)
-            .appendingPathComponent(try ArchiveInstaller.safeRelativePath(layer.archiveRoot), isDirectory: true)
+        let layerFiles = try layerFilesDirectory(paths: paths, layer: layer)
         var added: [String] = []
         for (sourceFolder, targetFolder) in folders.sorted(by: { $0.key < $1.key }) {
             let source = layerFiles
@@ -276,17 +464,19 @@ public final class WineVariantInstaller: @unchecked Sendable {
         return added
     }
 
-    /// Copies every file below `source` to the same relative path below
-    /// `target`, replacing what is there. Returns the number of files.
+    /// Copies every file and symbolic link below `source` to the same
+    /// relative path below `target`, replacing what is there. Links stay
+    /// links (a framework needs its `Versions/Current`). Returns the number
+    /// of files and links.
     static func overlay(from source: URL, onto target: URL, fileManager: FileManager) throws -> Int {
         guard let enumerator = fileManager.enumerator(atPath: source.path) else { return 0 }
         var count = 0
         while let relative = enumerator.nextObject() as? String {
             let from = source.appendingPathComponent(relative)
-            var isDirectory: ObjCBool = false
-            guard fileManager.fileExists(atPath: from.path, isDirectory: &isDirectory), !isDirectory.boolValue else {
-                continue
-            }
+            // attributesOfItem does not follow symbolic links.
+            guard let type = (try? fileManager.attributesOfItem(atPath: from.path))?[.type] as? FileAttributeType,
+                  type == .typeRegular || type == .typeSymbolicLink
+            else { continue }
             if relative.split(separator: "/").last?.hasPrefix(".") == true { continue }
             let to = target.appendingPathComponent(relative)
             try fileManager.createDirectory(at: to.deletingLastPathComponent(), withIntermediateDirectories: true)
