@@ -198,6 +198,10 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
         public var archiveRoot: String
         /// Where those folders go, relative to Wine's `lib` directory.
         public var libraryTarget: String
+        /// Libraries a bottle needs in its own Windows folders as well,
+        /// because Wine only loads a built-in library that also exists
+        /// there: folder below `archiveRoot` → folder inside the prefix.
+        public var prefixLibraries: [String: String]?
 
         public init(
             id: String,
@@ -206,7 +210,8 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
             url: URL,
             sha256: String?,
             archiveRoot: String,
-            libraryTarget: String
+            libraryTarget: String,
+            prefixLibraries: [String: String]? = nil
         ) {
             self.id = id
             self.name = name
@@ -215,6 +220,7 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
             self.sha256 = sha256
             self.archiveRoot = archiveRoot
             self.libraryTarget = libraryTarget
+            self.prefixLibraries = prefixLibraries
         }
     }
 

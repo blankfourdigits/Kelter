@@ -40,7 +40,11 @@ final class WineVariantTests: XCTestCase {
             url: URL(string: "https://example.invalid/dxmt.tar.gz")!,
             sha256: nil,
             archiveRoot: "v0.80",
-            libraryTarget: "wine"
+            libraryTarget: "wine",
+            prefixLibraries: [
+                "x86_64-windows": "drive_c/windows/system32",
+                "i386-windows": "drive_c/windows/syswow64"
+            ]
         )
     }
 
@@ -97,6 +101,37 @@ final class WineVariantTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: target.appendingPathComponent("x86_64-windows/.DS_Store").path))
         // The layer's own files are untouched.
         XCTAssertEqual(try read(source.appendingPathComponent("x86_64-windows/d3d11.dll")), "dxmt d3d11")
+    }
+
+    func testPrefixLibrariesAddOnlyWhatIsMissing() throws {
+        let files = paths.graphicsLayerDirectory(id: "dxmt", version: "0.80")
+            .appendingPathComponent("v0.80", isDirectory: true)
+        try write("dxmt d3d11", to: files.appendingPathComponent("x86_64-windows/d3d11.dll"))
+        try write("winemetal 64", to: files.appendingPathComponent("x86_64-windows/winemetal.dll"))
+        try write("winemetal 32", to: files.appendingPathComponent("i386-windows/winemetal.dll"))
+        try write("unix", to: files.appendingPathComponent("x86_64-unix/winemetal.so"))
+
+        let prefix = root.appendingPathComponent("prefix", isDirectory: true)
+        // Not set up by Wine yet: nothing to do, no error.
+        XCTAssertEqual(try WineVariantInstaller.installPrefixLibraries(layer: layer(), paths: paths, prefix: prefix), [])
+
+        let system32 = prefix.appendingPathComponent("drive_c/windows/system32", isDirectory: true)
+        let syswow64 = prefix.appendingPathComponent("drive_c/windows/syswow64", isDirectory: true)
+        try write("wine d3d11", to: system32.appendingPathComponent("d3d11.dll"))
+        try FileManager.default.createDirectory(at: syswow64, withIntermediateDirectories: true)
+
+        let added = try WineVariantInstaller.installPrefixLibraries(layer: layer(), paths: paths, prefix: prefix)
+
+        XCTAssertEqual(added, [
+            "drive_c/windows/syswow64/winemetal.dll",
+            "drive_c/windows/system32/winemetal.dll"
+        ])
+        XCTAssertEqual(try read(system32.appendingPathComponent("winemetal.dll")), "winemetal 64")
+        XCTAssertEqual(try read(syswow64.appendingPathComponent("winemetal.dll")), "winemetal 32")
+        // What the bottle already has stays as Wine put it there.
+        XCTAssertEqual(try read(system32.appendingPathComponent("d3d11.dll")), "wine d3d11")
+        // A second run finds nothing left to add.
+        XCTAssertEqual(try WineVariantInstaller.installPrefixLibraries(layer: layer(), paths: paths, prefix: prefix), [])
     }
 
     func testRunnerPicksVariantByGraphicsChoice() {

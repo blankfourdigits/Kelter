@@ -596,8 +596,19 @@ final class AppModel: ObservableObject {
         let browserArguments = current.settings.steamBrowserArguments ?? uiFix.browserArguments
         let log = self.log
 
+        let paths = self.paths
+        let layer = wineVariants[current.settings.graphicsBackend] == nil
+            ? nil
+            : config.graphicsLayer(for: current.settings.graphicsBackend)
+
         Task {
             do {
+                if let layer {
+                    let added = try WineVariantInstaller.installPrefixLibraries(layer: layer, paths: paths, prefix: prefix)
+                    if !added.isEmpty {
+                        log.append("\n\(layer.name): in die Bottle gelegt: \(added.joined(separator: ", "))\n")
+                    }
+                }
                 var environment: [String: String] = [:]
                 if uiFix.enabled {
                     guard let resources = AppModel.resourceDirectory(containing: uiFix.library) else {

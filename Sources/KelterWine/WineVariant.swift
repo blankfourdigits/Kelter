@@ -136,6 +136,43 @@ public final class WineVariantInstaller: @unchecked Sendable {
         guard copied == 0 else { throw WineInstallError.extractionFailed(name: layer.name, status: copied) }
     }
 
+    // MARK: Bottle
+
+    /// Puts the layer's libraries that a bottle does not have yet into the
+    /// bottle's Windows folders. Wine loads a built-in library only if a
+    /// file of that name exists in the prefix; libraries a layer adds
+    /// (DXMT's `winemetal.dll`) are missing in a prefix made by plain Wine.
+    /// Existing files stay untouched. Returns the names that were added.
+    @discardableResult
+    public static func installPrefixLibraries(
+        layer: RuntimeConfig.GraphicsLayer,
+        paths: AppPaths,
+        prefix: URL,
+        fileManager: FileManager = .default
+    ) throws -> [String] {
+        guard let folders = layer.prefixLibraries, !folders.isEmpty else { return [] }
+        let layerFiles = paths.graphicsLayerDirectory(id: layer.id, version: layer.version)
+            .appendingPathComponent(try ArchiveInstaller.safeRelativePath(layer.archiveRoot), isDirectory: true)
+        var added: [String] = []
+        for (sourceFolder, targetFolder) in folders.sorted(by: { $0.key < $1.key }) {
+            let source = layerFiles
+                .appendingPathComponent(try ArchiveInstaller.safeRelativePath(sourceFolder), isDirectory: true)
+            let target = prefix
+                .appendingPathComponent(try ArchiveInstaller.safeRelativePath(targetFolder), isDirectory: true)
+            // A prefix that Wine has not set up yet gets its files later.
+            guard fileManager.fileExists(atPath: target.path),
+                  let names = try? fileManager.contentsOfDirectory(atPath: source.path)
+            else { continue }
+            for name in names.sorted() where name.lowercased().hasSuffix(".dll") {
+                let destination = target.appendingPathComponent(name)
+                if (try? fileManager.attributesOfItem(atPath: destination.path)) != nil { continue }
+                try fileManager.copyItem(at: source.appendingPathComponent(name), to: destination)
+                added.append("\(targetFolder)/\(name)")
+            }
+        }
+        return added
+    }
+
     /// Copies every file below `source` to the same relative path below
     /// `target`, replacing what is there. Returns the number of files.
     static func overlay(from source: URL, onto target: URL, fileManager: FileManager) throws -> Int {

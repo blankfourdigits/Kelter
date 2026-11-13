@@ -181,6 +181,11 @@ Bottle mit dem Baum, der zu ihrer Auswahl passt. Auf APFS ist die Kopie ein
 Klon und belegt kaum zusätzlichen Platz. Welche Schichten es gibt, steht unter
 `graphicsLayers` in `runtimes.json`.
 
+Bibliotheken, die eine Schicht zusätzlich mitbringt (bei DXMT `winemetal.dll`),
+legt Kelter beim Start von Steam außerdem in die Windows-Ordner der Bottle
+(`prefixLibraries`). Wine lädt eine eingebaute Bibliothek nur, wenn es dort
+eine Datei dieses Namens gibt.
+
 Kelter kann auch ein Wine-Build mit Zusatzpaket benutzen (Abschnitt `support`
 in `runtimes.json`): Dann lässt sich pro Bottle wählen, ob Direct3D über DXMT
 oder DXVK läuft, und DirectX 8/9 gehen über D9VK. Erprobt wurde das mit der
