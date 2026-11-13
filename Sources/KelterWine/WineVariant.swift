@@ -133,7 +133,7 @@ public final class WineVariantInstaller: @unchecked Sendable {
         if cloned == 0 { return }
         try? fileManager.removeItem(at: destination)
         let copied = try await ProcessWaiter.runTool("/bin/cp", ["-R", source.path, destination.path], log: log)
-        guard copied == 0 else { throw WineInstallError.extractionFailed(copied) }
+        guard copied == 0 else { throw WineInstallError.extractionFailed(name: layer.name, status: copied) }
     }
 
     /// Copies every file below `source` to the same relative path below
