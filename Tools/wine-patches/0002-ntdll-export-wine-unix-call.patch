@@ -1,0 +1,45 @@
+ntdll: export __wine_unix_call again.
+
+Wine 9.9 turned __wine_unix_call() into an inline wrapper around
+__wine_unix_call_dispatcher and dropped the export. Builtin libraries built
+against older Wine import it by name; among them the PE libraries of Apple's
+D3DMetal (Game Porting Toolkit), which then fail to load. Export a function
+of that name that forwards to the dispatcher, with the old signature.
+
+For Wine 11.21 with Wine Staging 11.21 applied. LGPL-2.1-or-later like Wine.
+
+diff --git a/dlls/ntdll/loader.c b/dlls/ntdll/loader.c
+index 29ca9a2..12bdc1d 100644
+--- a/dlls/ntdll/loader.c
++++ b/dlls/ntdll/loader.c
+@@ -73,6 +73,18 @@ static void __fastcall default_thread_init_func( DWORD unknown, LPTHREAD_START_R
+ void (FASTCALL *pBaseThreadInitThunk)(DWORD,LPTHREAD_START_ROUTINE,void *) = default_thread_init_func;
+ NTSTATUS (WINAPI *__wine_unix_call_dispatcher)( unixlib_handle_t, unsigned int, void * ) = NULL;
+ 
++/***********************************************************************
++ *           __wine_unix_call   (NTDLL.@)
++ *
++ * Exported again for builtin libraries built against Wine before 9.9,
++ * which import it instead of using the inline wrapper, such as the PE
++ * libraries of Apple's D3DMetal (Game Porting Toolkit).
++ */
++NTSTATUS WINAPI ntdll_export_wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args )
++{
++    return __wine_unix_call_dispatcher( handle, code, args );
++}
++
+ static DWORD (WINAPI *pCtrlRoutine)(void *);
+ 
+ SYSTEM_DLL_INIT_BLOCK LdrSystemDllInitBlock = { 0xf0 };
+diff --git a/dlls/ntdll/ntdll.spec b/dlls/ntdll/ntdll.spec
+index 14608fd..b9006b2 100644
+--- a/dlls/ntdll/ntdll.spec
++++ b/dlls/ntdll/ntdll.spec
+@@ -1775,6 +1775,7 @@
+ @ stdcall __wine_ctrl_routine(ptr)
+ @ extern -private __wine_syscall_dispatcher
+ @ extern -private __wine_unix_call_dispatcher
++@ stdcall -norelay -private __wine_unix_call(int64 long ptr) ntdll_export_wine_unix_call
+ @ extern -private -arch=arm64ec __wine_unix_call_dispatcher_arm64ec
+ @ extern -private __wine_unixlib_handle
+ 

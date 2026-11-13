@@ -1,16 +1,18 @@
 winemac.drv: export a macdrv_functions table for DXMT and D3DMetal.
 
-DXMT (Direct3D 10/11 over Metal) looks up dlsym(RTLD_DEFAULT,
-"macdrv_functions"), as offered by CrossOver's Wine, to create a Metal view
-in a window. Upstream winemac.so exports no such symbol, so DXMT fails with
-"Failed to create metal view, it seems like your Wine has no exported
-symbols needed by DXMT".
+DXMT (Direct3D 10/11 over Metal) and Apple's D3DMetal look up
+dlsym(RTLD_DEFAULT, "macdrv_functions"), as offered by CrossOver's Wine, to
+create a Metal view in a window. Upstream winemac.so exports no such symbol,
+so DXMT fails with "Failed to create metal view, it seems like your Wine has
+no exported symbols needed by DXMT".
 
-- window.c: export the table in the layout DXMT expects. DXMT's
+- window.c: export the table in the layout these layers expect. Their
   struct macdrv_win_data has client_cocoa_view as fourth field, Wine 11's
   struct differs, so get_win_data hands out a copy in that layout. The copy
-  holds no lock and is never NULL (DXMT does not check); without a client
+  holds no lock and is never NULL (callers do not check); without a client
   surface view the window's content view hosts the Metal view.
+  macdrv_init_display_devices is a no-op: D3DMetal calls it, and Wine 11
+  keeps display devices up to date in win32u.
 - cocoa_window.m: count users of the cached WineMetalView so a second swap
   chain for the same window does not over-release it.
 
@@ -112,10 +114,10 @@ index 5157b38..1ba4462 100644
  extern WineMetalSwapChain_id macdrv_create_offscreen_swapchain(void* hwnd, CGRect bounds);
  extern CAMetalLayer *macdrv_swapchain_get_layer(WineMetalSwapChain_id swapchain);
 diff --git a/dlls/winemac.drv/window.c b/dlls/winemac.drv/window.c
-index 552971f..cdcde77 100644
+index 552971f..e72ef74 100644
 --- a/dlls/winemac.drv/window.c
 +++ b/dlls/winemac.drv/window.c
-@@ -2208,3 +2208,110 @@ void init_win_context(void)
+@@ -2208,3 +2208,117 @@ void init_win_context(void)
      pthread_mutex_init(&win_data_mutex, &attr);
      pthread_mutexattr_destroy(&attr);
  }
@@ -172,6 +174,13 @@ index 552971f..cdcde77 100644
 +    return ret;
 +}
 +
++/* D3DMetal calls this before creating a swap chain. Wine 11 keeps the
++   display devices up to date in win32u, so there is nothing left to do. */
++static void external_init_display_devices(BOOL force)
++{
++    TRACE("force %d\n", force);
++}
++
 +static void external_release_win_data(struct macdrv_external_win_data *data)
 +{
 +    free(data);
@@ -215,7 +224,7 @@ index 552971f..cdcde77 100644
 +
 +__attribute__((visibility("default"))) const struct macdrv_external_functions macdrv_functions =
 +{
-+    NULL, /* macdrv_init_display_devices: not offered by this driver */
++    external_init_display_devices,
 +    external_get_win_data,
 +    external_release_win_data,
 +    external_get_cocoa_window,
