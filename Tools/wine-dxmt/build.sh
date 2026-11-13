@@ -12,16 +12,24 @@
 # compiler on macOS, even though only a Unix library is built here. Builds
 # for x86_64 under Rosetta 2, for macOS 10.15 like the Gcenx build.
 #
+# Wine version and revision come from the "wineFiles" entry of the DXMT layer
+# in Resources/runtimes.json. The result goes where Kelter looks for it:
+# ~/Library/Application Support/Kelter/Runtimes/wine-files/dxmt/<wine>-<revision>/
+#
 # Usage: Tools/wine-dxmt/build.sh [output directory]
-#   WINE_VERSION  Wine and Wine Staging version (default 11.21)
-#   WORK          working folder, kept for faster rebuilds
-#                 (default ~/Library/Caches/Kelter/wine-dxmt-build)
+#   WORK  working folder, kept for faster rebuilds
+#         (default ~/Library/Caches/Kelter/wine-dxmt-build)
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-WINE_VERSION="${WINE_VERSION:-11.21}"
+CONFIG="$HERE/../../Resources/runtimes.json"
+read -r WINE_VERSION REVISION < <(python3 -I -c '
+import json, sys
+layer = next(l for l in json.load(open(sys.argv[1]))["graphicsLayers"] if l["id"] == "dxmt")
+print(layer["wineFiles"]["wineVersion"], layer["wineFiles"]["version"])
+' "$CONFIG")
 WORK="${WORK:-$HOME/Library/Caches/Kelter/wine-dxmt-build}"
-OUT="${1:-$HERE/../../build/wine-dxmt/$WINE_VERSION}"
+OUT="${1:-$HOME/Library/Application Support/Kelter/Runtimes/wine-files/dxmt/$WINE_VERSION-$REVISION}"
 PATCH="$HERE/winemac-dxmt.patch"
 
 BISON_DIR="$(brew --prefix bison 2>/dev/null)/bin"
@@ -71,7 +79,8 @@ LIB="$BUILD/dlls/winemac.drv/winemac.so"
 nm -gU "$LIB" | grep -q ' _macdrv_functions$' \
     || { echo "macdrv_functions wird nicht exportiert" >&2; exit 1; }
 mkdir -p "$OUT/x86_64-unix"
-cp "$LIB" "$OUT/x86_64-unix/winemac.so"
-codesign -s - -f "$OUT/x86_64-unix/winemac.so" 2>/dev/null
-echo "Fertig: $OUT/x86_64-unix/winemac.so"
-shasum -a 256 "$OUT/x86_64-unix/winemac.so"
+cp "$LIB" "$OUT/x86_64-unix/winemac.so.new"
+codesign -s - -f "$OUT/x86_64-unix/winemac.so.new" 2>/dev/null
+mv -f "$OUT/x86_64-unix/winemac.so.new" "$OUT/x86_64-unix/winemac.so"
+echo "Fertig (Wine $WINE_VERSION, Revision $REVISION): $OUT/x86_64-unix/winemac.so"
+echo "In Kelter jetzt bei der Bottle DXMT auswählen oder Steam starten."

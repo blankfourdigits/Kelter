@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 8,
+  "schemaVersion": 9,
   "wine": {
     "name": "Wine Staging (Gcenx macOS build)",
     "version": "11.21",
@@ -23,6 +23,15 @@
       "prefixLibraries": {
         "x86_64-windows": "drive_c/windows/system32",
         "i386-windows": "drive_c/windows/syswow64"
+      },
+      "wineFiles": {
+        "name": "Wines Mac-Treiber mit DXMT-Schnittstelle",
+        "version": "1",
+        "wineVersion": "11.21",
+        "files": [
+          "x86_64-unix/winemac.so"
+        ],
+        "buildScript": "Tools/wine-dxmt/build.sh"
       }
     }
   ],

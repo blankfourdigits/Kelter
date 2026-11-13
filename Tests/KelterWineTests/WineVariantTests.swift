@@ -48,6 +48,22 @@ final class WineVariantTests: XCTestCase {
         )
     }
 
+    private func layerWithWineFiles(wineVersion: String = "11.21") -> RuntimeConfig.GraphicsLayer {
+        var layer = layer()
+        layer.wineFiles = RuntimeConfig.WineFiles(
+            name: "Mac-Treiber",
+            version: "1",
+            wineVersion: wineVersion,
+            files: ["x86_64-unix/winemac.so"],
+            buildScript: "Tools/wine-dxmt/build.sh"
+        )
+        return layer
+    }
+
+    private var wineFilesSource: URL {
+        paths.wineFilesDirectory(layerID: "dxmt", wineVersion: "11.21", version: "1")
+    }
+
     private func write(_ text: String, to url: URL) throws {
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try Data(text.utf8).write(to: url)
@@ -64,6 +80,59 @@ final class WineVariantTests: XCTestCase {
             root.path + "/Runtimes/wine-variants/11.21+dxmt-0.80/Wine.app/bin/wine"
         )
         XCTAssertEqual(variant.libDirectory.path, root.path + "/Runtimes/wine-variants/11.21+dxmt-0.80/Wine.app/lib")
+    }
+
+    func testWineFilesRevisionGetsItsOwnCopy() {
+        let variant = WineVariantInstaller.variantDirectory(paths: paths, wine: wineConfig(), layer: layerWithWineFiles())
+        XCTAssertEqual(variant.lastPathComponent, "11.21+dxmt-0.80+wine-1")
+        XCTAssertEqual(wineFilesSource.path, root.path + "/Runtimes/wine-files/dxmt/11.21-1")
+    }
+
+    func testLayerWithoutWineFilesNeedsNothing() throws {
+        XCTAssertNil(try WineVariantInstaller.checkWineFiles(layer: layer(), wine: wineConfig(), paths: paths))
+    }
+
+    func testMissingWineFilesNameTheBuildScript() {
+        XCTAssertThrowsError(
+            try WineVariantInstaller.checkWineFiles(layer: layerWithWineFiles(), wine: wineConfig(), paths: paths)
+        ) { error in
+            XCTAssertEqual(
+                error as? WineFilesError,
+                .missing(name: "Mac-Treiber", layer: "DXMT", files: ["x86_64-unix/winemac.so"],
+                         buildScript: "Tools/wine-dxmt/build.sh")
+            )
+            XCTAssertTrue(error.localizedDescription.contains("bash Tools/wine-dxmt/build.sh"))
+        }
+    }
+
+    func testWineFilesForAnotherWineAreRefused() throws {
+        // Even if the file is there: a driver for another Wine must not be used.
+        try write("driver", to: wineFilesSource.appendingPathComponent("x86_64-unix/winemac.so"))
+        XCTAssertThrowsError(
+            try WineVariantInstaller.checkWineFiles(
+                layer: layerWithWineFiles(wineVersion: "11.20"), wine: wineConfig(), paths: paths)
+        ) { error in
+            XCTAssertEqual(
+                error as? WineFilesError,
+                .wrongWineVersion(name: "Mac-Treiber", expected: "11.20", installed: "11.21")
+            )
+        }
+    }
+
+    func testWineFilesReplaceWinesOwn() throws {
+        try write("patched driver", to: wineFilesSource.appendingPathComponent("x86_64-unix/winemac.so"))
+        let libraries = root.appendingPathComponent("copy/lib/wine", isDirectory: true)
+        try write("gcenx driver", to: libraries.appendingPathComponent("x86_64-unix/winemac.so"))
+        try write("ntdll", to: libraries.appendingPathComponent("x86_64-unix/ntdll.so"))
+
+        let count = try WineVariantInstaller.installWineFiles(
+            layer: layerWithWineFiles(), wine: wineConfig(), paths: paths, into: libraries, fileManager: .default)
+
+        XCTAssertEqual(count, 1)
+        XCTAssertEqual(try read(libraries.appendingPathComponent("x86_64-unix/winemac.so")), "patched driver")
+        XCTAssertEqual(try read(libraries.appendingPathComponent("x86_64-unix/ntdll.so")), "ntdll")
+        // The build output stays for the next copy.
+        XCTAssertEqual(try read(wineFilesSource.appendingPathComponent("x86_64-unix/winemac.so")), "patched driver")
     }
 
     func testLocateNeedsMarkerAndExecutable() throws {

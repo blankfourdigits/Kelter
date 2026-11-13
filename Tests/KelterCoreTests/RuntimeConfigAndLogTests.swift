@@ -15,7 +15,7 @@ final class RuntimeConfigTests: XCTestCase {
     func testBundledConfigIsValid() throws {
         let config = try RuntimeConfig.load(from: bundledConfig)
 
-        XCTAssertEqual(config.schemaVersion, 8)
+        XCTAssertEqual(config.schemaVersion, 9)
         XCTAssertFalse(config.wine.version.isEmpty)
         XCTAssertEqual(config.wine.url.scheme, "https")
         // The version becomes a folder name.
@@ -86,6 +86,30 @@ final class RuntimeConfigTests: XCTestCase {
         }
         XCTAssertEqual(config.graphicsLayer(for: .dxmt)?.id, "dxmt")
         XCTAssertNil(config.graphicsLayer(for: .wined3d))
+    }
+
+    func testBundledWineFilesMatchWineAndScript() throws {
+        let config = try RuntimeConfig.load(from: bundledConfig)
+        let packageRoot = bundledConfig.deletingLastPathComponent().deletingLastPathComponent()
+        let dxmtFiles = try XCTUnwrap(config.graphicsLayer(for: .dxmt)?.wineFiles, "DXMT needs Wine's driver")
+
+        for layer in config.graphicsLayers ?? [] {
+            guard let wineFiles = layer.wineFiles else { continue }
+            // Built for exactly the Wine Kelter downloads.
+            XCTAssertEqual(wineFiles.wineVersion, config.wine.version, layer.id)
+            XCTAssertFalse(wineFiles.version.isEmpty)
+            XCTAssertFalse(wineFiles.files.isEmpty)
+            for path in wineFiles.files + [wineFiles.buildScript] {
+                XCTAssertFalse(path.hasPrefix("/"), path)
+                XCTAssertFalse(path.split(separator: "/").contains(".."), path)
+            }
+            XCTAssertTrue(
+                FileManager.default.isExecutableFile(
+                    atPath: packageRoot.appendingPathComponent(wineFiles.buildScript).path),
+                wineFiles.buildScript
+            )
+        }
+        XCTAssertEqual(dxmtFiles.files, ["x86_64-unix/winemac.so"])
     }
 
     func testBundledSteamConfigIsValid() throws {

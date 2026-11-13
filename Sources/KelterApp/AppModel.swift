@@ -84,22 +84,31 @@ final class AppModel: ObservableObject {
     /// is not installed yet, it is downloaded and built first.
     func setGraphicsBackend(_ backend: GraphicsBackendKind, for bottle: Bottle) {
         guard let config, let wineInstallation, busyMessage == nil else { return }
-        guard let layer = config.graphicsLayer(for: backend), wineVariants[backend] == nil else {
+        guard config.graphicsLayer(for: backend) != nil, wineVariants[backend] == nil else {
             updateSettings(of: bottle) { $0.graphicsBackend = backend }
             return
         }
-        busyMessage = "\(layer.name) \(layer.version) wird geladen und eingerichtet …"
-        let installer = WineVariantInstaller(paths: paths, wine: config.wine, layer: layer, log: log)
         Task {
             do {
-                let variant = try await installer.install(base: wineInstallation) { _ in }
-                self.wineVariants[backend] = variant
+                try await self.installVariant(for: backend, base: wineInstallation, config: config)
                 self.updateSettings(of: bottle) { $0.graphicsBackend = backend }
             } catch {
                 self.errorMessage = error.localizedDescription
             }
-            self.busyMessage = nil
         }
+    }
+
+    /// Downloads a graphics layer and builds the copy of Wine with it.
+    private func installVariant(
+        for backend: GraphicsBackendKind,
+        base: WineInstallation,
+        config: RuntimeConfig
+    ) async throws {
+        guard let layer = config.graphicsLayer(for: backend) else { return }
+        busyMessage = "\(layer.name) \(layer.version) wird geladen und eingerichtet …"
+        defer { busyMessage = nil }
+        let installer = WineVariantInstaller(paths: paths, wine: config.wine, layer: layer, log: log)
+        wineVariants[backend] = try await installer.install(base: base) { _ in }
     }
 
     var supportsMSync: Bool {
@@ -586,10 +595,9 @@ final class AppModel: ObservableObject {
     }
 
     func launchSteam(in bottle: Bottle) {
-        guard let config, let runner, let wineInstallation else { return }
+        guard let config, let wineInstallation, busyMessage == nil else { return }
         // Read the bottle again: its start parameters may just have changed.
         let current = bottles.first { $0.id == bottle.id } ?? bottle
-        let launcher = SteamLauncher(config: config.steam, runner: runner)
         let prefix = store.prefixURL(for: current.id)
         let arguments = SteamLauncher.arguments(for: current.settings, config: config.steam)
         let uiFix = config.steam.uiFix
@@ -597,12 +605,18 @@ final class AppModel: ObservableObject {
         let log = self.log
 
         let paths = self.paths
-        let layer = wineVariants[current.settings.graphicsBackend] == nil
-            ? nil
-            : config.graphicsLayer(for: current.settings.graphicsBackend)
+        let backend = current.settings.graphicsBackend
+        let layer = config.graphicsLayer(for: backend)
 
         Task {
             do {
+                // Without its copy of Wine (removed, or a new revision of
+                // the layer) the bottle would quietly run on plain Wine.
+                if layer != nil, self.wineVariants[backend] == nil {
+                    try await self.installVariant(for: backend, base: wineInstallation, config: config)
+                }
+                guard let runner = self.runner else { return }
+                let launcher = SteamLauncher(config: config.steam, runner: runner)
                 if let layer {
                     let added = try WineVariantInstaller.installPrefixLibraries(layer: layer, paths: paths, prefix: prefix)
                     if !added.isEmpty {

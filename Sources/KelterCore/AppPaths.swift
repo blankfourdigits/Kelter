@@ -67,6 +67,15 @@ public struct AppPaths: Equatable, Sendable {
             .appendingPathComponent(version, isDirectory: true)
     }
 
+    /// Directory the build script puts changed Wine files of a graphics
+    /// layer into, e.g. `wine-files/dxmt/11.21-1`.
+    public func wineFilesDirectory(layerID: String, wineVersion: String, version: String) -> URL {
+        runtimesDirectory
+            .appendingPathComponent("wine-files", isDirectory: true)
+            .appendingPathComponent(layerID, isDirectory: true)
+            .appendingPathComponent("\(wineVersion)-\(version)", isDirectory: true)
+    }
+
     /// Directory one version of the support package is unpacked into.
     public func supportDirectory(version: String) -> URL {
         runtimesDirectory

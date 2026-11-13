@@ -185,6 +185,31 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
 
     public var schemaVersion: Int
     public var wine: Wine
+    /// Files of Wine itself that a graphics layer needs changed, for example
+    /// Wine's macOS driver with the functions DXMT looks up. They are built
+    /// on the Mac by a script from the repository (no foreign binaries are
+    /// shipped) and copied into the layer's copy of Wine.
+    public struct WineFiles: Codable, Equatable, Sendable {
+        /// Shown in messages, e.g. `Wines Mac-Treiber für DXMT`.
+        public var name: String
+        /// Revision of the change; a new one builds a new copy of Wine.
+        public var version: String
+        /// The Wine version the files were built for.
+        public var wineVersion: String
+        /// Paths relative to Wine's `lib/wine` and to the build output.
+        public var files: [String]
+        /// The script that builds the files, relative to the project folder.
+        public var buildScript: String
+
+        public init(name: String, version: String, wineVersion: String, files: [String], buildScript: String) {
+            self.name = name
+            self.version = version
+            self.wineVersion = wineVersion
+            self.files = files
+            self.buildScript = buildScript
+        }
+    }
+
     /// A Direct3D translation layer that is put into a copy of the Wine
     /// build, replacing Wine's own libraries there.
     public struct GraphicsLayer: Codable, Equatable, Sendable {
@@ -202,6 +227,8 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
         /// because Wine only loads a built-in library that also exists
         /// there: folder below `archiveRoot` → folder inside the prefix.
         public var prefixLibraries: [String: String]?
+        /// Changed Wine files the layer needs, if any.
+        public var wineFiles: WineFiles?
 
         public init(
             id: String,
@@ -211,7 +238,8 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
             sha256: String?,
             archiveRoot: String,
             libraryTarget: String,
-            prefixLibraries: [String: String]? = nil
+            prefixLibraries: [String: String]? = nil,
+            wineFiles: WineFiles? = nil
         ) {
             self.id = id
             self.name = name
@@ -221,6 +249,7 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
             self.archiveRoot = archiveRoot
             self.libraryTarget = libraryTarget
             self.prefixLibraries = prefixLibraries
+            self.wineFiles = wineFiles
         }
     }
 
