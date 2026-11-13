@@ -13,7 +13,7 @@ von CrossOver und liefert keine proprietären Bestandteile mit.
 | --- | --- | --- |
 | 1 | Wine-Download, Rosetta-Prüfung, Bottles, Log | läuft |
 | 2 | Steam-Einrichtung und Start | läuft |
-| 3 | Grafik | DXMT lädt, braucht aber einen angepassten Mac-Treiber von Wine (siehe `CLAUDE.md`). D9VK und D3DMetal offen |
+| 3 | Grafik | DXMT läuft (DirectX 10/11, getestet mit Blasphemous 2), der Mac-Treiber von Wine wird dafür lokal gebaut. D9VK und D3DMetal offen |
 | 4 | Spielebibliothek, Einstellungen pro Spiel, Winetricks | offen |
 
 ## Voraussetzungen
@@ -132,6 +132,8 @@ Alles liegt unter `~/Library/Application Support/Kelter/`:
 | Pfad | Inhalt |
 | --- | --- |
 | `Runtimes/wine/<Version>/` | das entpackte Wine |
+| `Runtimes/wine-variants/` | Kopien von Wine mit einer Grafikschicht |
+| `Runtimes/wine-files/` | selbst gebaute Wine-Dateien, z. B. der Mac-Treiber für DXMT |
 | `Bottles/<ID>/bottle.json` | Name und Einstellungen einer Bottle |
 | `Bottles/<ID>/prefix/` | die Windows-Umgebung (WINEPREFIX) |
 | `Logs/kelter.log` | Ausgabe von Kelter und Wine |
@@ -185,6 +187,39 @@ Bibliotheken, die eine Schicht zusätzlich mitbringt (bei DXMT `winemetal.dll`),
 legt Kelter beim Start von Steam außerdem in die Windows-Ordner der Bottle
 (`prefixLibraries`). Wine lädt eine eingebaute Bibliothek nur, wenn es dort
 eine Datei dieses Namens gibt.
+
+### DXMT braucht einen angepassten Mac-Treiber
+
+DXMT legt seine Metal-Ansicht über Funktionen an, die Wines Mac-Treiber
+(`winemac.so`) bei CrossOver nach außen anbietet, beim normalen Wine aber
+nicht. Ohne sie meldet DXMT „Failed to create metal view" und das Spiel
+bleibt schwarz oder beendet sich. `Tools/wine-dxmt/winemac-dxmt.patch` fügt
+diese Schnittstelle hinzu; `Tools/wine-dxmt/build.sh` baut nur diese eine
+Datei aus Wine plus Wine Staging in der Version aus `runtimes.json`.
+
+Einmalig nötig (Homebrew):
+
+```sh
+brew install bison mingw-w64
+```
+
+Dann im Kelter-Ordner:
+
+```sh
+bash Tools/wine-dxmt/build.sh
+```
+
+Das dauert beim ersten Mal etwa eine Minute (plus Download des Quelltexts)
+und legt die Datei nach `Runtimes/wine-files/dxmt/<Wine>-<Revision>/`. Kelter
+kopiert sie nur in die DXMT-Kopie von Wine; das Wine, das alle anderen Bottles
+benutzen, bleibt unverändert. Fehlt die Datei, sagt Kelter das beim Auswählen
+von DXMT und nennt den Befehl. In `runtimes.json` steht das unter
+`graphicsLayers[].wineFiles` (Name, Revision, Wine-Version, Dateien,
+Bauskript). Eine neue Revision legt eine neue Kopie an.
+
+Der Patch stützt sich auf die Patches von NNikolaG/bridgewine (0006, 0007)
+und codeWonderland/neutron (`tools/wine-dxmt`), beide MIT, und auf die
+Schnittstelle aus CrossOvers `winemac.drv`. Er steht wie Wine unter der LGPL.
 
 Kelter kann auch ein Wine-Build mit Zusatzpaket benutzen (Abschnitt `support`
 in `runtimes.json`): Dann lässt sich pro Bottle wählen, ob Direct3D über DXMT
