@@ -13,7 +13,7 @@ von CrossOver und liefert keine proprietären Bestandteile mit.
 | --- | --- | --- |
 | 1 | Wine-Download, Rosetta-Prüfung, Bottles, Log | läuft |
 | 2 | Steam-Einrichtung und Start | läuft |
-| 3 | Grafik | DXMT läuft (DirectX 10/11, getestet mit Blasphemous 2), der Mac-Treiber von Wine wird dafür lokal gebaut. D9VK und D3DMetal offen |
+| 3 | Grafik | DXMT läuft (DirectX 10/11, getestet mit Blasphemous 2). D3DMetal (DirectX 11/12) eingebaut, noch ungetestet. DirectX 9 über Wine (OpenGL) |
 | 4 | Spielebibliothek, Einstellungen pro Spiel, Winetricks | offen |
 
 ## Voraussetzungen
@@ -133,7 +133,8 @@ Alles liegt unter `~/Library/Application Support/Kelter/`:
 | --- | --- |
 | `Runtimes/wine/<Version>/` | das entpackte Wine |
 | `Runtimes/wine-variants/` | Kopien von Wine mit einer Grafikschicht |
-| `Runtimes/wine-files/` | selbst gebaute Wine-Dateien, z. B. der Mac-Treiber für DXMT |
+| `Runtimes/wine-files/` | selbst gebaute Wine-Dateien (Mac-Treiber, ntdll) |
+| `Runtimes/graphics/` | Grafikschichten (DXMT, die D3DMetal-Dateien von Apple) |
 | `Bottles/<ID>/bottle.json` | Name und Einstellungen einer Bottle |
 | `Bottles/<ID>/prefix/` | die Windows-Umgebung (WINEPREFIX) |
 | `Logs/kelter.log` | Ausgabe von Kelter und Wine |
@@ -174,6 +175,7 @@ ESync oder MSync. Pro Bottle lässt sich die Grafik wählen:
 | --- | --- | --- | --- |
 | Wine (eingebaut) | OpenGL | OpenGL | nicht unterstützt |
 | DXMT | OpenGL | DXMT (Metal) | nicht unterstützt |
+| D3DMetal | OpenGL | D3DMetal (Metal) | D3DMetal (Metal), nur 64-Bit |
 
 Wine sucht seine eingebauten Bibliotheken zuerst im eigenen Ordner. Eine
 Grafikschicht, die `d3d11.dll` ersetzt, muss deshalb in einem Wine-Baum liegen.
@@ -188,16 +190,21 @@ legt Kelter beim Start von Steam außerdem in die Windows-Ordner der Bottle
 (`prefixLibraries`). Wine lädt eine eingebaute Bibliothek nur, wenn es dort
 eine Datei dieses Namens gibt.
 
-### DXMT braucht einen angepassten Mac-Treiber
+### Kelters Anpassungen an Wine
 
-DXMT legt seine Metal-Ansicht über Funktionen an, die Wines Mac-Treiber
-(`winemac.so`) bei CrossOver nach außen anbietet, beim normalen Wine aber
-nicht. Ohne sie meldet DXMT „Failed to create metal view" und das Spiel
-bleibt schwarz oder beendet sich. `Tools/wine-dxmt/winemac-dxmt.patch` fügt
-diese Schnittstelle hinzu; `Tools/wine-dxmt/build.sh` baut nur diese eine
-Datei aus Wine plus Wine Staging in der Version aus `runtimes.json`.
+DXMT und D3DMetal brauchen zwei Dinge, die das normale Wine 11 nicht hat:
 
-Einmalig nötig (Homebrew):
+- **Mac-Treiber (`winemac.so`):** DXMT und D3DMetal legen ihre Metal-Ansicht
+  über eine Funktionstabelle `macdrv_functions` an, die nur CrossOvers Wine
+  anbietet. Ohne sie meldet DXMT „Failed to create metal view". Patch:
+  `Tools/wine-patches/0001-winemac-macdrv-functions.patch`.
+- **`ntdll.dll`:** Apples D3DMetal-Bibliotheken wurden für ein älteres Wine
+  gebaut und rufen `__wine_unix_call` auf, das Wine seit Version 9.9 nicht
+  mehr anbietet. Patch: `Tools/wine-patches/0002-ntdll-export-wine-unix-call.patch`.
+
+`Tools/wine-patches/build.sh` baut nur diese zwei Dateien aus Wine plus
+Wine Staging in der Version aus `runtimes.json` (`winePatches`). Einmalig
+nötig (Homebrew):
 
 ```sh
 brew install bison mingw-w64
@@ -206,20 +213,47 @@ brew install bison mingw-w64
 Dann im Kelter-Ordner:
 
 ```sh
-bash Tools/wine-dxmt/build.sh
+bash Tools/wine-patches/build.sh
 ```
 
 Das dauert beim ersten Mal etwa eine Minute (plus Download des Quelltexts)
-und legt die Datei nach `Runtimes/wine-files/dxmt/<Wine>-<Revision>/`. Kelter
-kopiert sie nur in die DXMT-Kopie von Wine; das Wine, das alle anderen Bottles
-benutzen, bleibt unverändert. Fehlt die Datei, sagt Kelter das beim Auswählen
-von DXMT und nennt den Befehl. In `runtimes.json` steht das unter
-`graphicsLayers[].wineFiles` (Name, Revision, Wine-Version, Dateien,
-Bauskript). Eine neue Revision legt eine neue Kopie an.
+und legt die Dateien nach `Runtimes/wine-files/<Wine>-<Revision>/`. Kelter
+kopiert sie nur in die Wine-Kopien für DXMT und D3DMetal; das Wine, das
+alle anderen Bottles benutzen, bleibt unverändert. Fehlen sie, sagt Kelter
+das beim Auswählen der Grafik und nennt den Befehl. Welche Schicht welche
+Datei braucht, steht unter `graphicsLayers[].wineFiles`. Eine neue Revision
+legt neue Kopien an.
 
-Der Patch stützt sich auf die Patches von NNikolaG/bridgewine (0006, 0007)
-und codeWonderland/neutron (`tools/wine-dxmt`), beide MIT, und auf die
-Schnittstelle aus CrossOvers `winemac.drv`. Er steht wie Wine unter der LGPL.
+Der Mac-Treiber-Patch stützt sich auf die Patches von NNikolaG/bridgewine
+(0006, 0007) und codeWonderland/neutron (`tools/wine-dxmt`), beide MIT, und
+auf die Schnittstelle aus CrossOvers `winemac.drv`. Beide Patches stehen wie
+Wine unter der LGPL.
+
+### D3DMetal (DirectX 12)
+
+D3DMetal ist Apples Übersetzung von DirectX 11/12 nach Metal aus dem Game
+Porting Toolkit. Es gehört Apple und ist **nicht** Teil von Kelter. Apples
+Lizenz erlaubt die Nutzung nur, um Spiele für Apple-Geräte zu entwickeln, zu
+testen oder zu bewerten, und die Weitergabe nur ohne kommerziellen Zweck;
+Apples Dateien dürfen nicht verändert oder zerlegt werden. Kelter verändert
+sie nicht und liefert sie nicht mit.
+
+Wer bei einer Bottle „D3DMetal" wählt, sieht zuerst Apples Lizenz und muss
+zustimmen. Danach gibt es zwei Wege:
+
+1. **Empfohlen:** Das Game Porting Toolkit mit der eigenen Apple-ID von
+   <https://developer.apple.com/download/all/?q=game%20porting%20toolkit>
+   laden und in Kelter die DMG-Datei (oder das schon geöffnete Laufwerk)
+   auswählen. Fragt das Image beim Öffnen nach einer Lizenz, öffnet Kelter es
+   nicht selbst: dann im Finder öffnen, bestätigen und das Laufwerk wählen.
+2. **Alternative:** Kelter lädt das Paket von Gcenx (Prüfsumme in
+   `runtimes.json`).
+
+Kelter übernimmt nur D3DMetals eigene Dateien (`include` in
+`runtimes.json`): `D3DMetal.framework`, `libd3dshared.dylib` und die
+Bibliotheken `d3d10`, `d3d11`, `d3d12`, `dxgi`, `atidxx64`, `nvapi64`,
+`nvngx`, `nvngx-on-metalfx`. D3DMetal läuft nur für 64-Bit-Programme;
+32-Bit-Programme in derselben Bottle nutzen Wines eigene Grafik.
 
 Kelter kann auch ein Wine-Build mit Zusatzpaket benutzen (Abschnitt `support`
 in `runtimes.json`): Dann lässt sich pro Bottle wählen, ob Direct3D über DXMT
