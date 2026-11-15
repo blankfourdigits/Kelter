@@ -786,6 +786,43 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Installs Winetricks packages (run-time libraries, fonts …) into the
+    /// bottle. Downloads Winetricks itself on first use.
+    func runWinetricks(_ verbs: [String], in bottle: Bottle) {
+        guard let config, let winetricks = config.winetricks, let runner, busyMessage == nil else { return }
+        let validated: [String]
+        do {
+            validated = try Winetricks.validatedVerbs(verbs)
+        } catch {
+            errorMessage = error.localizedDescription
+            return
+        }
+        guard !validated.isEmpty else { return }
+        let searchPath = Winetricks.searchPath(base: ProcessInfo.processInfo.environment["PATH"])
+        let missing = Winetricks.missingTools(winetricks.requiredTools, searchPath: searchPath)
+        guard missing.isEmpty else {
+            errorMessage = WinetricksError.missingTools(missing).localizedDescription
+            return
+        }
+        let current = bottles.first { $0.id == bottle.id } ?? bottle
+        let prefix = store.prefixURL(for: current.id)
+        let paths = self.paths
+        let log = self.log
+        busyMessage = "Winetricks installiert \(validated.joined(separator: ", ")) …"
+        Task {
+            defer { self.busyMessage = nil }
+            do {
+                let script = try await Winetricks.installScript(winetricks, paths: paths, log: log)
+                let status = try await runner.runWinetricks(
+                    script: script, verbs: validated, prefix: prefix, settings: current.settings,
+                    cache: paths.winetricksCache, searchPath: searchPath)
+                guard status == 0 else { throw WinetricksError.failed(status: status) }
+            } catch {
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
     /// Starts a `.exe` or `.msi` from anywhere on the Mac in the bottle.
     func runFile(_ file: URL, in bottle: Bottle) {
         guard let runner else { return }

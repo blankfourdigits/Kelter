@@ -141,6 +141,30 @@ public final class WineRunner: @unchecked Sendable {
         )
     }
 
+    /// Runs Winetricks unattended for `verbs` in the prefix, with the
+    /// bottle's Wine tree and environment. Returns the exit status.
+    @discardableResult
+    public func runWinetricks(
+        script: URL,
+        verbs: [String],
+        prefix: URL,
+        settings: BottleSettings,
+        cache: URL,
+        searchPath: [String]
+    ) async throws -> Int32 {
+        try FileManager.default.createDirectory(at: cache, withIntermediateDirectories: true)
+        return try await launch(
+            executable: URL(fileURLWithPath: "/bin/sh"),
+            label: "winetricks",
+            arguments: [script.path, "--unattended"] + verbs,
+            prefix: prefix,
+            settings: settings,
+            extraEnvironment: Winetricks.environment(
+                installation: installation(for: settings), cache: cache, searchPath: searchPath),
+            workingDirectory: nil
+        )
+    }
+
     // MARK: Internals
 
     private func launch(

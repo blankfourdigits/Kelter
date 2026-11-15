@@ -15,7 +15,7 @@ final class RuntimeConfigTests: XCTestCase {
     func testBundledConfigIsValid() throws {
         let config = try RuntimeConfig.load(from: bundledConfig)
 
-        XCTAssertEqual(config.schemaVersion, 13)
+        XCTAssertEqual(config.schemaVersion, 14)
         XCTAssertFalse(config.wine.version.isEmpty)
         XCTAssertEqual(config.wine.url.scheme, "https")
         // The version becomes a folder name.
@@ -121,6 +121,16 @@ final class RuntimeConfigTests: XCTestCase {
         for marker in antiCheat.markers {
             XCTAssertFalse(marker.name.contains("/"), marker.name)
         }
+    }
+
+    func testBundledWinetricksIsPinned() throws {
+        let winetricks = try XCTUnwrap(RuntimeConfig.load(from: bundledConfig).winetricks)
+        XCTAssertEqual(winetricks.url.scheme, "https")
+        XCTAssertTrue(winetricks.url.absoluteString.contains(winetricks.version), "a fixed version, not master")
+        XCTAssertEqual(winetricks.sha256?.count, 64)
+        XCTAssertTrue(winetricks.verbs.contains { $0.verb == "vcrun2022" })
+        XCTAssertEqual(Set(winetricks.verbs.map(\.verb)).count, winetricks.verbs.count)
+        XCTAssertEqual(winetricks.requiredTools, ["cabextract"])
     }
 
     func testSteamworksRedistributablesAreHidden() throws {

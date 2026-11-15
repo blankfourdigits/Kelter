@@ -14,7 +14,7 @@ von CrossOver und liefert keine proprietären Bestandteile mit.
 | 1 | Wine-Download, Rosetta-Prüfung, Bottles, Log | läuft |
 | 2 | Steam-Einrichtung und Start | läuft |
 | 3 | Grafik | DXMT läuft (DirectX 10/11, getestet mit Blasphemous 2). DirectX 9 über Wine (OpenGL). D3DMetal (DirectX 12) eingebaut, aber pausiert: Steam stürzt damit ab |
-| 4 | Spielebibliothek, Einstellungen pro Spiel, Winetricks | Bibliothek mit Covern, Start und Anti-Cheat-Hinweis, Editoren für Umgebung und DLL-Overrides; Rest offen |
+| 4 | Spielebibliothek, Einstellungen pro Spiel, Winetricks | Bibliothek mit Covern, Start und Anti-Cheat-Hinweis, Editoren für Umgebung und DLL-Overrides, Winetricks. Einstellungen pro Spiel zurückgestellt |
 
 ## Voraussetzungen
 
@@ -144,6 +144,22 @@ der Bottle, also auch für Steam und alle Spiele, ab ihrem nächsten Start.
   Vorrang vor denen aus `runtimes.json` (etwa dem abgeschalteten
   Steam-Overlay).
 
+## Winetricks
+
+Manche Spiele brauchen Windows-Bibliotheken, die Wine nicht mitbringt, etwa
+die Visual-C++-Laufzeit oder Standardschriften. Unter „Winetricks" in einer
+Bottle installiert Kelter die häufigsten mit einem Klick; andere Pakete
+lassen sich mit Namen eintragen (Liste: `winetricks list-all`). Kelter lädt
+Winetricks beim ersten Mal in der Version aus `runtimes.json` und prüft die
+Prüfsumme. Heruntergeladene Installer landen in
+`Downloads/winetricks-cache` und werden für andere Bottles wiederverwendet.
+
+Viele Pakete brauchen das Programm `cabextract`. Einmalig:
+
+```sh
+brew install cabextract
+```
+
 ## Wenn ein Spiel nicht startet
 
 1. In der Bottle "Ausführliches Wine-Log" einschalten und Steam neu starten.
@@ -168,6 +184,7 @@ Alles liegt unter `~/Library/Application Support/Kelter/`:
 | `Runtimes/wine/<Version>/` | das entpackte Wine |
 | `Runtimes/wine-variants/` | Kopien von Wine mit einer Grafikschicht |
 | `Runtimes/wine-files/` | selbst gebaute Wine-Dateien (Mac-Treiber, ntdll) |
+| `Runtimes/winetricks/` | das Winetricks-Skript |
 | `Runtimes/graphics/` | Grafikschichten (DXMT, die D3DMetal-Dateien von Apple) |
 | `Bottles/<ID>/bottle.json` | Name und Einstellungen einer Bottle |
 | `Bottles/<ID>/prefix/` | die Windows-Umgebung (WINEPREFIX) |

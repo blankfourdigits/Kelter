@@ -97,6 +97,12 @@ struct BottleDetailView: View {
                     .padding(6)
                 }
 
+                GroupBox("Winetricks") {
+                    WinetricksView(bottle: bottle)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(6)
+                }
+
                 DisclosureGroup("Umgebung und DLL-Overrides") {
                     BottleOverridesView(bottle: bottle)
                         .frame(maxWidth: .infinity, alignment: .leading)

@@ -75,6 +75,20 @@ public struct AppPaths: Equatable, Sendable {
             .appendingPathComponent("\(wineVersion)-\(version)", isDirectory: true)
     }
 
+    /// The Winetricks script of one version.
+    public func winetricksScript(version: String) -> URL {
+        runtimesDirectory
+            .appendingPathComponent("winetricks", isDirectory: true)
+            .appendingPathComponent(version, isDirectory: true)
+            .appendingPathComponent("winetricks")
+    }
+
+    /// Where Winetricks keeps the installers it downloads, so a second
+    /// bottle does not download them again.
+    public var winetricksCache: URL {
+        downloadsDirectory.appendingPathComponent("winetricks-cache", isDirectory: true)
+    }
+
     /// Directory one version of the support package is unpacked into.
     public func supportDirectory(version: String) -> URL {
         runtimesDirectory

@@ -241,6 +241,38 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
         }
     }
 
+    /// The Winetricks script, which installs Windows run-time libraries and
+    /// fonts into a bottle.
+    public struct Winetricks: Codable, Equatable, Sendable {
+        /// A package offered in the UI.
+        public struct Verb: Codable, Equatable, Sendable {
+            public var verb: String
+            public var name: String
+            public var description: String
+
+            public init(verb: String, name: String, description: String) {
+                self.verb = verb
+                self.name = name
+                self.description = description
+            }
+        }
+
+        public var version: String
+        public var url: URL
+        public var sha256: String?
+        public var verbs: [Verb]
+        /// Mac programs many verbs need, e.g. `cabextract`.
+        public var requiredTools: [String]
+
+        public init(version: String, url: URL, sha256: String?, verbs: [Verb], requiredTools: [String]) {
+            self.version = version
+            self.url = url
+            self.sha256 = sha256
+            self.verbs = verbs
+            self.requiredTools = requiredTools
+        }
+    }
+
     /// Games whose kernel anti-cheat does not run under Wine. Kelter only
     /// warns; the lists live here so they can be kept current.
     public struct AntiCheat: Codable, Equatable, Sendable {
@@ -347,6 +379,7 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
     public var graphicsLayers: [GraphicsLayer]?
     public var steam: Steam
     public var antiCheat: AntiCheat?
+    public var winetricks: Winetricks?
 
     public init(
         schemaVersion: Int,
@@ -355,7 +388,8 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
         winePatches: WinePatches? = nil,
         graphicsLayers: [GraphicsLayer]? = nil,
         steam: Steam,
-        antiCheat: AntiCheat? = nil
+        antiCheat: AntiCheat? = nil,
+        winetricks: Winetricks? = nil
     ) {
         self.schemaVersion = schemaVersion
         self.wine = wine
@@ -364,6 +398,7 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
         self.graphicsLayers = graphicsLayers
         self.steam = steam
         self.antiCheat = antiCheat
+        self.winetricks = winetricks
     }
 
     public func graphicsLayer(for backend: GraphicsBackendKind) -> GraphicsLayer? {
