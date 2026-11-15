@@ -66,8 +66,12 @@ struct BottleDetailView: View {
                         .frame(maxWidth: 320)
 
                         Picker("Grafik", selection: graphicsBackend) {
-                            ForEach(model.availableGraphicsBackends, id: \.self) { backend in
-                                Text(backend.displayName).tag(backend)
+                            ForEach(graphicsChoices, id: \.self) { backend in
+                                if model.config?.pauseReason(for: backend) != nil {
+                                    Text("\(backend.displayName) – pausiert").tag(backend)
+                                } else {
+                                    Text(backend.displayName).tag(backend)
+                                }
                             }
                         }
                         .frame(maxWidth: 420)
@@ -271,6 +275,16 @@ struct BottleDetailView: View {
                 model.updateSettings(of: bottle) { $0.retinaMode = newValue }
             }
         )
+    }
+
+    /// The choices that work, plus the bottle's current one if it is paused,
+    /// so the picker still shows what the bottle uses.
+    private var graphicsChoices: [GraphicsBackendKind] {
+        var choices = model.availableGraphicsBackends
+        if !choices.contains(bottle.settings.graphicsBackend) {
+            choices.append(bottle.settings.graphicsBackend)
+        }
+        return choices
     }
 
     private var graphicsBackend: Binding<GraphicsBackendKind> {

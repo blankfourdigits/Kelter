@@ -264,6 +264,9 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
         public var diskImage: DiskImage?
         /// Terms to agree to before the layer is fetched.
         public var license: License?
+        /// If set, the layer cannot be chosen, and this says why (for
+        /// example a known crash). Bottles that use it get the reason.
+        public var paused: String?
 
         public init(
             id: String,
@@ -277,7 +280,8 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
             wineFiles: [String]? = nil,
             include: [String]? = nil,
             diskImage: DiskImage? = nil,
-            license: License? = nil
+            license: License? = nil,
+            paused: String? = nil
         ) {
             self.id = id
             self.name = name
@@ -291,6 +295,7 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
             self.include = include
             self.diskImage = diskImage
             self.license = license
+            self.paused = paused
         }
     }
 
@@ -317,6 +322,11 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
 
     public func graphicsLayer(for backend: GraphicsBackendKind) -> GraphicsLayer? {
         graphicsLayers?.first { $0.id == backend.rawValue }
+    }
+
+    /// Why a graphics choice cannot be used right now, or `nil` if it can.
+    public func pauseReason(for backend: GraphicsBackendKind) -> String? {
+        graphicsLayer(for: backend)?.paused
     }
 }
 

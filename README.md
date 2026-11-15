@@ -13,7 +13,7 @@ von CrossOver und liefert keine proprietären Bestandteile mit.
 | --- | --- | --- |
 | 1 | Wine-Download, Rosetta-Prüfung, Bottles, Log | läuft |
 | 2 | Steam-Einrichtung und Start | läuft |
-| 3 | Grafik | DXMT läuft (DirectX 10/11, getestet mit Blasphemous 2). D3DMetal (DirectX 11/12) eingebaut, noch ungetestet. DirectX 9 über Wine (OpenGL) |
+| 3 | Grafik | DXMT läuft (DirectX 10/11, getestet mit Blasphemous 2). DirectX 9 über Wine (OpenGL). D3DMetal (DirectX 12) eingebaut, aber pausiert: Steam stürzt damit ab |
 | 4 | Spielebibliothek, Einstellungen pro Spiel, Winetricks | offen |
 
 ## Voraussetzungen
@@ -175,7 +175,7 @@ ESync oder MSync. Pro Bottle lässt sich die Grafik wählen:
 | --- | --- | --- | --- |
 | Wine (eingebaut) | OpenGL | OpenGL | nicht unterstützt |
 | DXMT | OpenGL | DXMT (Metal) | nicht unterstützt |
-| D3DMetal | OpenGL | D3DMetal (Metal) | D3DMetal (Metal), nur 64-Bit |
+| D3DMetal (pausiert) | OpenGL | D3DMetal (Metal) | D3DMetal (Metal), nur 64-Bit |
 
 Wine sucht seine eingebauten Bibliotheken zuerst im eigenen Ordner. Eine
 Grafikschicht, die `d3d11.dll` ersetzt, muss deshalb in einem Wine-Baum liegen.
@@ -230,6 +230,16 @@ auf die Schnittstelle aus CrossOvers `winemac.drv`. Beide Patches stehen wie
 Wine unter der LGPL.
 
 ### D3DMetal (DirectX 12)
+
+> **Pausiert.** Mit D3DMetal stürzt `steam.exe` beim Start ab: Steam lädt
+> `dxgi.dll`, in der D3DMetal-Kopie ist das Apples Version, und ein Thread
+> daraus stürzt in `pthread_setname_np` ab, weil das Register `GS` auf den
+> falschen Speicher zeigt. Vermutete Ursache: D3DMetal wurde für ein älteres
+> Wine gebaut, das auf dem Mac anders zwischen Windows- und Mac-Teil
+> umschaltet als Wine 11. In `runtimes.json` steht deshalb `paused` bei
+> D3DMetal; Kelter bietet es nicht zur Auswahl an. Möglicher nächster
+> Schritt: nachsehen, wie CrossOvers freier Quelltext das löst.
+
 
 D3DMetal ist Apples Übersetzung von DirectX 11/12 nach Metal aus dem Game
 Porting Toolkit. Es gehört Apple und ist **nicht** Teil von Kelter. Apples

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 10,
+  "schemaVersion": 11,
   "wine": {
     "name": "Wine Staging (Gcenx macOS build)",
     "version": "11.21",
@@ -77,7 +77,8 @@
         "name": "Apple-Lizenz für das Game Porting Toolkit",
         "url": "https://github.com/user-attachments/files/23971305/License.pdf",
         "summary": "D3DMetal gehört Apple. Apple erlaubt die Nutzung nur, um Spiele für Apple-Geräte zu entwickeln, zu testen oder zu bewerten, und die Weitergabe nur ohne kommerziellen Zweck. Die Dateien dürfen nicht verändert oder zerlegt werden. Kelter verändert sie nicht, liefert sie nicht mit und lädt sie nur nach deiner Zustimmung."
-      }
+      },
+      "paused": "Steam stürzt mit D3DMetal unter Wine 11 ab: Apples dxgi.dll startet in steam.exe einen Thread, der in macOS abstürzt. Bis zu einer Lösung ist D3DMetal nicht wählbar."
     }
   ],
   "steam": {

@@ -82,6 +82,7 @@ final class AppModel: ObservableObject {
     var availableGraphicsBackends: [GraphicsBackendKind] {
         GraphicsBackendKind.allCases.filter { backend in
             if backend == .wined3d { return true }
+            if config?.pauseReason(for: backend) != nil { return false }
             // Either a layer that Kelter builds into a copy of Wine …
             if config?.graphicsLayer(for: backend) != nil { return true }
             // … or renderers that come with the Wine build's support package.
@@ -94,6 +95,10 @@ final class AppModel: ObservableObject {
     /// is not installed yet, it is downloaded and built first.
     func setGraphicsBackend(_ backend: GraphicsBackendKind, for bottle: Bottle) {
         guard let config, let wineInstallation, busyMessage == nil else { return }
+        if let reason = config.pauseReason(for: backend) {
+            errorMessage = reason
+            return
+        }
         guard let layer = config.graphicsLayer(for: backend), wineVariants[backend] == nil else {
             updateSettings(of: bottle) { $0.graphicsBackend = backend }
             return
@@ -644,6 +649,11 @@ final class AppModel: ObservableObject {
         let paths = self.paths
         let backend = current.settings.graphicsBackend
         let layer = config.graphicsLayer(for: backend)
+
+        if let reason = config.pauseReason(for: backend) {
+            errorMessage = "\(reason)\n\nBitte bei der Bottle unter „Grafik“ eine andere Auswahl treffen, zum Beispiel DXMT."
+            return
+        }
 
         Task {
             do {

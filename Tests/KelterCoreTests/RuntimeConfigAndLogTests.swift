@@ -15,7 +15,7 @@ final class RuntimeConfigTests: XCTestCase {
     func testBundledConfigIsValid() throws {
         let config = try RuntimeConfig.load(from: bundledConfig)
 
-        XCTAssertEqual(config.schemaVersion, 10)
+        XCTAssertEqual(config.schemaVersion, 11)
         XCTAssertFalse(config.wine.version.isEmpty)
         XCTAssertEqual(config.wine.url.scheme, "https")
         // The version becomes a folder name.
@@ -108,6 +108,15 @@ final class RuntimeConfigTests: XCTestCase {
         XCTAssertEqual(config.graphicsLayer(for: .dxmt)?.wineFiles, ["x86_64-unix/winemac.so"])
         XCTAssertEqual(config.graphicsLayer(for: .d3dmetal)?.wineFiles,
                        ["x86_64-unix/winemac.so", "x86_64-windows/ntdll.dll"])
+    }
+
+    func testD3DMetalIsPausedButDXMTIsNot() throws {
+        let config = try RuntimeConfig.load(from: bundledConfig)
+        // Steam crashes with D3DMetal's dxgi.dll under Wine 11 (see README).
+        let reason = try XCTUnwrap(config.pauseReason(for: .d3dmetal))
+        XCTAssertTrue(reason.contains("Steam"))
+        XCTAssertNil(config.pauseReason(for: .dxmt))
+        XCTAssertNil(config.pauseReason(for: .wined3d))
     }
 
     func testBundledD3DMetalNeedsConsentAndShipsNothing() throws {
