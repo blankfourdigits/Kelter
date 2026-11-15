@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 11,
+  "schemaVersion": 12,
   "wine": {
     "name": "Wine Staging (Gcenx macOS build)",
     "version": "11.21",
@@ -124,6 +124,9 @@
     "dllOverrides": {
       "gameoverlayrenderer": "d",
       "gameoverlayrenderer64": "d"
-    }
+    },
+    "hiddenAppIDs": [
+      228980
+    ]
   }
 }

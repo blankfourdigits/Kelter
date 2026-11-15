@@ -636,12 +636,44 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func launchSteam(in bottle: Bottle) {
+    // MARK: Game library
+
+    /// Installed games per bottle, as last read from Steam's files.
+    @Published private(set) var steamGames: [Bottle.ID: [SteamApp]] = [:]
+
+    /// Reads which games Steam has installed in the bottle.
+    func refreshLibrary(for bottle: Bottle) {
+        guard let config else { return }
+        let prefix = store.prefixURL(for: bottle.id)
+        let steamDirectory = SteamLocation.directory(prefix: prefix, config: config.steam)
+        let hidden = config.steam.hiddenAppIDs
+        Task {
+            let games = await Task.detached {
+                SteamLibrary.games(SteamLibrary.scan(steamDirectory: steamDirectory, prefix: prefix), hiding: hidden)
+            }.value
+            self.steamGames[bottle.id] = games
+        }
+    }
+
+    /// A cached cover picture for a game, if Steam has one.
+    func coverImage(for game: SteamApp, in bottle: Bottle) -> URL? {
+        guard let config else { return nil }
+        let steamDirectory = SteamLocation.directory(prefix: store.prefixURL(for: bottle.id), config: config.steam)
+        return SteamLibrary.coverImage(appID: game.appID, steamDirectory: steamDirectory)
+    }
+
+    /// Starts a game through Steam (starting Steam first if needed).
+    func play(_ game: SteamApp, in bottle: Bottle) {
+        log.append("\nStarte \(game.name) (\(game.appID)) über Steam.\n")
+        launchSteam(in: bottle, extraArguments: [SteamLibrary.runGameArgument(appID: game.appID)])
+    }
+
+    func launchSteam(in bottle: Bottle, extraArguments: [String] = []) {
         guard let config, let wineInstallation, busyMessage == nil else { return }
         // Read the bottle again: its start parameters may just have changed.
         let current = bottles.first { $0.id == bottle.id } ?? bottle
         let prefix = store.prefixURL(for: current.id)
-        let arguments = SteamLauncher.arguments(for: current.settings, config: config.steam)
+        let arguments = SteamLauncher.arguments(for: current.settings, config: config.steam) + extraArguments
         let uiFix = config.steam.uiFix
         let browserArguments = current.settings.steamBrowserArguments ?? uiFix.browserArguments
         let log = self.log
@@ -686,7 +718,9 @@ final class AppModel: ObservableObject {
                     log.append("\nSteam-Fensterkorrektur aktiv, Browser-Parameter: \(CommandLineArguments.join(browserArguments))\n")
                 }
                 log.append("\nStarte Steam mit: \(CommandLineArguments.join(arguments))\n")
-                try await launcher.launch(prefix: prefix, settings: current.settings, environment: environment)
+                try await launcher.launch(
+                    prefix: prefix, settings: current.settings,
+                    extraArguments: extraArguments, environment: environment)
             } catch {
                 self.errorMessage = error.localizedDescription
             }

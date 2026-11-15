@@ -163,6 +163,9 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
         /// off the Steam overlay library, which stops games from starting
         /// under Wine on macOS. A bottle's own overrides win.
         public var dllOverrides: [String: String]?
+        /// Apps Steam installs that are not games (for example the
+        /// Steamworks redistributables); the library leaves them out.
+        public var hiddenAppIDs: [Int]?
 
         public init(
             installerURL: URL,
@@ -171,7 +174,8 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
             defaultArguments: [String],
             argumentPresets: [ArgumentPreset],
             uiFix: UIFix,
-            dllOverrides: [String: String]? = nil
+            dllOverrides: [String: String]? = nil,
+            hiddenAppIDs: [Int]? = nil
         ) {
             self.installerURL = installerURL
             self.installerArguments = installerArguments
@@ -180,6 +184,7 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
             self.argumentPresets = argumentPresets
             self.uiFix = uiFix
             self.dllOverrides = dllOverrides
+            self.hiddenAppIDs = hiddenAppIDs
         }
     }
 

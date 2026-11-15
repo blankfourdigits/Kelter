@@ -15,7 +15,7 @@ final class RuntimeConfigTests: XCTestCase {
     func testBundledConfigIsValid() throws {
         let config = try RuntimeConfig.load(from: bundledConfig)
 
-        XCTAssertEqual(config.schemaVersion, 11)
+        XCTAssertEqual(config.schemaVersion, 12)
         XCTAssertFalse(config.wine.version.isEmpty)
         XCTAssertEqual(config.wine.url.scheme, "https")
         // The version becomes a folder name.
@@ -108,6 +108,11 @@ final class RuntimeConfigTests: XCTestCase {
         XCTAssertEqual(config.graphicsLayer(for: .dxmt)?.wineFiles, ["x86_64-unix/winemac.so"])
         XCTAssertEqual(config.graphicsLayer(for: .d3dmetal)?.wineFiles,
                        ["x86_64-unix/winemac.so", "x86_64-windows/ntdll.dll"])
+    }
+
+    func testSteamworksRedistributablesAreHidden() throws {
+        let config = try RuntimeConfig.load(from: bundledConfig)
+        XCTAssertEqual(config.steam.hiddenAppIDs, [228980])
     }
 
     func testD3DMetalIsPausedButDXMTIsNot() throws {

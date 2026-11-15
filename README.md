@@ -14,7 +14,7 @@ von CrossOver und liefert keine proprietären Bestandteile mit.
 | 1 | Wine-Download, Rosetta-Prüfung, Bottles, Log | läuft |
 | 2 | Steam-Einrichtung und Start | läuft |
 | 3 | Grafik | DXMT läuft (DirectX 10/11, getestet mit Blasphemous 2). DirectX 9 über Wine (OpenGL). D3DMetal (DirectX 12) eingebaut, aber pausiert: Steam stürzt damit ab |
-| 4 | Spielebibliothek, Einstellungen pro Spiel, Winetricks | offen |
+| 4 | Spielebibliothek, Einstellungen pro Spiel, Winetricks | Bibliothek mit Covern und Start läuft; Rest offen |
 
 ## Voraussetzungen
 
@@ -59,6 +59,17 @@ Zwischenablage.
 Steam an, lädt den Windows-Installer von Valve, installiert ihn und startet
 Steam. Beim ersten Start aktualisiert sich Steam selbst; das dauert einige
 Minuten.
+
+### Spielebibliothek
+
+Unter „Spiele" zeigt Kelter die Spiele, die Steam in der Bottle installiert
+hat. Kelter liest dafür Steams eigene Dateien (`steamapps/libraryfolders.vdf`
+und `appmanifest_*.acf`), auch aus Bibliotheken auf anderen Laufwerken. Die
+Cover stammen aus Steams Zwischenspeicher (`appcache/librarycache`), es wird
+nichts heruntergeladen. „Spielen" startet das Spiel über
+`steam://rungameid/<id>`: Läuft Steam schon, übernimmt es den Start, sonst
+startet Kelter Steam mit allen Korrekturen und dann das Spiel. Programme, die
+keine Spiele sind (`steam.hiddenAppIDs` in `runtimes.json`), blendet Kelter aus.
 
 ### Warum Steam eine Hilfsbibliothek braucht
 

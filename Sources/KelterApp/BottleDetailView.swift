@@ -38,6 +38,12 @@ struct BottleDetailView: View {
                         .padding(6)
                 }
 
+                GroupBox("Spiele") {
+                    LibraryView(bottle: bottle)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(6)
+                }
+
                 GroupBox("Programme") {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {

@@ -151,4 +151,49 @@ public enum SteamLibrary {
             return order == .orderedSame ? $0.appID < $1.appID : order == .orderedAscending
         }
     }
+
+    // MARK: Covers and starting
+
+    /// Picture names in Steam's cache, best fitting for a cover first.
+    static let coverNames = ["library_600x900.jpg", "library_capsule.jpg", "library_header.jpg", "header.jpg"]
+
+    /// A cover picture Steam has already cached for the app, if any:
+    /// `appcache/librarycache/<id>/` holds the pictures directly or in
+    /// subfolders named after their hash.
+    public static func coverImage(
+        appID: Int,
+        steamDirectory: URL,
+        fileManager: FileManager = .default
+    ) -> URL? {
+        let folder = steamDirectory
+            .appendingPathComponent("appcache", isDirectory: true)
+            .appendingPathComponent("librarycache", isDirectory: true)
+            .appendingPathComponent(String(appID), isDirectory: true)
+        let subfolders = ((try? fileManager.contentsOfDirectory(atPath: folder.path)) ?? [])
+            .sorted()
+            .map { folder.appendingPathComponent($0, isDirectory: true) }
+            .filter { url in
+                var isDirectory: ObjCBool = false
+                return fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory) && isDirectory.boolValue
+            }
+        for name in coverNames {
+            for candidate in [folder] + subfolders {
+                let file = candidate.appendingPathComponent(name)
+                if fileManager.fileExists(atPath: file.path) { return file }
+            }
+        }
+        return nil
+    }
+
+    /// The apps worth showing as games: without the hidden ones.
+    public static func games(_ apps: [SteamApp], hiding hiddenAppIDs: [Int]?) -> [SteamApp] {
+        let hidden = Set(hiddenAppIDs ?? [])
+        return apps.filter { !hidden.contains($0.appID) }
+    }
+
+    /// The argument that makes `steam.exe` start a game, in a running
+    /// Steam as well as in a new one.
+    public static func runGameArgument(appID: Int) -> String {
+        "steam://rungameid/\(appID)"
+    }
 }

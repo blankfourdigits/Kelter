@@ -210,6 +210,40 @@ final class SteamLibraryTests: XCTestCase {
         XCTAssertEqual(apps[1].installDirectory, "Half-Life 2")
     }
 
+    func testCoverPrefersPortraitPictureInAnyCacheFolder() throws {
+        let steam = root.appendingPathComponent("Steam", isDirectory: true)
+        let cache = steam.appendingPathComponent("appcache/librarycache", isDirectory: true)
+        // Newer Steam: pictures in hash-named subfolders.
+        try write("header", to: cache.appendingPathComponent("220/b91f/library_header.jpg"))
+        try write("portrait", to: cache.appendingPathComponent("220/ac2f/library_600x900.jpg"))
+        try write("logo", to: cache.appendingPathComponent("220/logo.png"))
+        // Older Steam: pictures directly in the app's folder.
+        try write("portrait", to: cache.appendingPathComponent("340/library_600x900.jpg"))
+        // Only a wide header.
+        try write("header", to: cache.appendingPathComponent("2114740/6b91/library_header.jpg"))
+
+        XCTAssertEqual(SteamLibrary.coverImage(appID: 220, steamDirectory: steam)?.lastPathComponent,
+                       "library_600x900.jpg")
+        XCTAssertEqual(SteamLibrary.coverImage(appID: 340, steamDirectory: steam)?.path,
+                       cache.appendingPathComponent("340/library_600x900.jpg").path)
+        XCTAssertEqual(SteamLibrary.coverImage(appID: 2_114_740, steamDirectory: steam)?.lastPathComponent,
+                       "library_header.jpg")
+        XCTAssertNil(SteamLibrary.coverImage(appID: 1, steamDirectory: steam))
+    }
+
+    func testHiddenAppsAreLeftOutAndGamesStartThroughSteam() {
+        let library = URL(fileURLWithPath: "/tmp/Steam")
+        let apps = [
+            SteamApp(appID: 220, name: "Half-Life 2", installDirectory: "Half-Life 2", library: library,
+                     sizeOnDisk: 1, stateFlags: 4, lastPlayed: nil),
+            SteamApp(appID: 228_980, name: "Steamworks Common Redistributables", installDirectory: "Steamworks Shared",
+                     library: library, sizeOnDisk: 1, stateFlags: 4, lastPlayed: nil),
+        ]
+        XCTAssertEqual(SteamLibrary.games(apps, hiding: [228_980]).map(\.appID), [220])
+        XCTAssertEqual(SteamLibrary.games(apps, hiding: nil).count, 2)
+        XCTAssertEqual(SteamLibrary.runGameArgument(appID: 220), "steam://rungameid/220")
+    }
+
     func testScanWithoutSteamFindsNothing() throws {
         let (prefix, steam, _) = try makePrefix()
         XCTAssertEqual(SteamLibrary.scan(steamDirectory: steam, prefix: prefix), [])
