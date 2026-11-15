@@ -12,7 +12,7 @@ swift build -c release
 BIN_DIR="$(swift build -c release --show-bin-path)"
 
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/de.lproj"
 cp "$BIN_DIR/Kelter" "$APP/Contents/MacOS/Kelter"
 cp -R Resources/. "$APP/Contents/Resources/"
 
@@ -27,6 +27,14 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <string>Kelter</string>
     <key>CFBundleIdentifier</key>
     <string>app.kelter.Kelter</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>de</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>de</string>
+    </array>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleExecutable</key>
     <string>Kelter</string>
     <key>CFBundlePackageType</key>
@@ -47,6 +55,11 @@ PLIST
 
 # Ad-hoc signature: enough to run on this Mac.
 codesign --force --sign - "$APP"
+
+# macOS remembers app icons by path; register the new build so the Dock and
+# the app switcher show the current icon instead of a cached blank one.
+touch "$APP"
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$APP" || true
 
 echo "Fertig: $APP"
 echo "Starten mit: open $APP"
