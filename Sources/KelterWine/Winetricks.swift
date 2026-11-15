@@ -5,6 +5,9 @@ public enum WinetricksError: LocalizedError, Equatable {
     case invalidVerb(String)
     case missingTools([String])
     case failed(status: Int32)
+    /// A Microsoft installer refused because a newer version is already
+    /// there (exit code 1638, which Winetricks sees as 102).
+    case alreadyNewer(installer: String)
 
     public var errorDescription: String? {
         switch self {
@@ -18,6 +21,11 @@ public enum WinetricksError: LocalizedError, Equatable {
                 """
         case .failed(let status):
             return "Winetricks meldet einen Fehler (Status \(status)). Die Einzelheiten stehen im Log."
+        case .alreadyNewer(let installer):
+            return """
+                \(installer) ist in dieser Bottle bereits in einer neueren Version installiert, meist von Steam selbst. \
+                Es ist nichts zu tun. Weitere Pakete aus demselben Aufruf wurden nicht installiert; bitte einzeln installieren.
+                """
         }
     }
 }
@@ -38,6 +46,19 @@ public enum Winetricks {
                 }
                 return verb
             }
+    }
+
+    /// Turns a failed run into a clearer error where the cause is known
+    /// from Winetricks' output.
+    public static func explainFailure(status: Int32, output: String) -> WinetricksError {
+        // Microsoft's installers end with 1638 ("a newer version is
+        // installed"); the shell only passes on the low byte, 102.
+        for line in output.split(separator: "\n") where line.contains("returned status 102") {
+            if let range = line.range(of: #"vc_redist\.(x86|x64|arm64)\.exe"#, options: .regularExpression) {
+                return .alreadyNewer(installer: "Visual C++ (\(line[range]))")
+            }
+        }
+        return .failed(status: status)
     }
 
     /// Splits what the user typed ("vcrun2022 corefonts, xact") into verbs.

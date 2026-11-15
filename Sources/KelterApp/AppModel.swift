@@ -813,14 +813,29 @@ final class AppModel: ObservableObject {
             defer { self.busyMessage = nil }
             do {
                 let script = try await Winetricks.installScript(winetricks, paths: paths, log: log)
+                let logStart = (try? FileManager.default.attributesOfItem(atPath: log.url.path)[.size] as? UInt64) ?? 0
                 let status = try await runner.runWinetricks(
                     script: script, verbs: validated, prefix: prefix, settings: current.settings,
                     cache: paths.winetricksCache, searchPath: searchPath)
-                guard status == 0 else { throw WinetricksError.failed(status: status) }
+                guard status == 0 else {
+                    throw Winetricks.explainFailure(status: status, output: Self.logText(of: log, from: logStart))
+                }
             } catch {
                 self.errorMessage = error.localizedDescription
             }
         }
+    }
+
+    /// The log written since `offset` (at most the last megabyte).
+    private static func logText(of log: LogFile, from offset: UInt64) -> String {
+        guard let handle = try? FileHandle(forReadingFrom: log.url) else { return "" }
+        defer { try? handle.close() }
+        let end = (try? handle.seekToEnd()) ?? 0
+        let start = max(offset, end > 1_000_000 ? end - 1_000_000 : 0)
+        guard start < end, (try? handle.seek(toOffset: start)) != nil,
+              let data = try? handle.readToEnd()
+        else { return "" }
+        return String(decoding: data, as: UTF8.self)
     }
 
     /// Starts a `.exe` or `.msi` from anywhere on the Mac in the bottle.

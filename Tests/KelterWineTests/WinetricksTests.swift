@@ -75,4 +75,21 @@ final class WinetricksTests: XCTestCase {
         let result = try await Winetricks.installScript(config, paths: paths, log: LogFile(url: paths.logFile))
         XCTAssertEqual(result, script)
     }
+
+    func testNewerVisualCppIsExplainedNotAFailure() {
+        // From a real run in a Steam bottle.
+        let output = """
+            Executing /W/bin/wine vc_redist.x86.exe /q
+            ------------------------------------------------------
+            warning: Note: command /W/bin/wine vc_redist.x86.exe /q returned status 102. Aborting.
+            ------------------------------------------------------
+            """
+        XCTAssertEqual(Winetricks.explainFailure(status: 1, output: output),
+                       .alreadyNewer(installer: "Visual C++ (vc_redist.x86.exe)"))
+        XCTAssertTrue(Winetricks.explainFailure(status: 1, output: output).localizedDescription
+            .contains("nichts zu tun"))
+        // Other failures stay failures.
+        XCTAssertEqual(Winetricks.explainFailure(status: 1, output: "returned status 1. Aborting."), .failed(status: 1))
+        XCTAssertEqual(Winetricks.explainFailure(status: 1, output: "setup.exe returned status 102"), .failed(status: 1))
+    }
 }
