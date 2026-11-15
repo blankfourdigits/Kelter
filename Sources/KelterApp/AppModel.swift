@@ -197,6 +197,44 @@ final class AppModel: ObservableObject {
         loadConfig()
         refreshBottles()
         await refreshEnvironment()
+
+        refreshRunningBottles()
+        runningTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.refreshRunningBottles()
+            }
+        }
+    }
+
+    // MARK: Running state
+
+    /// Bottles in which Wine (Steam, a game …) is running right now.
+    @Published private(set) var runningBottles: Set<Bottle.ID> = []
+    private var runningTimer: Timer?
+
+    func refreshRunningBottles() {
+        let prefixes = bottles.map { ($0.id, store.prefixURL(for: $0.id)) }
+        Task {
+            let running = await Task.detached {
+                Set(prefixes.filter { WineServerStatus.isRunning(prefix: $0.1) }.map(\.0))
+            }.value
+            if running != self.runningBottles {
+                self.runningBottles = running
+            }
+        }
+    }
+
+    func isRunning(_ bottle: Bottle) -> Bool {
+        runningBottles.contains(bottle.id)
+    }
+
+    /// A binding to one setting of a bottle, always reading the stored
+    /// bottle so two quick changes cannot overwrite each other.
+    func settingBinding<Value>(_ bottle: Bottle, _ keyPath: WritableKeyPath<BottleSettings, Value>) -> Binding<Value> {
+        Binding(
+            get: { (self.bottles.first { $0.id == bottle.id } ?? bottle).settings[keyPath: keyPath] },
+            set: { newValue in self.updateSettings(of: bottle) { $0[keyPath: keyPath] = newValue } }
+        )
     }
 
     private func loadConfig() {

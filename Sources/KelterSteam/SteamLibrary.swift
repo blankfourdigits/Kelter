@@ -191,6 +191,19 @@ public enum SteamLibrary {
         return apps.filter { !hidden.contains($0.appID) }
     }
 
+    /// The games whose name contains every word of `query`, ignoring case
+    /// and accents ("half 2" finds "Half-Life 2").
+    public static func filter(_ games: [SteamApp], matching query: String) -> [SteamApp] {
+        let words = query
+            .split(whereSeparator: { $0.isWhitespace })
+            .map { $0.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil) }
+        guard !words.isEmpty else { return games }
+        return games.filter { game in
+            let name = game.name.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+            return words.allSatisfy { name.contains($0) }
+        }
+    }
+
     /// The argument that makes `steam.exe` start a game, in a running
     /// Steam as well as in a new one.
     public static func runGameArgument(appID: Int) -> String {

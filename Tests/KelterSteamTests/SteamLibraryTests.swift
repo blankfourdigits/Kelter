@@ -245,6 +245,20 @@ final class SteamLibraryTests: XCTestCase {
         XCTAssertEqual(SteamLibrary.runGameArgument(appID: 220), "steam://rungameid/220")
     }
 
+    func testSearchIgnoresCaseAccentsAndWordOrder() {
+        let library = URL(fileURLWithPath: "/tmp/Steam")
+        let games = ["Half-Life 2", "Half-Life 2: Episode Two", "Pokémon Café", "Stray"].enumerated().map {
+            SteamApp(appID: $0.offset, name: $0.element, installDirectory: $0.element, library: library,
+                     sizeOnDisk: 1, stateFlags: 4, lastPlayed: nil)
+        }
+        XCTAssertEqual(SteamLibrary.filter(games, matching: "  ").count, 4)
+        XCTAssertEqual(SteamLibrary.filter(games, matching: "half 2").map(\.name),
+                       ["Half-Life 2", "Half-Life 2: Episode Two"])
+        XCTAssertEqual(SteamLibrary.filter(games, matching: "two HALF").map(\.name), ["Half-Life 2: Episode Two"])
+        XCTAssertEqual(SteamLibrary.filter(games, matching: "pokemon cafe").map(\.name), ["Pokémon Café"])
+        XCTAssertEqual(SteamLibrary.filter(games, matching: "zelda"), [])
+    }
+
     func testScanWithoutSteamFindsNothing() throws {
         let (prefix, steam, _) = try makePrefix()
         XCTAssertEqual(SteamLibrary.scan(steamDirectory: steam, prefix: prefix), [])

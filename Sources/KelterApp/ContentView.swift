@@ -1,7 +1,47 @@
 import KelterCore
 import SwiftUI
 
+/// The window: the everyday view, or the test view with every switch, the
+/// log and the diagnostics (menu Darstellung → Testansicht).
 struct ContentView: View {
+    @EnvironmentObject private var model: AppModel
+    @AppStorage("showTestView") private var showTestView = false
+
+    var body: some View {
+        Group {
+            if showTestView {
+                TestView()
+            } else {
+                MainView()
+            }
+        }
+        .sheet(item: $model.pendingLayerConsent) { consent in
+            LayerConsentView(consent: consent)
+                .environmentObject(model)
+        }
+        .alert("Fehler", isPresented: errorIsPresented) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(model.errorMessage ?? "")
+        }
+        .task {
+            await model.start()
+        }
+    }
+
+    private var errorIsPresented: Binding<Bool> {
+        Binding(
+            get: { model.errorMessage != nil },
+            set: { presented in
+                if !presented { model.errorMessage = nil }
+            }
+        )
+    }
+}
+
+/// Kelter's original window, kept for testing: all settings of a bottle
+/// on one page and the live log below.
+struct TestView: View {
     @EnvironmentObject private var model: AppModel
     @State private var showNewBottle = false
     @State private var newBottleName = ""
@@ -47,7 +87,7 @@ struct ContentView: View {
                     .frame(minHeight: 120, idealHeight: 200)
             }
         }
-        .navigationTitle("Kelter")
+        .navigationTitle("Kelter – Testansicht")
         .alert("Neue Bottle", isPresented: $showNewBottle) {
             TextField("Name", text: $newBottleName)
             Button("Anlegen") {
@@ -56,18 +96,6 @@ struct ContentView: View {
             Button("Abbrechen", role: .cancel) {}
         } message: {
             Text("Eine Bottle ist eine eigene, abgeschlossene Windows-Umgebung.")
-        }
-        .sheet(item: $model.pendingLayerConsent) { consent in
-            LayerConsentView(consent: consent)
-                .environmentObject(model)
-        }
-        .alert("Fehler", isPresented: errorIsPresented) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(model.errorMessage ?? "")
-        }
-        .task {
-            await model.start()
         }
     }
 
@@ -101,14 +129,5 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-    }
-
-    private var errorIsPresented: Binding<Bool> {
-        Binding(
-            get: { model.errorMessage != nil },
-            set: { presented in
-                if !presented { model.errorMessage = nil }
-            }
-        )
     }
 }

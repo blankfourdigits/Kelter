@@ -44,14 +44,35 @@ Alternativ `Package.swift` in Xcode öffnen und das Schema `Kelter` starten.
 
 ## Erste Schritte in der App
 
-1. Beim ersten Start zeigt Kelter die Einrichtung: Rosetta 2 prüfen, Wine laden.
-2. Mit dem Plus-Knopf eine Bottle anlegen. Das erste Einrichten dauert ein bis
-   zwei Minuten.
-3. Über "Wine-Konfiguration" prüfen, ob Wine läuft, oder mit "Programm
-   starten …" eine `.exe` ausführen.
+1. Beim ersten Start führt Kelter durch die Einrichtung: Rosetta 2, dann Wine
+   (rund 250 MB). Danach legt „Steam einrichten“ eine Bottle an und
+   installiert Steam darin.
+2. Links stehen die Bottles, rechts die Spiele der gewählten Bottle mit ihren
+   Covern. Ein Klick auf ein Cover startet das Spiel über Steam.
+   „Steam-Client öffnen“ oben rechts öffnet nur das Steam-Fenster, etwa zum
+   Installieren neuer Spiele.
+3. Das Zahnrad öffnet die Einstellungen der Bottle: Allgemein (Name,
+   Windows-Version, Programme, Löschen), Grafik, Winetricks und Erweitert
+   (Startparameter, Umgebung, DLL-Overrides, Fehlersuche).
+4. Eine `.exe` oder `.msi` lässt sich auf das Fenster ziehen und startet in der
+   Bottle.
 
-Alles, was Wine ausgibt, steht im Log-Bereich unten. "Kopieren" legt es in die
-Zwischenablage.
+### Testansicht
+
+**Darstellung → Testansicht** (⌥⌘T) zeigt Kelters ursprüngliche Ansicht:
+alle Schalter einer Bottle auf einer Seite und darunter das Live-Log mit
+„Kopieren“, „Logdatei zeigen“ und „Diagnose sammeln …“. Für die Fehlersuche
+gedacht, nicht für den Alltag. Kelter merkt sich die Wahl.
+
+### App-Icon
+
+Das Icon (eine schlichte Weinpresse, „Kelter“) zeichnet
+`Tools/app-icon/make-icon.swift` und legt es als `Resources/AppIcon.icns` ab;
+`scripts/make-app.sh` bindet es ein. Neu zeichnen:
+
+```sh
+swift Tools/app-icon/make-icon.swift
+```
 
 ## Steam
 
