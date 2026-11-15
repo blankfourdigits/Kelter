@@ -241,6 +241,44 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
         }
     }
 
+    /// Games whose kernel anti-cheat does not run under Wine. Kelter only
+    /// warns; the lists live here so they can be kept current.
+    public struct AntiCheat: Codable, Equatable, Sendable {
+        /// A game known to need such an anti-cheat.
+        public struct KnownApp: Codable, Equatable, Sendable {
+            public var appID: Int
+            public var system: String
+
+            public init(appID: Int, system: String) {
+                self.appID = appID
+                self.system = system
+            }
+        }
+
+        /// A file or folder in a game's folder that belongs to an anti-cheat.
+        public struct Marker: Codable, Equatable, Sendable {
+            /// Name of the file or folder, compared without regard to case.
+            public var name: String
+            public var system: String
+
+            public init(name: String, system: String) {
+                self.name = name
+                self.system = system
+            }
+        }
+
+        public var knownApps: [KnownApp]
+        public var markers: [Marker]
+        /// Shown with the warning.
+        public var message: String
+
+        public init(knownApps: [KnownApp], markers: [Marker], message: String) {
+            self.knownApps = knownApps
+            self.markers = markers
+            self.message = message
+        }
+    }
+
     /// A Direct3D translation layer that is put into a copy of the Wine
     /// build, replacing Wine's own libraries there.
     public struct GraphicsLayer: Codable, Equatable, Sendable {
@@ -308,6 +346,7 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
     public var winePatches: WinePatches?
     public var graphicsLayers: [GraphicsLayer]?
     public var steam: Steam
+    public var antiCheat: AntiCheat?
 
     public init(
         schemaVersion: Int,
@@ -315,7 +354,8 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
         support: Support? = nil,
         winePatches: WinePatches? = nil,
         graphicsLayers: [GraphicsLayer]? = nil,
-        steam: Steam
+        steam: Steam,
+        antiCheat: AntiCheat? = nil
     ) {
         self.schemaVersion = schemaVersion
         self.wine = wine
@@ -323,6 +363,7 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
         self.winePatches = winePatches
         self.graphicsLayers = graphicsLayers
         self.steam = steam
+        self.antiCheat = antiCheat
     }
 
     public func graphicsLayer(for backend: GraphicsBackendKind) -> GraphicsLayer? {

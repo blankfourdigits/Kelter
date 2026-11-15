@@ -640,18 +640,31 @@ final class AppModel: ObservableObject {
 
     /// Installed games per bottle, as last read from Steam's files.
     @Published private(set) var steamGames: [Bottle.ID: [SteamApp]] = [:]
+    /// Anti-cheat warnings per bottle, by Steam app id.
+    @Published private(set) var antiCheatHints: [Bottle.ID: [Int: AntiCheatHint]] = [:]
 
-    /// Reads which games Steam has installed in the bottle.
+    /// Reads which games Steam has installed in the bottle and which of
+    /// them use an anti-cheat that does not run under Wine.
     func refreshLibrary(for bottle: Bottle) {
         guard let config else { return }
         let prefix = store.prefixURL(for: bottle.id)
         let steamDirectory = SteamLocation.directory(prefix: prefix, config: config.steam)
         let hidden = config.steam.hiddenAppIDs
+        let antiCheat = config.antiCheat
         Task {
-            let games = await Task.detached {
-                SteamLibrary.games(SteamLibrary.scan(steamDirectory: steamDirectory, prefix: prefix), hiding: hidden)
+            let (games, hints) = await Task.detached { () -> ([SteamApp], [Int: AntiCheatHint]) in
+                let games = SteamLibrary.games(
+                    SteamLibrary.scan(steamDirectory: steamDirectory, prefix: prefix), hiding: hidden)
+                var hints: [Int: AntiCheatHint] = [:]
+                if let antiCheat {
+                    for game in games {
+                        hints[game.appID] = AntiCheatCheck.hint(for: game, config: antiCheat)
+                    }
+                }
+                return (games, hints)
             }.value
             self.steamGames[bottle.id] = games
+            self.antiCheatHints[bottle.id] = hints
         }
     }
 
@@ -665,6 +678,9 @@ final class AppModel: ObservableObject {
     /// Starts a game through Steam (starting Steam first if needed).
     func play(_ game: SteamApp, in bottle: Bottle) {
         log.append("\nStarte \(game.name) (\(game.appID)) über Steam.\n")
+        if let hint = antiCheatHints[bottle.id]?[game.appID] {
+            log.append("Hinweis: \(hint.systems.joined(separator: ", ")) (\(hint.evidence.joined(separator: "; "))).\n")
+        }
         launchSteam(in: bottle, extraArguments: [SteamLibrary.runGameArgument(appID: game.appID)])
     }
 

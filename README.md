@@ -14,7 +14,7 @@ von CrossOver und liefert keine proprietären Bestandteile mit.
 | 1 | Wine-Download, Rosetta-Prüfung, Bottles, Log | läuft |
 | 2 | Steam-Einrichtung und Start | läuft |
 | 3 | Grafik | DXMT läuft (DirectX 10/11, getestet mit Blasphemous 2). DirectX 9 über Wine (OpenGL). D3DMetal (DirectX 12) eingebaut, aber pausiert: Steam stürzt damit ab |
-| 4 | Spielebibliothek, Einstellungen pro Spiel, Winetricks | Bibliothek mit Covern und Start läuft; Rest offen |
+| 4 | Spielebibliothek, Einstellungen pro Spiel, Winetricks | Bibliothek mit Covern, Start und Anti-Cheat-Hinweis läuft; Rest offen |
 
 ## Voraussetzungen
 
@@ -70,6 +70,14 @@ nichts heruntergeladen. „Spielen" startet das Spiel über
 `steam://rungameid/<id>`: Läuft Steam schon, übernimmt es den Start, sonst
 startet Kelter Steam mit allen Korrekturen und dann das Spiel. Programme, die
 keine Spiele sind (`steam.hiddenAppIDs` in `runtimes.json`), blendet Kelter aus.
+
+**Anti-Cheat:** Viele Mehrspieler-Spiele nutzen einen Schutz gegen
+Schummeln, der tief im System läuft (Kernel-Anti-Cheat) und unter Wine auf
+dem Mac nicht funktioniert, etwa Ricochet (Call of Duty), BattlEye oder Easy
+Anti-Cheat. Kelter markiert solche Spiele orange und fragt vor dem Start
+nach. Erkannt wird das an einer Liste von Spiel-IDs und an typischen Dateien
+oder Ordnern im Spielordner (`antiCheat` in `runtimes.json`). Das ist ein
+Hinweis, keine Sperre: „Trotzdem starten" bleibt möglich.
 
 ### Warum Steam eine Hilfsbibliothek braucht
 

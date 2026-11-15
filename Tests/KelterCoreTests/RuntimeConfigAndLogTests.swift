@@ -15,7 +15,7 @@ final class RuntimeConfigTests: XCTestCase {
     func testBundledConfigIsValid() throws {
         let config = try RuntimeConfig.load(from: bundledConfig)
 
-        XCTAssertEqual(config.schemaVersion, 12)
+        XCTAssertEqual(config.schemaVersion, 13)
         XCTAssertFalse(config.wine.version.isEmpty)
         XCTAssertEqual(config.wine.url.scheme, "https")
         // The version becomes a folder name.
@@ -108,6 +108,19 @@ final class RuntimeConfigTests: XCTestCase {
         XCTAssertEqual(config.graphicsLayer(for: .dxmt)?.wineFiles, ["x86_64-unix/winemac.so"])
         XCTAssertEqual(config.graphicsLayer(for: .d3dmetal)?.wineFiles,
                        ["x86_64-unix/winemac.so", "x86_64-windows/ntdll.dll"])
+    }
+
+    func testBundledAntiCheatListIsUsable() throws {
+        let antiCheat = try XCTUnwrap(RuntimeConfig.load(from: bundledConfig).antiCheat)
+        XCTAssertFalse(antiCheat.message.isEmpty)
+        // Call of Duty (Ricochet) is a common case that cannot run.
+        XCTAssertTrue(antiCheat.knownApps.contains { $0.appID == 1_938_090 })
+        XCTAssertEqual(Set(antiCheat.knownApps.map(\.appID)).count, antiCheat.knownApps.count)
+        XCTAssertTrue(antiCheat.markers.contains { $0.name == "EasyAntiCheat" })
+        XCTAssertTrue(antiCheat.markers.contains { $0.name == "BattlEye" })
+        for marker in antiCheat.markers {
+            XCTAssertFalse(marker.name.contains("/"), marker.name)
+        }
     }
 
     func testSteamworksRedistributablesAreHidden() throws {

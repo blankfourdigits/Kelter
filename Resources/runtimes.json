@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 12,
+  "schemaVersion": 13,
   "wine": {
     "name": "Wine Staging (Gcenx macOS build)",
     "version": "11.21",
@@ -127,6 +127,61 @@
     },
     "hiddenAppIDs": [
       228980
+    ]
+  },
+  "antiCheat": {
+    "message": "Dieses Spiel nutzt einen Schutz gegen Schummeln, der unter Wine auf dem Mac in der Regel nicht läuft. Meist startet dann das Spiel oder sein Mehrspieler-Modus nicht. Ein Versuch ist möglich; Kelter kann aber nicht ausschließen, dass der Schutz Wine als Manipulation wertet.",
+    "knownApps": [
+      {
+        "appID": 1938090,
+        "system": "Ricochet (Call of Duty)"
+      },
+      {
+        "appID": 1085660,
+        "system": "BattlEye (Destiny 2)"
+      },
+      {
+        "appID": 359550,
+        "system": "BattlEye (Rainbow Six Siege)"
+      },
+      {
+        "appID": 578080,
+        "system": "BattlEye (PUBG)"
+      },
+      {
+        "appID": 271590,
+        "system": "BattlEye (GTA Online)"
+      },
+      {
+        "appID": 1172470,
+        "system": "Easy Anti-Cheat (Apex Legends)"
+      },
+      {
+        "appID": 1517290,
+        "system": "EA Javelin (Battlefield 2042)"
+      }
+    ],
+    "markers": [
+      {
+        "name": "EasyAntiCheat",
+        "system": "Easy Anti-Cheat"
+      },
+      {
+        "name": "EasyAntiCheat_EOS",
+        "system": "Easy Anti-Cheat"
+      },
+      {
+        "name": "BattlEye",
+        "system": "BattlEye"
+      },
+      {
+        "name": "BEService_x64.exe",
+        "system": "BattlEye"
+      },
+      {
+        "name": "EAAntiCheat.Installer.exe",
+        "system": "EA Javelin"
+      }
     ]
   }
 }

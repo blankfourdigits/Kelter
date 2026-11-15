@@ -1,5 +1,6 @@
 import Foundation
 import XCTest
+import KelterCore
 @testable import KelterSteam
 
 final class VDFTests: XCTestCase {
@@ -247,5 +248,69 @@ final class SteamLibraryTests: XCTestCase {
     func testScanWithoutSteamFindsNothing() throws {
         let (prefix, steam, _) = try makePrefix()
         XCTAssertEqual(SteamLibrary.scan(steamDirectory: steam, prefix: prefix), [])
+    }
+}
+
+final class AntiCheatCheckTests: XCTestCase {
+    private var root: URL!
+
+    override func setUpWithError() throws {
+        root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("KelterAntiCheat-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    }
+
+    override func tearDownWithError() throws {
+        try? FileManager.default.removeItem(at: root)
+    }
+
+    private let config = RuntimeConfig.AntiCheat(
+        knownApps: [.init(appID: 1_938_090, system: "Ricochet (Call of Duty)")],
+        markers: [
+            .init(name: "EasyAntiCheat", system: "Easy Anti-Cheat"),
+            .init(name: "BattlEye", system: "BattlEye"),
+            .init(name: "BEService_x64.exe", system: "BattlEye"),
+        ],
+        message: "Hinweis"
+    )
+
+    private func game(_ id: Int, folder: String) -> SteamApp {
+        SteamApp(appID: id, name: folder, installDirectory: folder, library: root,
+                 sizeOnDisk: 1, stateFlags: 4, lastPlayed: nil)
+    }
+
+    private func make(_ relative: String, directory: Bool = false) throws {
+        let url = root.appendingPathComponent("steamapps/common").appendingPathComponent(relative)
+        if directory {
+            try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        } else {
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try Data().write(to: url)
+        }
+    }
+
+    func testKnownAppIsFlaggedEvenWithoutFiles() {
+        let hint = AntiCheatCheck.hint(for: game(1_938_090, folder: "Call of Duty"), config: config)
+        XCTAssertEqual(hint?.systems, ["Ricochet (Call of Duty)"])
+    }
+
+    func testMarkersAtTopAndOneLevelDownIgnoringCase() throws {
+        try make("Shooter/easyanticheat", directory: true)
+        try make("Survival/Game/BattlEye", directory: true)
+        try make("Survival/Game/BEService_x64.exe")
+        let shooter = AntiCheatCheck.hint(for: game(1, folder: "Shooter"), config: config)
+        XCTAssertEqual(shooter?.systems, ["Easy Anti-Cheat"])
+        XCTAssertEqual(shooter?.evidence, ["easyanticheat im Spielordner"])
+        // One system found twice is named once.
+        let survival = AntiCheatCheck.hint(for: game(2, folder: "Survival"), config: config)
+        XCTAssertEqual(survival?.systems, ["BattlEye"])
+        XCTAssertEqual(survival?.evidence.count, 2)
+    }
+
+    func testDeeperOrUnrelatedFilesAreNotFlagged() throws {
+        try make("Indie/Game/Plugins/EasyAntiCheat", directory: true)   // two levels down
+        try make("Indie/Game.exe")
+        XCTAssertNil(AntiCheatCheck.hint(for: game(3, folder: "Indie"), config: config))
+        XCTAssertNil(AntiCheatCheck.hint(for: game(4, folder: "Missing"), config: config))
     }
 }

@@ -26,7 +26,12 @@ struct LibraryView: View {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 130, maximum: 160), spacing: 16)],
                           alignment: .leading, spacing: 18) {
                     ForEach(games) { game in
-                        GameTile(game: game, cover: model.coverImage(for: game, in: bottle)) {
+                        GameTile(
+                            game: game,
+                            cover: model.coverImage(for: game, in: bottle),
+                            antiCheat: model.antiCheatHints[bottle.id]?[game.appID],
+                            antiCheatMessage: model.config?.antiCheat?.message ?? ""
+                        ) {
                             model.play(game, in: bottle)
                         }
                     }
@@ -51,7 +56,11 @@ struct LibraryView: View {
 private struct GameTile: View {
     let game: SteamApp
     let cover: URL?
+    let antiCheat: AntiCheatHint?
+    let antiCheatMessage: String
     let play: () -> Void
+
+    @State private var confirmAntiCheat = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -63,9 +72,32 @@ private struct GameTile: View {
                 .font(.callout)
                 .lineLimit(2, reservesSpace: true)
                 .frame(width: 130, alignment: .leading)
-            Button(game.isFullyInstalled ? "Spielen" : "Wird installiert …", action: play)
-                .disabled(!game.isFullyInstalled)
-                .frame(width: 130)
+            if let antiCheat {
+                Label(antiCheat.systems.joined(separator: ", "), systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .lineLimit(2)
+                    .frame(width: 130, alignment: .leading)
+                    .help("\(antiCheatMessage)\n\nGefunden: \(antiCheat.evidence.joined(separator: "; "))")
+            }
+            Button(game.isFullyInstalled ? "Spielen" : "Wird installiert …") {
+                if antiCheat != nil {
+                    confirmAntiCheat = true
+                } else {
+                    play()
+                }
+            }
+            .disabled(!game.isFullyInstalled)
+            .frame(width: 130)
+        }
+        .confirmationDialog(
+            "\(game.name) nutzt \(antiCheat?.systems.joined(separator: ", ") ?? "einen Anti-Cheat-Schutz")",
+            isPresented: $confirmAntiCheat
+        ) {
+            Button("Trotzdem starten", action: play)
+            Button("Abbrechen", role: .cancel) {}
+        } message: {
+            Text(antiCheatMessage)
         }
         .help("\(game.name) – \(ByteCountFormatter.string(fromByteCount: game.sizeOnDisk, countStyle: .file))")
         .contextMenu {
