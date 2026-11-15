@@ -14,7 +14,7 @@ von CrossOver und liefert keine proprietären Bestandteile mit.
 | 1 | Wine-Download, Rosetta-Prüfung, Bottles, Log | läuft |
 | 2 | Steam-Einrichtung und Start | läuft |
 | 3 | Grafik | DXMT läuft (DirectX 10/11, getestet mit Blasphemous 2). DirectX 9 über Wine (OpenGL). D3DMetal (DirectX 12) eingebaut, aber pausiert: Steam stürzt damit ab |
-| 4 | Spielebibliothek, Einstellungen pro Spiel, Winetricks | Bibliothek mit Covern, Start und Anti-Cheat-Hinweis läuft; Rest offen |
+| 4 | Spielebibliothek, Einstellungen pro Spiel, Winetricks | Bibliothek mit Covern, Start und Anti-Cheat-Hinweis, Editoren für Umgebung und DLL-Overrides; Rest offen |
 
 ## Voraussetzungen
 
@@ -128,6 +128,21 @@ gibt es dadurch nicht.
 
 "Steam beenden" bittet Steam, sich zu schließen, und beendet danach alle
 Wine-Prozesse der Bottle.
+
+## Umgebung und DLL-Overrides
+
+Unter „Umgebung und DLL-Overrides" in einer Bottle lassen sich eigene
+Umgebungsvariablen und DLL-Overrides setzen. Sie gelten für alle Programme
+der Bottle, also auch für Steam und alle Spiele, ab ihrem nächsten Start.
+
+- **Umgebungsvariablen:** Name und Wert, etwa `WINEDEBUG` für mehr Meldungen
+  im Log. `WINEPREFIX` und `WINEDLLOVERRIDES` setzt Kelter selbst; für
+  Letzteres gibt es den eigenen Editor.
+- **DLL-Overrides:** ob Wine für eine Bibliothek (`d3d11`, `winmm` …) seine
+  eigene Version oder eine Windows-Version aus dem Spielordner lädt. Namen
+  werden klein und ohne `.dll` gespeichert. Die Einträge der Bottle haben
+  Vorrang vor denen aus `runtimes.json` (etwa dem abgeschalteten
+  Steam-Overlay).
 
 ## Wenn ein Spiel nicht startet
 

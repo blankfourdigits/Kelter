@@ -494,6 +494,22 @@ final class AppModel: ObservableObject {
     }
 
     /// Saves changed settings and writes those that live in the registry.
+    /// Applies an edit that may be refused (an invalid name); the reason
+    /// is shown and the bottle stays unchanged. Returns whether it worked.
+    @discardableResult
+    func editSettings(of bottle: Bottle, _ change: (inout BottleSettings) throws -> Void) -> Bool {
+        let current = bottles.first { $0.id == bottle.id } ?? bottle
+        var settings = current.settings
+        do {
+            try change(&settings)
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+        updateSettings(of: bottle) { $0 = settings }
+        return true
+    }
+
     func updateSettings(of bottle: Bottle, _ change: (inout BottleSettings) -> Void) {
         // Start from what is stored now, not from the caller's copy, so two
         // changes in a row cannot overwrite each other.
