@@ -27,16 +27,25 @@ struct MainView: View {
                 }
                 .navigationSplitViewColumnWidth(min: 190, ideal: 220)
                 .safeAreaInset(edge: .bottom) {
-                    Button {
-                        newBottleName = ""
-                        showNewBottle = true
-                    } label: {
-                        Label("Neue Bottle", systemImage: "plus")
+                    HStack {
+                        Button {
+                            newBottleName = ""
+                            showNewBottle = true
+                        } label: {
+                            Label("Neue Bottle", systemImage: "plus")
+                        }
+                        .disabled(model.busyMessage != nil)
+                        Spacer()
+                        // Kelter's own settings (language); also in the
+                        // menu Kelter → Einstellungen …
+                        SettingsLink {
+                            Label("Kelter-Einstellungen", systemImage: "gearshape")
+                                .labelStyle(.iconOnly)
+                        }
+                        .help("Kelter-Einstellungen, zum Beispiel die Sprache")
                     }
                     .buttonStyle(.borderless)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(12)
-                    .disabled(model.busyMessage != nil)
                 }
             } detail: {
                 if let bottle = model.selectedBottle {
