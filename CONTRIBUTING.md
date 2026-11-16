@@ -1,59 +1,58 @@
-# Mitmachen
+# Contributing
 
-Danke für dein Interesse an Kelter. Beiträge sind willkommen: Berichte zu
-Spielen, Fehlermeldungen, Übersetzungen und Code.
+Thanks for your interest in Kelter. Contributions are welcome: game reports,
+bug reports, translations and code.
 
-## Erfahrungen mit Spielen
+## Game reports
 
-Ein kurzer Bericht hilft schon sehr. Bitte nenne:
+A short report already helps a lot. Please include:
 
-- Spiel und Steam-Seite (oder App-ID)
-- Mac-Modell und macOS-Version
-- Grafik in Kelter (Wine eingebaut, DXMT)
-- was passiert: läuft, Bildfehler, stürzt ab bei …, startet nicht
-- bei Problemen: die wichtigsten Zeilen aus dem Log (Darstellung →
-  Testansicht). Den Ordner von „Diagnose sammeln …“ bitte vorher durchsehen;
-  Steams Logs können deinen Kontonamen enthalten.
+- the game and its Steam page (or app ID)
+- Mac model and macOS version
+- the graphics chosen in Kelter (Wine built-in, DXMT)
+- what happens: runs, graphics glitches, crashes when …, doesn't start
+- for problems: the relevant lines from the log (View → Test view). Please
+  look through the folder from "Collect diagnostics …" before sharing it;
+  Steam's logs may contain your account name.
 
-## Bauen und testen
+## Building and testing
 
 ```sh
-swift build          # kompilieren
-swift test           # alle Tests
-swift run Kelter     # starten (ohne App-Bundle, ohne Übersetzungen)
-bash scripts/make-app.sh && open build/Kelter.app   # richtige App
+swift build          # compile
+swift test           # all tests
+swift run Kelter     # run (without app bundle, without translations)
+bash scripts/make-app.sh && open build/Kelter.app   # the real app
 ```
 
-Swift Package (Swift 5.9, macOS 15), kein Xcode-Projekt nötig;
-`Package.swift` lässt sich aber in Xcode öffnen.
+Kelter is a Swift package (Swift 5.9, macOS 15); no Xcode project is needed,
+but `Package.swift` opens in Xcode.
 
-## Regeln für Änderungen
+## Rules for changes
 
-- **Vor jedem Commit** müssen `swift build` und `swift test` ohne Fehler und
-  ohne neue Warnungen durchlaufen.
-- **Zu jeder Logikänderung ein Test.** Wine selbst wird in Tests nie
-  gestartet; getestet werden Pfade, Umgebung, Argumente und Dateioperationen
-  in temporären Ordnern.
-- **Alle Wine-Aufrufe laufen über `WineRunner`.**
-- **Keine festen Versionen, URLs oder Prüfsummen im Code:** Was Kelter lädt,
-  gehört in `Resources/runtimes.json`. Bei Strukturänderungen
-  `schemaVersion` erhöhen und den Test in
-  `Tests/KelterCoreTests/RuntimeConfigAndLogTests.swift` anpassen.
-- **Keine Binärdateien fremder Herkunft und keine proprietären Bestandteile**
-  im Repository. Ausnahme ist die selbst gebaute
-  `Resources/steam-ui-fix/winmm.dll`, deren Quelltext beiliegt.
-- **Apples Dateien** (D3DMetal, Game Porting Toolkit) werden nicht
-  verändert, nicht disassembliert und nicht weitergegeben; Lösungen gehören
-  in Wine (`Tools/wine-patches/`).
-- **Texte:** Die Oberfläche ist deutsch, mit englischer Übersetzung. Neue
-  Texte als festes SwiftUI-Literal oder über `loc("…")`, dann die
-  Übersetzung in `Resources/en.lproj/Localizable.strings` ergänzen;
-  `LocalizationTests` prüft das.
-- Code-Kommentare und Bezeichner auf Englisch, Commit-Nachrichten gern auf
-  Deutsch: eine Zeile, was sich ändert, darunter kurz warum.
+- **Before every commit**, `swift build` and `swift test` must pass without
+  errors and without new warnings.
+- **Every change in logic comes with a test.** Wine itself is never started
+  in tests; tests cover paths, environment, arguments and file operations in
+  temporary folders.
+- **Every Wine call goes through `WineRunner`.**
+- **No fixed versions, URLs or checksums in the code:** what Kelter downloads
+  belongs in `Resources/runtimes.json`. On structural changes, increase
+  `schemaVersion` and adjust the test in
+  `Tests/KelterCoreTests/RuntimeConfigAndLogTests.swift`.
+- **No binaries of foreign origin and no proprietary components** in the
+  repository. The exception is the self-built
+  `Resources/steam-ui-fix/winmm.dll`, whose source is included.
+- **Apple's files** (D3DMetal, Game Porting Toolkit) are not changed, not
+  disassembled and not redistributed; fixes belong in Wine
+  (`Tools/wine-patches/`).
+- **Texts:** the interface is German with an English translation. Add new
+  texts as a fixed SwiftUI literal or through `loc("…")`, using the German
+  text as the key, and add the translation to
+  `Resources/en.lproj/Localizable.strings`; `LocalizationTests` checks this.
+- Code comments and identifiers in English.
 
-## Lizenz
+## License
 
-Mit einem Beitrag stimmst du zu, dass er unter der GPLv3 veröffentlicht wird,
-wie der Rest von Kelter. Änderungen an Wine (`Tools/wine-patches/`) stehen
-wie Wine unter der LGPL.
+By contributing you agree that your contribution is published under the
+GPLv3, like the rest of Kelter. Changes to Wine (`Tools/wine-patches/`) are
+licensed under the LGPL, like Wine.
