@@ -329,9 +329,11 @@ To try English without changing your setting:
 
 ## Contributing
 
-Contributions are welcome, especially reports on games (which game, which
-graphics, what happens) and help with D3DMetal. How to build and test, and
-the rules for changes, are in [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions are welcome, especially reports on games and help with
+D3DMetal. To report how a game runs, open an issue with the **Game report**
+form; for problems in Kelter itself, use **Bug report**. How to build and
+test, and the rules for changes, are in [CONTRIBUTING.md](CONTRIBUTING.md).
+Security problems please report privately, see [SECURITY.md](SECURITY.md).
 
 ## Credits and licenses
 

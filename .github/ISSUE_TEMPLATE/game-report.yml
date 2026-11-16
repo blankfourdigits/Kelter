@@ -1,0 +1,64 @@
+name: Game report
+description: Tell us how a game runs (or doesn't) in Kelter.
+title: "[Game] "
+labels: ["game report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing a game! Reports like this show which games work and where Kelter needs work.
+        Please check your log excerpt before posting: Steam's logs may contain your account name.
+  - type: input
+    id: game
+    attributes:
+      label: Game
+      description: Name and Steam app ID or store link.
+      placeholder: "Blasphemous 2 (2114740)"
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options:
+        - Runs well
+        - Runs with problems
+        - Starts, then crashes or hangs
+        - Doesn't start
+    validations:
+      required: true
+  - type: dropdown
+    id: graphics
+    attributes:
+      label: Graphics in Kelter
+      description: Bottle settings → Graphics.
+      options:
+        - DXMT
+        - Wine (built-in)
+    validations:
+      required: true
+  - type: input
+    id: mac
+    attributes:
+      label: Mac and macOS
+      placeholder: "MacBook Air M2, macOS 15.5"
+    validations:
+      required: true
+  - type: input
+    id: kelter
+    attributes:
+      label: Kelter version or commit
+      placeholder: "0.1.0 / main from 2026-11-16"
+  - type: textarea
+    id: details
+    attributes:
+      label: What happens?
+      description: Frame rate, graphics glitches, sound, controller, when it crashes …
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log excerpt (optional)
+      description: The relevant lines from View → Test view. Leave out anything personal.
+      render: text

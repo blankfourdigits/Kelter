@@ -1,0 +1,42 @@
+name: Bug report
+description: Something in Kelter itself doesn't work (setup, Steam, library, settings …).
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For problems with a specific game, please use the game report form instead.
+        Please check your log excerpt before posting: Steam's logs may contain your account name.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. …
+        2. …
+  - type: input
+    id: mac
+    attributes:
+      label: Mac and macOS
+      placeholder: "MacBook Pro M3, macOS 26.1"
+    validations:
+      required: true
+  - type: input
+    id: kelter
+    attributes:
+      label: Kelter version or commit
+      placeholder: "0.1.0 / main from 2026-11-16"
+  - type: textarea
+    id: log
+    attributes:
+      label: Log excerpt (optional)
+      description: The relevant lines from View → Test view. Leave out anything personal.
+      render: text

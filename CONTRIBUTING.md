@@ -5,7 +5,8 @@ bug reports, translations and code.
 
 ## Game reports
 
-A short report already helps a lot. Please include:
+A short report already helps a lot. The easiest way is the **Game report**
+form when you open a new issue; it asks for:
 
 - the game and its Steam page (or app ID)
 - Mac model and macOS version
@@ -14,6 +15,9 @@ A short report already helps a lot. Please include:
 - for problems: the relevant lines from the log (View → Test view). Please
   look through the folder from "Collect diagnostics …" before sharing it;
   Steam's logs may contain your account name.
+
+Problems in Kelter itself go into a **Bug report**. Security problems please
+report privately, see [SECURITY.md](SECURITY.md).
 
 ## Building and testing
 
@@ -25,7 +29,8 @@ bash scripts/make-app.sh && open build/Kelter.app   # the real app
 ```
 
 Kelter is a Swift package (Swift 5.9, macOS 15); no Xcode project is needed,
-but `Package.swift` opens in Xcode.
+but `Package.swift` opens in Xcode. GitHub builds and tests every push and
+pull request on an Apple Silicon Mac (`.github/workflows/ci.yml`).
 
 ## Rules for changes
 

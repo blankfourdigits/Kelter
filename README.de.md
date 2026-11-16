@@ -336,9 +336,12 @@ Zum Ausprobieren ohne Umstellen: `open build/Kelter.app --args -AppleLanguages '
 
 ## Mitmachen
 
-Beiträge sind willkommen, besonders Erfahrungsberichte zu Spielen (welches
-Spiel, welche Grafik, was passiert) und Hilfe bei D3DMetal. Wie man baut,
-testet und was dabei gilt, steht in [CONTRIBUTING.md](CONTRIBUTING.md) (englisch).
+Beiträge sind willkommen, besonders Erfahrungsberichte zu Spielen und Hilfe
+bei D3DMetal. Für Spielberichte gibt es beim Anlegen eines Issues das
+Formular **Game report**, für Fehler in Kelter selbst **Bug report**. Wie man
+baut, testet und was dabei gilt, steht in [CONTRIBUTING.md](CONTRIBUTING.md)
+(englisch). Sicherheitsprobleme bitte vertraulich melden, siehe
+[SECURITY.md](SECURITY.md) (englisch).
 
 ## Herkunft und Lizenzen
 
