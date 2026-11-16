@@ -82,9 +82,9 @@ struct SetupView: View {
     }
 
     private func description(of config: RuntimeConfig) -> String {
-        var text = "\(config.wine.name), Version \(config.wine.version)."
+        var text = loc("%@, Version %@.", config.wine.name, config.wine.version)
         if let support = config.support {
-            text += " Dazu kommt \(support.name), Version \(support.version)."
+            text += " " + loc("Dazu kommt %@, Version %@.", support.name, support.version)
         }
         text += " Zusammen sind das rund 250 MB Download und etwa 1 GB auf der Festplatte."
         return text
@@ -96,7 +96,7 @@ struct SetupView: View {
         case .downloading(let fraction):
             if let fraction {
                 ProgressView(value: fraction) {
-                    Text("Lade herunter … \(Int(fraction * 100)) %")
+                    Text(loc("Lade herunter … %@ %%", "\(Int(fraction * 100))"))
                 }
                 .frame(maxWidth: 360)
             } else {

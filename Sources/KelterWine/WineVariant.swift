@@ -13,21 +13,15 @@ public enum WineFilesError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .notConfigured(let layer):
-            return "\(layer) braucht angepasste Wine-Dateien, aber runtimes.json enthält keinen Abschnitt \"winePatches\"."
+            return loc("%@ braucht angepasste Wine-Dateien, aber runtimes.json enthält keinen Abschnitt \"winePatches\".", "\(layer)")
         case .missing(let name, let layer, let files, let buildScript):
-            return """
-                Für \(layer) fehlt noch: \(name) (\(files.joined(separator: ", "))).
-                Diese Dateien werden auf deinem Mac gebaut. Im Terminal im Kelter-Ordner ausführen:
-
-                bash \(buildScript)
-
-                Danach \(layer) noch einmal auswählen.
-                """
+            return loc(
+                "Für %@ fehlt noch: %@ (%@).\nDiese Dateien werden auf deinem Mac gebaut. Im Terminal im Kelter-Ordner ausführen:\n\nbash %@\n\nDanach %@ noch einmal auswählen.",
+                layer, name, files.joined(separator: ", "), buildScript, layer)
         case .wrongWineVersion(let name, let expected, let installed):
-            return """
-                \(name) ist für Wine \(expected) gedacht, eingestellt ist aber Wine \(installed). \
-                Bitte runtimes.json anpassen und die Dateien für Wine \(installed) neu bauen.
-                """
+            return loc(
+                "%@ ist für Wine %@ gedacht, eingestellt ist aber Wine %@. Bitte runtimes.json anpassen und die Dateien für Wine %@ neu bauen.",
+                name, expected, installed, installed)
         }
     }
 }
@@ -44,14 +38,13 @@ public enum LayerSourceError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .noDiskImage(let layer):
-            return "Für \(layer) ist kein Disk-Image vorgesehen."
+            return loc("Für %@ ist kein Disk-Image vorgesehen.", "\(layer)")
         case .cannotMount(let name):
-            return """
-                \(name) konnte nicht geöffnet werden. Bitte die Datei im Finder per Doppelklick öffnen, \
-                die Lizenz bestätigen und dann das geöffnete Laufwerk statt der Datei auswählen.
-                """
+            return loc(
+                "%@ konnte nicht geöffnet werden. Bitte die Datei im Finder per Doppelklick öffnen, die Lizenz bestätigen und dann das geöffnete Laufwerk statt der Datei auswählen.",
+                name)
         case .fileMissing(let layer, let path):
-            return "Im ausgewählten Paket fehlt \(path). Ist das wirklich das Paket für \(layer)?"
+            return loc("Im ausgewählten Paket fehlt %@. Ist das wirklich das Paket für %@?", "\(path)", "\(layer)")
         }
     }
 }

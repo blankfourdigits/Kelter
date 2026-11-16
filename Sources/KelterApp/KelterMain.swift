@@ -19,6 +19,10 @@ struct KelterMain: App {
                     .keyboardShortcut("t", modifiers: [.command, .option])
             }
         }
+
+        Settings {
+            AppSettingsView()
+        }
     }
 }
 

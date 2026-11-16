@@ -1,0 +1,737 @@
+/* English translations for Kelter. The German text is the key.
+   Placeholders: %@ = text, %% = percent sign. Checked by
+   Tests/KelterCoreTests/LocalizationTests.swift. */
+
+/* KelterApp/AppModel.swift:148 */
+"%@ %@ wird geladen und eingerichtet …" = "%@ %@ is being downloaded and set up …";
+
+/* KelterApp/AppModel.swift:185 */
+"Der Datenordner konnte nicht angelegt werden: %@" = "The data folder could not be created: %@";
+
+/* KelterApp/AppModel.swift:399 */
+"Die Diagnose konnte nicht gesammelt werden: %@" = "The diagnostics could not be collected: %@";
+
+/* KelterApp/AppModel.swift:415 */
+"Rosetta 2 konnte nicht automatisch installiert werden. Bitte im Terminal ausführen:\n%@" = "Rosetta 2 could not be installed automatically. Run this in Terminal:\n%@";
+
+/* KelterApp/AppModel.swift:444 */
+"Wine" = "Wine";
+
+/* KelterApp/AppModel.swift:449 */
+"Laufzeitbibliotheken und Grafikschichten" = "Run-time libraries and graphics layers";
+
+/* KelterApp/AppModel.swift:496 */
+"Bottle \"%@\" wird eingerichtet. Das dauert beim ersten Mal ein bis zwei Minuten." = "Bottle \"%@\" is being set up. The first time this takes one to two minutes.";
+
+/* KelterApp/AppModel.swift:520 */
+"Bottle \"%@\" wird gelöscht." = "Bottle \"%@\" is being deleted.";
+
+/* KelterApp/AppModel.swift:629 */
+"Steam wird vorbereitet …" = "Preparing Steam …";
+
+/* KelterApp/AppModel.swift:642 */
+"Windows-Umgebung für Steam wird eingerichtet. Das dauert ein bis zwei Minuten." = "Setting up the Windows environment for Steam. This takes one to two minutes.";
+
+/* KelterApp/AppModel.swift:686 */
+"Der Steam-Installer wird geladen …" = "Downloading the Steam installer …";
+
+/* KelterApp/AppModel.swift:688 */
+"Steam wird installiert …" = "Installing Steam …";
+
+/* KelterApp/AppModel.swift:757 */
+"%@\n\nBitte bei der Bottle unter „Grafik“ eine andere Auswahl treffen, zum Beispiel DXMT." = "%@\n\nPlease choose something else under “Graphics” in the bottle, for example DXMT.";
+
+/* KelterApp/AppModel.swift:806 */
+"Steam wird beendet …" = "Quitting Steam …";
+
+/* KelterApp/AppModel.swift:850 */
+"Winetricks installiert %@ …" = "Winetricks is installing %@ …";
+
+/* KelterApp/AppModel.swift:912 */
+"%@ ist noch nicht eingerichtet. Bitte bei der Bottle unter „Grafik“ %@ auswählen und der Lizenz zustimmen." = "%@ is not set up yet. Please choose %@ under “Graphics” in the bottle and agree to the license.";
+
+/* KelterApp/AppSettingsView.swift:12 */
+"Sprache" = "Language";
+
+/* KelterApp/AppSettingsView.swift:24 */
+"Gilt nach einem Neustart von Kelter." = "Takes effect after Kelter restarts.";
+
+/* KelterApp/AppSettingsView.swift:28 */
+"Jetzt neu starten" = "Restart now";
+
+/* KelterApp/BottleDetailView.swift:35 */
+"Steam" = "Steam";
+
+/* KelterApp/BottleDetailView.swift:41 */
+"Spiele" = "Games";
+
+/* KelterApp/BottleDetailView.swift:47 */
+"Programme" = "Programs";
+
+/* KelterApp/BottleDetailView.swift:50 */
+"Programm starten …" = "Run program …";
+
+/* KelterApp/BottleDetailView.swift:53 */
+"Wine-Prozesse beenden" = "Stop Wine processes";
+
+/* KelterApp/BottleDetailView.swift:57 */
+"Eine .exe- oder .msi-Datei kannst du auch auf dieses Fenster ziehen." = "You can also drop an .exe or .msi file onto this window.";
+
+/* KelterApp/BottleDetailView.swift:65 */
+"Einstellungen" = "Settings";
+
+/* KelterApp/BottleDetailView.swift:67 */
+"Windows-Version" = "Windows version";
+
+/* KelterApp/BottleDetailView.swift:74 */
+"Grafik" = "Graphics";
+
+/* KelterApp/BottleDetailView.swift:84 */
+"Gilt ab dem nächsten Start von Steam. DXMT übersetzt DirectX 10 und 11 nach Metal und wird bei der ersten Auswahl geladen (rund 20 MB). DirectX 9 läuft immer über Wines eingebaute Grafik." = "Takes effect the next time Steam starts. DXMT translates DirectX 10 and 11 to Metal and is downloaded the first time you choose it (about 20 MB). DirectX 9 always runs through Wine's built-in graphics.";
+
+/* KelterApp/BottleDetailView.swift:90 */
+"MSync (schnellere Synchronisation, gilt ab dem nächsten Start)" = "MSync (faster synchronization, takes effect at next start)";
+
+/* KelterApp/BottleDetailView.swift:92 */
+"Retina-Modus (schärfer, aber langsamer)" = "Retina mode (sharper, but slower)";
+
+/* KelterApp/BottleDetailView.swift:93 */
+"FPS-Anzeige von Metal einblenden (nur mit DXMT oder D3DMetal)" = "Show Metal's FPS counter (only with DXMT or D3DMetal)";
+
+/* KelterApp/BottleDetailView.swift:94 */
+"Ausführliches Wine-Log (zur Fehlersuche, gilt ab dem nächsten Start)" = "Verbose Wine log (for troubleshooting, takes effect at next start)";
+
+/* KelterApp/BottleDetailView.swift:100 */
+"Winetricks" = "Winetricks";
+
+/* KelterApp/BottleDetailView.swift:106 */
+"Umgebung und DLL-Overrides" = "Environment and DLL overrides";
+
+/* KelterApp/BottleDetailView.swift:113 */
+"Werkzeuge" = "Tools";
+
+/* KelterApp/BottleDetailView.swift:115 */
+"Wine-Konfiguration" = "Wine configuration";
+
+/* KelterApp/BottleDetailView.swift:118 */
+"Registrierungseditor" = "Registry editor";
+
+/* KelterApp/BottleDetailView.swift:121 */
+"Im Finder zeigen" = "Show in Finder";
+
+/* KelterApp/BottleDetailView.swift:151 */
+"Name" = "Name";
+
+/* KelterApp/BottleDetailView.swift:152 */
+"Umbenennen" = "Rename";
+
+/* KelterApp/BottleDetailView.swift:155 */
+"Abbrechen" = "Cancel";
+
+/* KelterApp/BottleDetailView.swift:161 */
+"Endgültig löschen" = "Delete permanently";
+
+/* KelterApp/BottleDetailView.swift:166 */
+"Alle darin installierten Programme, Spiele und Spielstände gehen verloren. Das lässt sich nicht rückgängig machen." = "All programs, games and saved games in it will be lost. This can't be undone.";
+
+/* KelterApp/BottleDetailView.swift:176 */
+"Umbenennen …" = "Rename …";
+
+/* KelterApp/BottleDetailView.swift:180 */
+"Löschen …" = "Delete …";
+
+/* KelterApp/BottleDetailView.swift:193 */
+"Steam starten" = "Start Steam";
+
+/* KelterApp/BottleDetailView.swift:198 */
+"Steam beenden" = "Quit Steam";
+
+/* KelterApp/BottleDetailView.swift:204 */
+"Startparameter" = "Launch options";
+
+/* KelterApp/BottleDetailView.swift:210 */
+"Vorschläge" = "Suggestions";
+
+/* KelterApp/BottleDetailView.swift:218 */
+"Standard aus runtimes.json" = "Default from runtimes.json";
+
+/* KelterApp/BottleDetailView.swift:228 */
+"Browser-Parameter" = "Browser options";
+
+/* KelterApp/BottleDetailView.swift:234 */
+"Standard" = "Default";
+
+/* KelterApp/BottleDetailView.swift:243 */
+"Oben stehen die Startparameter für Steam, darunter die Parameter, die Kelters Hilfsbibliothek an Steams eingebauten Browser weitergibt. Änderungen gelten ab dem nächsten Start von Steam." = "Above are the launch options for Steam, below the options Kelter's helper library passes to Steam's built-in browser. Changes take effect the next time Steam starts.";
+
+/* KelterApp/BottleDetailView.swift:250 */
+"Steam in dieser Bottle installieren" = "Install Steam in this bottle";
+
+/* KelterApp/BottleDetailView.swift:253 */
+"Lädt den Windows-Installer von Valve und richtet Steam ein." = "Downloads Valve's Windows installer and sets up Steam.";
+
+/* KelterApp/BottleDetailView.swift:150 */
+"Bottle umbenennen" = "Rename bottle";
+
+/* KelterApp/BottleDetailView.swift:77 */
+"%@ – pausiert" = "%@ – paused";
+
+/* KelterApp/BottleDetailView.swift:158 */
+"Bottle „%@“ wirklich löschen?" = "Really delete bottle “%@”?";
+
+/* KelterApp/BottleDetailView.swift:353 */
+"Windows-Programm auswählen" = "Choose a Windows program";
+
+/* KelterApp/BottleOverridesView.swift:18 */
+"Gilt für alle Programme der Bottle, auch Steam und Spiele, ab ihrem nächsten Start." = "Applies to all programs in the bottle, including Steam and games, from their next start.";
+
+/* KelterApp/BottleOverridesView.swift:32 */
+"Umgebungsvariablen" = "Environment variables";
+
+/* KelterApp/BottleOverridesView.swift:36 */
+"Keine eigenen Variablen." = "No variables of your own.";
+
+/* KelterApp/BottleOverridesView.swift:70 */
+"Name, z. B. DXVK_HUD" = "Name, e.g. DXVK_HUD";
+
+/* KelterApp/BottleOverridesView.swift:73 */
+"Wert" = "Value";
+
+/* KelterApp/BottleOverridesView.swift:76 */
+"Setzen" = "Set";
+
+/* KelterApp/BottleOverridesView.swift:95 */
+"DLL-Overrides" = "DLL overrides";
+
+/* KelterApp/BottleOverridesView.swift:97 */
+"Legt fest, ob Wine für eine Bibliothek seine eigene Version oder eine mitgelieferte Windows-Version lädt." = "Sets whether Wine loads its own version of a library or a Windows version that came with the program.";
+
+/* KelterApp/BottleOverridesView.swift:102 */
+"Keine eigenen Overrides." = "No overrides of your own.";
+
+/* KelterApp/BottleOverridesView.swift:129 */
+"Bibliothek, z. B. d3d11" = "Library, e.g. d3d11";
+
+/* KelterApp/BottleOverridesView.swift:140 */
+"Hinzufügen" = "Add";
+
+/* KelterApp/BottleOverridesView.swift:59 */
+"Zum Ändern unten übernehmen" = "Copy below to change";
+
+/* KelterApp/BottleOverridesView.swift:66 */
+"Entfernen" = "Remove";
+
+/* KelterApp/BottleSettingsView.swift:16 */
+"Allgemein" = "General";
+
+/* KelterApp/BottleSettingsView.swift:25 */
+"Erweitert" = "Advanced";
+
+/* KelterApp/BottleSettingsView.swift:38 */
+"Fertig" = "Done";
+
+/* KelterApp/BottleSettingsView.swift:69 */
+"Windows-Programm" = "Windows program";
+
+/* KelterApp/BottleSettingsView.swift:70 */
+"Starten …" = "Run …";
+
+/* KelterApp/BottleSettingsView.swift:73 */
+"Öffnen" = "Open";
+
+/* KelterApp/BottleSettingsView.swift:75 */
+"Ordner der Bottle" = "Bottle folder";
+
+/* KelterApp/BottleSettingsView.swift:80 */
+"Alles in dieser Bottle löschen" = "Delete everything in this bottle";
+
+/* KelterApp/BottleSettingsView.swift:81 */
+"Bottle löschen …" = "Delete bottle …";
+
+/* KelterApp/BottleSettingsView.swift:152 */
+"Gilt ab dem nächsten Start von Steam." = "Takes effect the next time Steam starts.";
+
+/* KelterApp/BottleSettingsView.swift:156 */
+"FPS-Anzeige einblenden" = "Show FPS counter";
+
+/* KelterApp/BottleSettingsView.swift:159 */
+"MSync (schnellere Synchronisation)" = "MSync (faster synchronization)";
+
+/* KelterApp/BottleSettingsView.swift:162 */
+"Die FPS-Anzeige von Metal funktioniert mit DXMT, nicht mit Wines eigener Grafik." = "Metal's FPS counter works with DXMT, not with Wine's own graphics.";
+
+/* KelterApp/BottleSettingsView.swift:195 */
+"Startparameter für Steam" = "Launch options for Steam";
+
+/* KelterApp/BottleSettingsView.swift:216 */
+"Startparameter für einzelne Spiele setzt du in Steam: Rechtsklick aufs Spiel → Eigenschaften." = "Launch options for single games are set in Steam: right-click the game → Properties.";
+
+/* KelterApp/BottleSettingsView.swift:228 */
+"Fehlersuche" = "Troubleshooting";
+
+/* KelterApp/BottleSettingsView.swift:230 */
+"Ausführliches Wine-Log" = "Verbose Wine log";
+
+/* KelterApp/BottleSettingsView.swift:235 */
+"Log, Diagnose und alle Schalter auf einer Seite: Menü Darstellung → Testansicht (⌥⌘T)." = "Log, diagnostics and every switch on one page: menu View → Test view (⌥⌘T).";
+
+/* KelterApp/BottleSettingsView.swift:174 */
+"Läuft mit allem, aber langsamer. Für alte Spiele (DirectX 9)." = "Works with everything, but slower. For old games (DirectX 9).";
+
+/* KelterApp/BottleSettingsView.swift:175 */
+"Schnell für DirectX 10 und 11. DirectX 9 läuft weiter über Wine. Empfohlen." = "Fast for DirectX 10 and 11. DirectX 9 still runs through Wine. Recommended.";
+
+/* KelterApp/BottleSettingsView.swift:176 */
+"Apples Übersetzung für DirectX 12. Zurzeit nicht nutzbar." = "Apple's translation for DirectX 12. Not usable at the moment.";
+
+/* KelterApp/BottleSettingsView.swift:177 */
+"DirectX 10 und 11 über Vulkan." = "DirectX 10 and 11 through Vulkan.";
+
+/* KelterApp/ContentView.swift:52 */
+"Bottles" = "Bottles";
+
+/* KelterApp/ContentView.swift:65 */
+"Steam einrichten" = "Set up Steam";
+
+/* KelterApp/ContentView.swift:75 */
+"Neue Bottle" = "New bottle";
+
+/* KelterApp/ContentView.swift:93 */
+"Anlegen" = "Create";
+
+/* KelterApp/ContentView.swift:98 */
+"Eine Bottle ist eine eigene, abgeschlossene Windows-Umgebung." = "A bottle is a separate, self-contained Windows environment.";
+
+/* KelterApp/ContentView.swift:113 */
+"Noch keine Bottle" = "No bottle yet";
+
+/* KelterApp/ContentView.swift:124 */
+"Legt eine Bottle namens Steam an, installiert Steam darin und startet es. Für andere Programme legst du mit dem Plus-Knopf eine leere Bottle an." = "Creates a bottle named Steam, installs Steam in it and starts it. For other programs, create an empty bottle with the plus button.";
+
+/* KelterApp/ContentView.swift:22 */
+"Fehler" = "Error";
+
+/* KelterApp/ContentView.swift:68 */
+"Steam einrichten und starten" = "Set up and start Steam";
+
+/* KelterApp/ContentView.swift:78 */
+"Neue Bottle anlegen" = "Create a new bottle";
+
+/* KelterApp/ContentView.swift:90 */
+"Kelter – Testansicht" = "Kelter – Test view";
+
+/* KelterApp/KelterMain.swift:18 */
+"Testansicht" = "Test view";
+
+/* KelterApp/LayerConsentView.swift:27 */
+"Ich habe die Lizenz gelesen und stimme ihr zu." = "I have read the license and agree to it.";
+
+/* KelterApp/LayerConsentView.swift:34 */
+"Empfohlen: Apples eigenes Paket" = "Recommended: Apple's own package";
+
+/* KelterApp/LayerConsentView.swift:36 */
+"Lade das Paket mit deiner Apple-ID bei Apple herunter. Wähle dann die DMG-Datei oder, wenn sie schon geöffnet ist, das Laufwerk aus." = "Download the package from Apple with your Apple ID. Then choose the DMG file or, if it's already open, the volume.";
+
+/* KelterApp/LayerConsentView.swift:40 */
+"Zu Apples Download-Seite" = "Go to Apple's download page";
+
+/* KelterApp/LayerConsentView.swift:42 */
+"Paket auswählen …" = "Choose package …";
+
+/* KelterApp/LayerConsentView.swift:50 */
+"Alternative: direkt laden" = "Alternative: download directly";
+
+/* KelterApp/LayerConsentView.swift:57 */
+"Direkt laden" = "Download directly";
+
+/* KelterApp/LayerConsentView.swift:20 */
+"%@ einrichten" = "Set up %@";
+
+/* KelterApp/LayerConsentView.swift:52 */
+"Kelter lädt Apples Dateien aus dem Paket von Gcenx (%@) und prüft die Prüfsumme." = "Kelter downloads Apple's files from Gcenx's package (%@) and checks the checksum.";
+
+/* KelterApp/LayerConsentView.swift:84 */
+"%@: Apples Paket auswählen" = "%@: choose Apple's package";
+
+/* KelterApp/LayerConsentView.swift:85 */
+"Die DMG-Datei oder das bereits geöffnete Laufwerk auswählen." = "Choose the DMG file or the volume that is already open.";
+
+/* KelterApp/LibraryView.swift:21 */
+"Aktualisieren" = "Refresh";
+
+/* KelterApp/LibraryView.swift:97 */
+"Trotzdem starten" = "Start anyway";
+
+/* KelterApp/LibraryView.swift:49 */
+"Keine installierten Spiele gefunden. Spiele installierst du in Steam." = "No installed games found. You install games in Steam.";
+
+/* KelterApp/LibraryView.swift:50 */
+"1 installiertes Spiel" = "1 installed game";
+
+/* KelterApp/LibraryView.swift:51 */
+"%@ installierte Spiele" = "%@ installed games";
+
+/* KelterApp/LibraryView.swift:81 */
+"%@\n\nGefunden: %@" = "%@\n\nFound: %@";
+
+/* KelterApp/LibraryView.swift:94 */
+"%@ nutzt %@" = "%@ uses %@";
+
+/* KelterApp/LibraryView.swift:94 */
+"einen Anti-Cheat-Schutz" = "an anti-cheat protection";
+
+/* KelterApp/LogView.swift:14 */
+"Log" = "Log";
+
+/* KelterApp/LogView.swift:17 */
+"Kopieren" = "Copy";
+
+/* KelterApp/LogView.swift:21 */
+"Leeren" = "Clear";
+
+/* KelterApp/LogView.swift:25 */
+"Logdatei zeigen" = "Show log file";
+
+/* KelterApp/LogView.swift:28 */
+"Diagnose sammeln …" = "Collect diagnostics …";
+
+/* KelterApp/LogView.swift:31 */
+"Legt Log, Einstellungen, Steam-Logs und die Liste der laufenden Wine-Prozesse in einen Ordner deiner Wahl." = "Puts the log, settings, Steam logs and the list of running Wine processes into a folder of your choice.";
+
+/* KelterApp/LogView.swift:63 */
+"Ordner für die Diagnose wählen" = "Choose a folder for the diagnostics";
+
+/* KelterApp/LogView.swift:64 */
+"Kelter legt darin einen neuen Ordner \"Kelter-Diagnose-…\" an. Steams Logs können deinen Kontonamen enthalten." = "Kelter creates a new folder \"Kelter-Diagnose-…\" in it. Steam's logs may contain your account name.";
+
+/* KelterApp/LogView.swift:65 */
+"Hier sammeln" = "Collect here";
+
+/* KelterApp/MainView.swift:64 */
+"Willkommen bei Kelter" = "Welcome to Kelter";
+
+/* KelterApp/MainView.swift:66 */
+"Kelter richtet Steam für Windows-Spiele ein: eine Bottle, der Steam-Installer von Valve, fertig." = "Kelter sets up Steam for Windows games: a bottle, Valve's Steam installer, done.";
+
+/* KelterApp/MainView.swift:153 */
+"Steam-Client öffnen" = "Open Steam client";
+
+/* KelterApp/MainView.swift:216 */
+"Steam ist hier noch nicht installiert" = "Steam isn't installed here yet";
+
+/* KelterApp/MainView.swift:218 */
+"Kelter lädt den Installer von Valve und richtet Steam in dieser Bottle ein. Andere Windows-Programme kannst du auch einfach auf dieses Fenster ziehen." = "Kelter downloads Valve's installer and sets up Steam in this bottle. You can also drop other Windows programs onto this window.";
+
+/* KelterApp/MainView.swift:220 */
+"Steam installieren" = "Install Steam";
+
+/* KelterApp/MainView.swift:233 */
+"Spiele werden gesucht …" = "Looking for games …";
+
+/* KelterApp/MainView.swift:237 */
+"Noch keine Spiele" = "No games yet";
+
+/* KelterApp/MainView.swift:239 */
+"Installiere Spiele in Steam. Sie erscheinen hier von selbst." = "Install games in Steam. They show up here on their own.";
+
+/* KelterApp/MainView.swift:294 */
+"Anti-Cheat" = "Anti-cheat";
+
+/* KelterApp/MainView.swift:329 */
+"Spielen" = "Play";
+
+/* KelterApp/MainView.swift:49 */
+"Kelter" = "Kelter";
+
+/* KelterApp/MainView.swift:94 */
+"Läuft" = "Running";
+
+/* KelterApp/MainView.swift:127 */
+"Spiele suchen" = "Search games";
+
+/* KelterApp/MainView.swift:148 */
+"Beendet Steam und alle Spiele dieser Bottle." = "Quits Steam and all games in this bottle.";
+
+/* KelterApp/MainView.swift:156 */
+"Öffnet nur das Steam-Fenster, ohne ein Spiel zu starten. Ein Spiel startest du mit einem Klick auf sein Cover." = "Opens only the Steam window, without starting a game. To start a game, click its cover.";
+
+/* KelterApp/MainView.swift:166 */
+"Einstellungen dieser Bottle" = "Settings for this bottle";
+
+/* KelterApp/MainView.swift:202 */
+"Grafik: %@" = "Graphics: %@";
+
+/* KelterApp/MainView.swift:379 */
+"Wine (OpenGL)" = "Wine (OpenGL)";
+
+/* KelterApp/MainView.swift:380 */
+"DXMT" = "DXMT";
+
+/* KelterApp/MainView.swift:381 */
+"D3DMetal" = "D3DMetal";
+
+/* KelterApp/MainView.swift:382 */
+"DXVK" = "DXVK";
+
+/* KelterApp/SetupView.swift:11 */
+"Einrichtung" = "Setup";
+
+/* KelterApp/SetupView.swift:30 */
+"Rosetta 2" = "Rosetta 2";
+
+/* KelterApp/SetupView.swift:32 */
+"Wine ist ein Intel-Programm. Rosetta 2 von Apple lässt es auf diesem Mac laufen." = "Wine is an Intel program. Apple's Rosetta 2 lets it run on this Mac.";
+
+/* KelterApp/SetupView.swift:38 */
+"Rosetta 2 wird installiert …" = "Installing Rosetta 2 …";
+
+/* KelterApp/SetupView.swift:41 */
+"Rosetta 2 installieren" = "Install Rosetta 2";
+
+/* KelterApp/SetupView.swift:71 */
+"Herunterladen und installieren" = "Download and install";
+
+/* KelterApp/SetupView.swift:77 */
+"Die Konfiguration runtimes.json wurde nicht gefunden oder ist fehlerhaft." = "The runtimes.json configuration was not found or is broken.";
+
+/* KelterApp/SetupView.swift:103 */
+"Lade herunter …" = "Downloading …";
+
+/* KelterApp/SetupView.swift:107 */
+"Prüfe Prüfsumme …" = "Checking checksum …";
+
+/* KelterApp/SetupView.swift:110 */
+"Entpacke …" = "Unpacking …";
+
+/* KelterApp/SetupView.swift:85 */
+"%@, Version %@." = "%@, version %@.";
+
+/* KelterApp/SetupView.swift:87 */
+"Dazu kommt %@, Version %@." = "It comes with %@, version %@.";
+
+/* KelterApp/SetupView.swift:99 */
+"Lade herunter … %@ %%" = "Downloading … %@ %%";
+
+/* KelterApp/WelcomeView.swift:21 */
+"Windows-Spiele aus deiner Steam-Bibliothek auf dem Mac. Zwei Dinge richtet Kelter vorher ein, danach Steam." = "Windows games from your Steam library on your Mac. Kelter sets up two things first, then Steam.";
+
+/* KelterApp/WelcomeView.swift:35 */
+"Installieren" = "Install";
+
+/* KelterApp/WelcomeView.swift:45 */
+"Laden" = "Download";
+
+/* KelterApp/WelcomeView.swift:63 */
+"Die Konfiguration runtimes.json fehlt oder ist fehlerhaft." = "The runtimes.json configuration is missing or broken.";
+
+/* KelterApp/WelcomeView.swift:32 */
+"Von Apple. Lässt Wine, ein Intel-Programm, auf diesem Mac laufen." = "From Apple. Lets Wine, an Intel program, run on this Mac.";
+
+/* KelterApp/WelcomeView.swift:53 */
+"Danach legt Kelter mit einem Klick eine Bottle an und installiert Steam darin." = "Then Kelter creates a bottle with one click and installs Steam in it.";
+
+/* KelterApp/WelcomeView.swift:76 */
+"Wird installiert …" = "Installing …";
+
+/* KelterApp/WelcomeView.swift:85 */
+"Lade … %@ %%" = "Downloading … %@ %%";
+
+/* KelterApp/WelcomeView.swift:85 */
+"Lade …" = "Downloading …";
+
+/* KelterApp/WelcomeView.swift:87 */
+"Prüfe …" = "Checking …";
+
+/* KelterApp/WelcomeView.swift:97 */
+"%@ %@. Rund 250 MB Download, etwa 1 GB auf der Festplatte." = "%@ %@. About 250 MB download, about 1 GB on disk.";
+
+/* KelterApp/WinetricksView.swift:15 */
+"Installiert Windows-Laufzeitbibliotheken und Schriften, die manche Spiele brauchen. Steam vorher beenden ist am sichersten." = "Installs Windows run-time libraries and fonts that some games need. Quitting Steam first is safest.";
+
+/* KelterApp/WinetricksView.swift:36 */
+"Weitere Pakete, z. B. dotnet48 physx" = "More packages, e.g. dotnet48 physx";
+
+/* KelterCore/Bottle.swift:37 */
+"Wine (eingebaut)" = "Wine (built-in)";
+
+/* KelterCore/Bottle.swift:38 */
+"DXMT (DirectX 10/11 über Metal)" = "DXMT (DirectX 10/11 via Metal)";
+
+/* KelterCore/Bottle.swift:39 */
+"D3DMetal (DirectX 11/12, Apple)" = "D3DMetal (DirectX 11/12, Apple)";
+
+/* KelterCore/Bottle.swift:40 */
+"DXVK (DirectX 10/11 über Vulkan)" = "DXVK (DirectX 10/11 via Vulkan)";
+
+/* KelterCore/BottleStore.swift:11 */
+"Der Name darf nicht leer sein." = "The name can't be empty.";
+
+/* KelterCore/BottleStore.swift:13 */
+"Es gibt bereits eine Bottle mit dem Namen \"%@\"." = "There already is a bottle named \"%@\".";
+
+/* KelterCore/BottleStore.swift:15 */
+"Diese Bottle wurde nicht gefunden." = "This bottle wasn't found.";
+
+/* KelterCore/Localization.swift:32 */
+"Wie das System" = "Same as the system";
+
+/* KelterCore/RuntimeConfig.swift:423 */
+"Die Konfiguration %@ ist fehlerhaft: %@" = "The configuration %@ is broken: %@";
+
+/* KelterCore/SettingsEditing.swift:13 */
+"Windows-Version, sonst Wines eigene" = "Windows version, else Wine's own";
+
+/* KelterCore/SettingsEditing.swift:14 */
+"Wines eigene, sonst Windows-Version" = "Wine's own, else Windows version";
+
+/* KelterCore/SettingsEditing.swift:15 */
+"Nur Windows-Version" = "Windows version only";
+
+/* KelterCore/SettingsEditing.swift:16 */
+"Nur Wines eigene" = "Wine's own only";
+
+/* KelterCore/SettingsEditing.swift:17 */
+"Abgeschaltet" = "Disabled";
+
+/* KelterCore/SettingsEditing.swift:48 */
+"„%@“ ist kein gültiger Name für eine Umgebungsvariable. Erlaubt sind Buchstaben, Ziffern und _, nicht am Anfang eine Ziffer." = "“%@” isn't a valid name for an environment variable. Letters, digits and _ are allowed, but not a digit at the start.";
+
+/* KelterCore/SettingsEditing.swift:50 */
+"%@ setzt Kelter selbst für die Bottle und kann hier nicht geändert werden." = "Kelter sets %@ itself for the bottle; it can't be changed here.";
+
+/* KelterCore/SettingsEditing.swift:52 */
+"„%@“ ist kein gültiger Bibliotheksname. Beispiele: d3d11, dxgi, winmm, steam.exe." = "“%@” isn't a valid library name. Examples: d3d11, dxgi, winmm, steam.exe.";
+
+/* KelterSteam/SteamInstaller.swift:17 */
+"Der Steam-Installer ist mit Status %@ fehlgeschlagen. Details stehen im Log." = "The Steam installer failed with status %@. Details are in the log.";
+
+/* KelterSteam/SteamInstaller.swift:19 */
+"Steam ist in dieser Bottle nicht installiert." = "Steam isn't installed in this bottle.";
+
+/* KelterSteam/SteamUIFix.swift:13 */
+"Für die Steam-Fensterkorrektur fehlt die Datei %@." = "The file %@ for the Steam window fix is missing.";
+
+/* KelterSteam/SteamUIFix.swift:15 */
+"Die Windows-Umgebung ist noch nicht eingerichtet (%@ fehlt)." = "The Windows environment isn't set up yet (%@ is missing).";
+
+/* KelterSteam/SteamUIFix.swift:17 */
+"Die Steam-Fensterkorrektur konnte nicht in der Registrierung eingetragen werden (Status %@)." = "The Steam window fix could not be written to the registry (status %@).";
+
+/* KelterSteam/VDF.swift:56 */
+"Die Steam-Datei endet unerwartet." = "The Steam file ends unexpectedly.";
+
+/* KelterSteam/VDF.swift:58 */
+"Unerwartetes Zeichen \"%@\" in Zeile %@ der Steam-Datei." = "Unexpected character \"%@\" in line %@ of the Steam file.";
+
+/* KelterWine/FileDownloader.swift:10 */
+"Der Download ist fehlgeschlagen (HTTP %@)." = "The download failed (HTTP %@).";
+
+/* KelterWine/WineInstaller.swift:21 */
+"Die Prüfsumme von %@ stimmt nicht.\nErwartet: %@\nErhalten: %@" = "The checksum of %@ doesn't match.\nExpected: %@\nReceived: %@";
+
+/* KelterWine/WineInstaller.swift:23 */
+"%@ konnte nicht entpackt werden (tar-Status %@)." = "%@ could not be unpacked (tar status %@).";
+
+/* KelterWine/WineInstaller.swift:25 */
+"Nach dem Entpacken fehlt %@. Passen die Pfade in runtimes.json zum Archiv?" = "%@ is missing after unpacking. Do the paths in runtimes.json match the archive?";
+
+/* KelterWine/WineInstaller.swift:27 */
+"Der Pfad \"%@\" in runtimes.json ist nicht zulässig." = "The path \"%@\" in runtimes.json isn't allowed.";
+
+/* KelterWine/WineRunner.swift:10 */
+"\"%@\" ist mit Status %@ fehlgeschlagen. Details stehen im Log." = "\"%@\" failed with status %@. Details are in the log.";
+
+/* KelterWine/WineVariant.swift:16 */
+"%@ braucht angepasste Wine-Dateien, aber runtimes.json enthält keinen Abschnitt \"winePatches\"." = "%@ needs changed Wine files, but runtimes.json has no \"winePatches\" section.";
+
+/* KelterWine/WineVariant.swift:18 */
+"Für %@ fehlt noch: %@ (%@).\nDiese Dateien werden auf deinem Mac gebaut. Im Terminal im Kelter-Ordner ausführen:\n\nbash %@\n\nDanach %@ noch einmal auswählen." = "%@ still needs: %@ (%@).\nThese files are built on your Mac. Run this in Terminal in the Kelter folder:\n\nbash %@\n\nThen choose %@ again.";
+
+/* KelterWine/WineVariant.swift:22 */
+"%@ ist für Wine %@ gedacht, eingestellt ist aber Wine %@. Bitte runtimes.json anpassen und die Dateien für Wine %@ neu bauen." = "%@ is meant for Wine %@, but Wine %@ is configured. Please adjust runtimes.json and rebuild the files for Wine %@.";
+
+/* KelterWine/WineVariant.swift:41 */
+"Für %@ ist kein Disk-Image vorgesehen." = "%@ offers no disk image.";
+
+/* KelterWine/WineVariant.swift:43 */
+"%@ konnte nicht geöffnet werden. Bitte die Datei im Finder per Doppelklick öffnen, die Lizenz bestätigen und dann das geöffnete Laufwerk statt der Datei auswählen." = "%@ could not be opened. Please open the file in Finder with a double-click, accept the license, and then choose the opened volume instead of the file.";
+
+/* KelterWine/WineVariant.swift:47 */
+"Im ausgewählten Paket fehlt %@. Ist das wirklich das Paket für %@?" = "%@ is missing in the chosen package. Is this really the package for %@?";
+
+/* KelterWine/Winetricks.swift:15 */
+"„%@“ ist kein gültiger Winetricks-Paketname." = "“%@” isn't a valid Winetricks package name.";
+
+/* KelterWine/Winetricks.swift:17 */
+"Winetricks braucht für viele Pakete %@. Einmalig im Terminal installieren:\n\nbrew install %@" = "Winetricks needs %@ for many packages. Install it once in Terminal:\n\nbrew install %@";
+
+/* KelterWine/Winetricks.swift:21 */
+"Winetricks meldet einen Fehler (Status %@). Die Einzelheiten stehen im Log." = "Winetricks reported an error (status %@). The details are in the log.";
+
+/* KelterWine/Winetricks.swift:23 */
+"%@ ist in dieser Bottle bereits in einer neueren Version installiert, meist von Steam selbst. Es ist nichts zu tun. Weitere Pakete aus demselben Aufruf wurden nicht installiert; bitte einzeln installieren." = "%@ is already installed in a newer version in this bottle, usually by Steam itself. Nothing to do. Other packages from the same run were not installed; please install them one by one.";
+
+/* runtimes.json license */
+"Apple-Lizenz für das Game Porting Toolkit" = "Apple license for the Game Porting Toolkit";
+
+/* runtimes.json license */
+"D3DMetal gehört Apple. Apple erlaubt die Nutzung nur, um Spiele für Apple-Geräte zu entwickeln, zu testen oder zu bewerten, und die Weitergabe nur ohne kommerziellen Zweck. Die Dateien dürfen nicht verändert oder zerlegt werden. Kelter verändert sie nicht, liefert sie nicht mit und lädt sie nur nach deiner Zustimmung." = "D3DMetal belongs to Apple. Apple allows using it only to develop, test or evaluate games for Apple devices, and passing it on only for non-commercial purposes. The files must not be changed or taken apart. Kelter doesn't change them, doesn't ship them and only downloads them after you agree.";
+
+/* runtimes.json paused */
+"Steam stürzt mit D3DMetal unter Wine 11 ab: Apples dxgi.dll startet in steam.exe einen Thread, der in macOS abstürzt. Bis zu einer Lösung ist D3DMetal nicht wählbar." = "Steam crashes with D3DMetal under Wine 11: Apple's dxgi.dll starts a thread in steam.exe that crashes in macOS. Until this is solved, D3DMetal can't be chosen.";
+
+/* runtimes.json antiCheat */
+"Dieses Spiel nutzt einen Schutz gegen Schummeln, der unter Wine auf dem Mac in der Regel nicht läuft. Meist startet dann das Spiel oder sein Mehrspieler-Modus nicht. Ein Versuch ist möglich; Kelter kann aber nicht ausschließen, dass der Schutz Wine als Manipulation wertet." = "This game uses a protection against cheating that usually doesn't run under Wine on the Mac. Usually the game or its multiplayer mode won't start. You can try; but Kelter can't rule out that the protection treats Wine as tampering.";
+
+/* runtimes.json winetricks */
+"Visual C++ 2015–2022" = "Visual C++ 2015–2022";
+
+/* runtimes.json winetricks */
+"Laufzeitbibliothek, die sehr viele Spiele brauchen." = "Run-time library that a great many games need.";
+
+/* runtimes.json winetricks */
+"Direct3D-Shader-Compiler" = "Direct3D shader compiler";
+
+/* runtimes.json winetricks */
+"Für Spiele, die Shader beim Start übersetzen." = "For games that compile shaders at startup.";
+
+/* runtimes.json winetricks */
+"DirectX 9 (D3DX)" = "DirectX 9 (D3DX)";
+
+/* runtimes.json winetricks */
+"Zusatzbibliotheken älterer DirectX-9-Spiele." = "Extra libraries of older DirectX 9 games.";
+
+/* runtimes.json winetricks */
+"XAudio/XACT" = "XAudio/XACT";
+
+/* runtimes.json winetricks */
+"Ton bei älteren Spielen." = "Sound in older games.";
+
+/* runtimes.json winetricks */
+"Microsoft-Schriften" = "Microsoft fonts";
+
+/* runtimes.json winetricks */
+"Arial, Times New Roman und andere Standardschriften." = "Arial, Times New Roman and other standard fonts.";
+
+/* runtimes.json presets */
+"Oberfläche ohne Grafikbeschleunigung (Standard)" = "Interface without graphics acceleration (default)";
+
+/* runtimes.json presets */
+"Wie Standard, zusätzlich ohne Sandbox" = "Like default, additionally without sandbox";
+
+/* runtimes.json presets */
+"Oberfläche mit Grafikbeschleunigung" = "Interface with graphics acceleration";
+/* KelterApp/BottleOverridesView.swift */
+"(leer)" = "(empty)";
+
+/* KelterApp/LogView.swift */
+"Noch keine Ausgabe." = "No output yet.";
+
+/* KelterApp/MainView.swift */
+"Bereit" = "Ready";
+
+/* KelterApp/MainView.swift */
+"Steam läuft" = "Steam is running";
+
+/* KelterApp/MainView.swift */
+"Steam ist aus" = "Steam is off";

@@ -10,11 +10,11 @@ public enum DllOverrideMode: String, CaseIterable, Codable, Sendable {
 
     public var displayName: String {
         switch self {
-        case .nativeThenBuiltin: return "Windows-Version, sonst Wines eigene"
-        case .builtinThenNative: return "Wines eigene, sonst Windows-Version"
-        case .native: return "Nur Windows-Version"
-        case .builtin: return "Nur Wines eigene"
-        case .disabled: return "Abgeschaltet"
+        case .nativeThenBuiltin: return loc("Windows-Version, sonst Wines eigene")
+        case .builtinThenNative: return loc("Wines eigene, sonst Windows-Version")
+        case .native: return loc("Nur Windows-Version")
+        case .builtin: return loc("Nur Wines eigene")
+        case .disabled: return loc("Abgeschaltet")
         }
     }
 
@@ -45,11 +45,11 @@ public enum SettingsEditingError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .invalidVariableName(let name):
-            return "„\(name)“ ist kein gültiger Name für eine Umgebungsvariable. Erlaubt sind Buchstaben, Ziffern und _, nicht am Anfang eine Ziffer."
+            return loc("„%@“ ist kein gültiger Name für eine Umgebungsvariable. Erlaubt sind Buchstaben, Ziffern und _, nicht am Anfang eine Ziffer.", "\(name)")
         case .reservedVariable(let name):
-            return "\(name) setzt Kelter selbst für die Bottle und kann hier nicht geändert werden."
+            return loc("%@ setzt Kelter selbst für die Bottle und kann hier nicht geändert werden.", "\(name)")
         case .invalidLibraryName(let name):
-            return "„\(name)“ ist kein gültiger Bibliotheksname. Beispiele: d3d11, dxgi, winmm, steam.exe."
+            return loc("„%@“ ist kein gültiger Bibliotheksname. Beispiele: d3d11, dxgi, winmm, steam.exe.", "\(name)")
         }
     }
 }

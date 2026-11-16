@@ -12,20 +12,17 @@ public enum WinetricksError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .invalidVerb(let verb):
-            return "„\(verb)“ ist kein gültiger Winetricks-Paketname."
+            return loc("„%@“ ist kein gültiger Winetricks-Paketname.", "\(verb)")
         case .missingTools(let tools):
-            return """
-                Winetricks braucht für viele Pakete \(tools.joined(separator: ", ")). Einmalig im Terminal installieren:
-
-                brew install \(tools.joined(separator: " "))
-                """
+            return loc(
+                "Winetricks braucht für viele Pakete %@. Einmalig im Terminal installieren:\n\nbrew install %@",
+                tools.joined(separator: ", "), tools.joined(separator: " "))
         case .failed(let status):
-            return "Winetricks meldet einen Fehler (Status \(status)). Die Einzelheiten stehen im Log."
+            return loc("Winetricks meldet einen Fehler (Status %@). Die Einzelheiten stehen im Log.", "\(status)")
         case .alreadyNewer(let installer):
-            return """
-                \(installer) ist in dieser Bottle bereits in einer neueren Version installiert, meist von Steam selbst. \
-                Es ist nichts zu tun. Weitere Pakete aus demselben Aufruf wurden nicht installiert; bitte einzeln installieren.
-                """
+            return loc(
+                "%@ ist in dieser Bottle bereits in einer neueren Version installiert, meist von Steam selbst. Es ist nichts zu tun. Weitere Pakete aus demselben Aufruf wurden nicht installiert; bitte einzeln installieren.",
+                installer)
         }
     }
 }

@@ -85,7 +85,7 @@ private struct GeneralSettings: View {
         .formStyle(.grouped)
         .onAppear { name = bottle.name }
         .onDisappear(perform: rename)
-        .confirmationDialog("Bottle „\(bottle.name)“ wirklich löschen?", isPresented: $confirmDelete) {
+        .confirmationDialog(loc("Bottle „%@“ wirklich löschen?", bottle.name), isPresented: $confirmDelete) {
             Button("Endgültig löschen", role: .destructive) {
                 close()
                 model.deleteBottle(bottle)
@@ -104,7 +104,7 @@ private struct GeneralSettings: View {
 
     private func chooseProgram() {
         let panel = NSOpenPanel()
-        panel.title = "Windows-Programm auswählen"
+        panel.title = loc("Windows-Programm auswählen")
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.allowedContentTypes = ["exe", "msi"].compactMap { UTType(filenameExtension: $0) }
@@ -139,7 +139,7 @@ private struct GraphicsSettings: View {
                     ForEach(choices, id: \.self) { backend in
                         VStack(alignment: .leading, spacing: 2) {
                             Text(model.config?.pauseReason(for: backend) == nil
-                                 ? backend.displayName : "\(backend.displayName) – pausiert")
+                                 ? backend.displayName : loc("%@ – pausiert", backend.displayName))
                             Text(backend.explanation)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -171,10 +171,10 @@ extension GraphicsBackendKind {
     /// One line in everyday words for the graphics settings.
     var explanation: String {
         switch self {
-        case .wined3d: return "Läuft mit allem, aber langsamer. Für alte Spiele (DirectX 9)."
-        case .dxmt: return "Schnell für DirectX 10 und 11. DirectX 9 läuft weiter über Wine. Empfohlen."
-        case .d3dmetal: return "Apples Übersetzung für DirectX 12. Zurzeit nicht nutzbar."
-        case .dxvk: return "DirectX 10 und 11 über Vulkan."
+        case .wined3d: return loc("Läuft mit allem, aber langsamer. Für alte Spiele (DirectX 9).")
+        case .dxmt: return loc("Schnell für DirectX 10 und 11. DirectX 9 läuft weiter über Wine. Empfohlen.")
+        case .d3dmetal: return loc("Apples Übersetzung für DirectX 12. Zurzeit nicht nutzbar.")
+        case .dxvk: return loc("DirectX 10 und 11 über Vulkan.")
         }
     }
 }
@@ -200,7 +200,7 @@ private struct AdvancedSettings: View {
                                 .onSubmit(saveArguments)
                             Menu("Vorschläge") {
                                 ForEach(Array(model.steamArgumentPresets.enumerated()), id: \.offset) { _, preset in
-                                    Button(preset.name) {
+                                    Button(loc(preset.name)) {
                                         model.setSteamArguments(preset.arguments, for: bottle)
                                         steamArguments = CommandLineArguments.join(preset.arguments)
                                     }

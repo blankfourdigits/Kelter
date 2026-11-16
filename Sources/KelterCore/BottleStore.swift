@@ -8,11 +8,11 @@ public enum BottleStoreError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .emptyName:
-            return "Der Name darf nicht leer sein."
+            return loc("Der Name darf nicht leer sein.")
         case .duplicateName(let name):
-            return "Es gibt bereits eine Bottle mit dem Namen \"\(name)\"."
+            return loc("Es gibt bereits eine Bottle mit dem Namen \"%@\".", "\(name)")
         case .notFound:
-            return "Diese Bottle wurde nicht gefunden."
+            return loc("Diese Bottle wurde nicht gefunden.")
         }
     }
 }

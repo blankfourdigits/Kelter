@@ -1,4 +1,5 @@
 import Foundation
+import KelterCore
 
 /// Valve's text KeyValues format (VDF), as used by `appmanifest_*.acf`,
 /// `libraryfolders.vdf` and `config.vdf`:
@@ -52,9 +53,9 @@ public enum VDFError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .unexpectedEnd:
-            return "Die Steam-Datei endet unerwartet."
+            return loc("Die Steam-Datei endet unerwartet.")
         case .unexpectedToken(let token, let line):
-            return "Unerwartetes Zeichen \"\(token)\" in Zeile \(line) der Steam-Datei."
+            return loc("Unerwartetes Zeichen \"%@\" in Zeile %@ der Steam-Datei.", "\(token)", "\(line)")
         }
     }
 }

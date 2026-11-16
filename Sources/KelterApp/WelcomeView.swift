@@ -29,7 +29,7 @@ struct WelcomeView: View {
                     StepRow(
                         number: 1,
                         title: "Rosetta 2",
-                        text: "Von Apple. Lässt Wine, ein Intel-Programm, auf diesem Mac laufen.",
+                        text: loc("Von Apple. Lässt Wine, ein Intel-Programm, auf diesem Mac laufen."),
                         state: rosettaState
                     ) {
                         Button("Installieren") { model.installRosetta() }
@@ -50,7 +50,7 @@ struct WelcomeView: View {
                     StepRow(
                         number: 3,
                         title: "Steam",
-                        text: "Danach legt Kelter mit einem Klick eine Bottle an und installiert Steam darin.",
+                        text: loc("Danach legt Kelter mit einem Klick eine Bottle an und installiert Steam darin."),
                         state: .later
                     ) { EmptyView() }
                 }
@@ -73,7 +73,7 @@ struct WelcomeView: View {
         switch model.rosettaInstalled {
         case .some(true): return .done
         case .none: return .checking
-        case .some(false): return model.rosettaInstalling ? .working("Wird installiert …", nil) : .todo
+        case .some(false): return model.rosettaInstalling ? .working(loc("Wird installiert …"), nil) : .todo
         }
     }
 
@@ -82,11 +82,11 @@ struct WelcomeView: View {
         if let phase = model.installPhase {
             switch phase {
             case .downloading(let fraction):
-                return .working(fraction.map { "Lade … \(Int($0 * 100)) %" } ?? "Lade …", fraction)
+                return .working(fraction.map { loc("Lade … %@ %%", "\(Int($0 * 100))") } ?? loc("Lade …"), fraction)
             case .verifying:
-                return .working("Prüfe …", nil)
+                return .working(loc("Prüfe …"), nil)
             case .extracting:
-                return .working("Entpacke …", nil)
+                return .working(loc("Entpacke …"), nil)
             }
         }
         return .todo
@@ -94,7 +94,7 @@ struct WelcomeView: View {
 
     private var wineText: String {
         guard let config = model.config else { return "Die Windows-Umgebung, in der Steam läuft." }
-        return "\(config.wine.name) \(config.wine.version). Rund 250 MB Download, etwa 1 GB auf der Festplatte."
+        return loc("%@ %@. Rund 250 MB Download, etwa 1 GB auf der Festplatte.", "\(config.wine.name)", "\(config.wine.version)")
     }
 }
 
@@ -124,7 +124,7 @@ private struct StepRow<Action: View>: View {
                         .font(.callout.weight(.bold))
                         .foregroundStyle(.white)
                 } else {
-                    Text("\(number)")
+                    Text(verbatim: "\(number)")
                         .font(.callout.weight(.semibold))
                         .foregroundStyle(isActive ? .white : .secondary)
                 }

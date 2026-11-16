@@ -1,4 +1,5 @@
 import AppKit
+import KelterCore
 import SwiftUI
 
 /// Live view of the log file: everything Kelter and Wine print.
@@ -38,7 +39,7 @@ struct LogView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(model.logText.isEmpty ? "Noch keine Ausgabe." : model.logText)
+                        Text(model.logText.isEmpty ? loc("Noch keine Ausgabe.") : model.logText)
                             .font(.system(.caption, design: .monospaced))
                             .foregroundStyle(model.logText.isEmpty ? .secondary : .primary)
                             .textSelection(.enabled)
@@ -59,9 +60,9 @@ struct LogView: View {
 
     private func chooseDiagnosticsFolder() {
         let panel = NSOpenPanel()
-        panel.title = "Ordner für die Diagnose wählen"
-        panel.message = "Kelter legt darin einen neuen Ordner \"Kelter-Diagnose-…\" an. Steams Logs können deinen Kontonamen enthalten."
-        panel.prompt = "Hier sammeln"
+        panel.title = loc("Ordner für die Diagnose wählen")
+        panel.message = loc("Kelter legt darin einen neuen Ordner \"Kelter-Diagnose-…\" an. Steams Logs können deinen Kontonamen enthalten.")
+        panel.prompt = loc("Hier sammeln")
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.canCreateDirectories = true

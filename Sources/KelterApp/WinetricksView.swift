@@ -20,8 +20,8 @@ struct WinetricksView: View {
                 ForEach(verbs, id: \.verb) { verb in
                     HStack(alignment: .firstTextBaseline) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(verb.name)
-                            Text("\(verb.verb) – \(verb.description)")
+                            Text(loc(verb.name))
+                            Text(verb.verb + " – " + loc(verb.description))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }

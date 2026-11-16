@@ -420,7 +420,7 @@ public enum RuntimeConfigError: LocalizedError, Equatable {
         case .notFound(let paths):
             return "Keine runtimes.json gefunden. Gesucht in:\n" + paths.joined(separator: "\n")
         case .invalid(let path, let reason):
-            return "Die Konfiguration \(path) ist fehlerhaft: \(reason)"
+            return loc("Die Konfiguration %@ ist fehlerhaft: %@", "\(path)", "\(reason)")
         }
     }
 }

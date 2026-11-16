@@ -57,6 +57,19 @@ Alternativ `Package.swift` in Xcode öffnen und das Schema `Kelter` starten.
 4. Eine `.exe` oder `.msi` lässt sich auf das Fenster ziehen und startet in der
    Bottle.
 
+### Sprache
+
+Kelter gibt es auf Deutsch und Englisch. Umstellen unter **Kelter →
+Einstellungen …** (⌘,): „Wie das System“, Deutsch oder English. macOS
+wechselt die Sprache einer App beim Start; „Jetzt neu starten“ erledigt das.
+Das Log bleibt deutsch, es ist ein technisches Protokoll.
+
+Für Mitwirkende: Der deutsche Text ist der Schlüssel, die englischen
+Übersetzungen stehen in `Resources/en.lproj/Localizable.strings`. Feste
+Texte in SwiftUI (`Text("…")`, `Button("…")` …) übersetzt SwiftUI selbst;
+Texte mit Platzhaltern oder aus Variablen laufen über `loc("… %@ …", wert)`.
+Der Test `LocalizationTests` findet jeden angezeigten Text ohne Übersetzung.
+
 ### Testansicht
 
 **Darstellung → Testansicht** (⌥⌘T) zeigt Kelters ursprüngliche Ansicht:

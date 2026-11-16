@@ -32,6 +32,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleLocalizations</key>
     <array>
         <string>de</string>
+        <string>en</string>
     </array>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>

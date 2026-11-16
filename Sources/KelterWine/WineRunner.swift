@@ -7,7 +7,7 @@ public enum WineRunnerError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .commandFailed(let command, let status):
-            return "\"\(command)\" ist mit Status \(status) fehlgeschlagen. Details stehen im Log."
+            return loc("\"%@\" ist mit Status %@ fehlgeschlagen. Details stehen im Log.", "\(command)", "\(status)")
         }
     }
 }

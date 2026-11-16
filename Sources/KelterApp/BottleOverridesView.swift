@@ -42,7 +42,7 @@ struct BottleOverridesView: View {
                         .font(.body.monospaced())
                         .frame(width: 200, alignment: .leading)
                         .textSelection(.enabled)
-                    Text(entry.value.isEmpty ? "(leer)" : entry.value)
+                    Text(entry.value.isEmpty ? loc("(leer)") : entry.value)
                         .font(.body.monospaced())
                         .foregroundStyle(entry.value.isEmpty ? .secondary : .primary)
                         .lineLimit(1)

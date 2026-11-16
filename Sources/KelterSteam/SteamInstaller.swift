@@ -14,9 +14,9 @@ public enum SteamError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .installerFailed(let status):
-            return "Der Steam-Installer ist mit Status \(status) fehlgeschlagen. Details stehen im Log."
+            return loc("Der Steam-Installer ist mit Status %@ fehlgeschlagen. Details stehen im Log.", "\(status)")
         case .notInstalled:
-            return "Steam ist in dieser Bottle nicht installiert."
+            return loc("Steam ist in dieser Bottle nicht installiert.")
         }
     }
 }

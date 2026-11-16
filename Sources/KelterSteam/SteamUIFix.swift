@@ -10,11 +10,11 @@ public enum SteamUIFixError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .missingFile(let path):
-            return "Für die Steam-Fensterkorrektur fehlt die Datei \(path)."
+            return loc("Für die Steam-Fensterkorrektur fehlt die Datei %@.", "\(path)")
         case .prefixNotInitialized(let path):
-            return "Die Windows-Umgebung ist noch nicht eingerichtet (\(path) fehlt)."
+            return loc("Die Windows-Umgebung ist noch nicht eingerichtet (%@ fehlt).", "\(path)")
         case .registryFailed(let status):
-            return "Die Steam-Fensterkorrektur konnte nicht in der Registrierung eingetragen werden (Status \(status))."
+            return loc("Die Steam-Fensterkorrektur konnte nicht in der Registrierung eingetragen werden (Status %@).", "\(status)")
         }
     }
 }

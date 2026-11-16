@@ -96,7 +96,7 @@ final class AppModel: ObservableObject {
     func setGraphicsBackend(_ backend: GraphicsBackendKind, for bottle: Bottle) {
         guard let config, let wineInstallation, busyMessage == nil else { return }
         if let reason = config.pauseReason(for: backend) {
-            errorMessage = reason
+            errorMessage = loc(reason)
             return
         }
         guard let layer = config.graphicsLayer(for: backend), wineVariants[backend] == nil else {
@@ -145,7 +145,7 @@ final class AppModel: ObservableObject {
         source: LayerSource? = nil
     ) async throws {
         guard let layer = config.graphicsLayer(for: backend) else { return }
-        busyMessage = "\(layer.name) \(layer.version) wird geladen und eingerichtet …"
+        busyMessage = loc("%@ %@ wird geladen und eingerichtet …", "\(layer.name)", "\(layer.version)")
         defer { busyMessage = nil }
         let installer = WineVariantInstaller(
             paths: paths, wine: config.wine, layer: layer, patches: config.winePatches, log: log)
@@ -182,7 +182,7 @@ final class AppModel: ObservableObject {
             try paths.ensureDirectories()
             try log.prepare()
         } catch {
-            errorMessage = "Der Datenordner konnte nicht angelegt werden: \(error.localizedDescription)"
+            errorMessage = loc("Der Datenordner konnte nicht angelegt werden: %@", "\(error.localizedDescription)")
         }
 
         // Show only this session in the log pane.
@@ -396,7 +396,7 @@ final class AppModel: ObservableObject {
                 log.append("\nDiagnose gesammelt: \(folder.path)\n")
                 NSWorkspace.shared.activateFileViewerSelecting([folder])
             } catch {
-                self.errorMessage = "Die Diagnose konnte nicht gesammelt werden: \(error.localizedDescription)"
+                self.errorMessage = loc("Die Diagnose konnte nicht gesammelt werden: %@", "\(error.localizedDescription)")
             }
         }
     }
@@ -412,8 +412,9 @@ final class AppModel: ObservableObject {
                 let ok = try await Rosetta.install(log: log)
                 self.rosettaInstalled = ok
                 if !ok {
-                    self.errorMessage = "Rosetta 2 konnte nicht automatisch installiert werden. "
-                        + "Bitte im Terminal ausführen:\n\(Rosetta.manualCommand)"
+                    self.errorMessage = loc(
+                        "Rosetta 2 konnte nicht automatisch installiert werden. Bitte im Terminal ausführen:\n%@",
+                        Rosetta.manualCommand)
                 }
             } catch {
                 self.errorMessage = error.localizedDescription
@@ -440,12 +441,12 @@ final class AppModel: ObservableObject {
         Task {
             do {
                 if self.wineInstallation == nil {
-                    self.installLabel = "Wine"
+                    self.installLabel = loc("Wine")
                     let installer = WineInstaller(paths: paths, config: config.wine, log: log)
                     self.wineInstallation = try await installer.install(onPhase: onPhase)
                 }
                 if let support = config.support, self.supportInstallation == nil {
-                    self.installLabel = "Laufzeitbibliotheken und Grafikschichten"
+                    self.installLabel = loc("Laufzeitbibliotheken und Grafikschichten")
                     self.installPhase = .downloading(0)
                     let installer = SupportInstaller(paths: paths, config: support, log: log)
                     self.supportInstallation = try await installer.install(onPhase: onPhase)
@@ -492,7 +493,7 @@ final class AppModel: ObservableObject {
         selectedBottleID = bottle.id
 
         let prefix = store.prefixURL(for: bottle.id)
-        busyMessage = "Bottle \"\(bottle.name)\" wird eingerichtet. Das dauert beim ersten Mal ein bis zwei Minuten."
+        busyMessage = loc("Bottle \"%@\" wird eingerichtet. Das dauert beim ersten Mal ein bis zwei Minuten.", "\(bottle.name)")
         Task {
             do {
                 try await runner.initializePrefix(prefix: prefix, settings: bottle.settings)
@@ -516,7 +517,7 @@ final class AppModel: ObservableObject {
     func deleteBottle(_ bottle: Bottle) {
         let runner = self.runner
         let prefix = store.prefixURL(for: bottle.id)
-        busyMessage = "Bottle \"\(bottle.name)\" wird gelöscht."
+        busyMessage = loc("Bottle \"%@\" wird gelöscht.", "\(bottle.name)")
         Task {
             if let runner {
                 _ = try? await runner.killAll(prefix: prefix, settings: bottle.settings)
@@ -625,7 +626,7 @@ final class AppModel: ObservableObject {
     /// it and start it.
     func setUpSteam() {
         guard let config, let runner, busyMessage == nil else { return }
-        busyMessage = "Steam wird vorbereitet …"
+        busyMessage = loc("Steam wird vorbereitet …")
         Task {
             do {
                 let bottle: Bottle
@@ -638,7 +639,7 @@ final class AppModel: ObservableObject {
                     bottle = try self.store.create(name: AppModel.steamBottleName)
                     self.refreshBottles()
                     self.selectedBottleID = bottle.id
-                    self.busyMessage = "Windows-Umgebung für Steam wird eingerichtet. Das dauert ein bis zwei Minuten."
+                    self.busyMessage = loc("Windows-Umgebung für Steam wird eingerichtet. Das dauert ein bis zwei Minuten.")
                     try await runner.initializePrefix(
                         prefix: self.store.prefixURL(for: bottle.id),
                         settings: bottle.settings
@@ -660,7 +661,7 @@ final class AppModel: ObservableObject {
     /// Installs Steam into an existing bottle.
     func installSteam(in bottle: Bottle) {
         guard let config, let runner, busyMessage == nil else { return }
-        busyMessage = "Steam wird vorbereitet …"
+        busyMessage = loc("Steam wird vorbereitet …")
         Task {
             do {
                 try await self.performSteamInstall(in: bottle, config: config, runner: runner)
@@ -682,9 +683,9 @@ final class AppModel: ObservableObject {
                 guard self.busyMessage != nil else { return }
                 switch phase {
                 case .downloading:
-                    self.busyMessage = "Der Steam-Installer wird geladen …"
+                    self.busyMessage = loc("Der Steam-Installer wird geladen …")
                 case .installing:
-                    self.busyMessage = "Steam wird installiert …"
+                    self.busyMessage = loc("Steam wird installiert …")
                 }
             }
         }
@@ -753,7 +754,7 @@ final class AppModel: ObservableObject {
         let layer = config.graphicsLayer(for: backend)
 
         if let reason = config.pauseReason(for: backend) {
-            errorMessage = "\(reason)\n\nBitte bei der Bottle unter „Grafik“ eine andere Auswahl treffen, zum Beispiel DXMT."
+            errorMessage = loc("%@\n\nBitte bei der Bottle unter „Grafik“ eine andere Auswahl treffen, zum Beispiel DXMT.", loc(reason))
             return
         }
 
@@ -802,7 +803,7 @@ final class AppModel: ObservableObject {
         guard let config, let runner, busyMessage == nil else { return }
         let launcher = SteamLauncher(config: config.steam, runner: runner)
         let prefix = store.prefixURL(for: bottle.id)
-        busyMessage = "Steam wird beendet …"
+        busyMessage = loc("Steam wird beendet …")
         Task {
             await launcher.shutdown(prefix: prefix, settings: bottle.settings)
             self.busyMessage = nil
@@ -846,7 +847,7 @@ final class AppModel: ObservableObject {
         let prefix = store.prefixURL(for: current.id)
         let paths = self.paths
         let log = self.log
-        busyMessage = "Winetricks installiert \(validated.joined(separator: ", ")) …"
+        busyMessage = loc("Winetricks installiert %@ …", validated.joined(separator: ", "))
         Task {
             defer { self.busyMessage = nil }
             do {
@@ -908,6 +909,6 @@ final class AppModel: ObservableObject {
 struct LayerNotSetUp: LocalizedError {
     let layer: String
     var errorDescription: String? {
-        "\(layer) ist noch nicht eingerichtet. Bitte bei der Bottle unter „Grafik“ \(layer) auswählen und der Lizenz zustimmen."
+        loc("%@ ist noch nicht eingerichtet. Bitte bei der Bottle unter „Grafik“ %@ auswählen und der Lizenz zustimmen.", layer, layer)
     }
 }

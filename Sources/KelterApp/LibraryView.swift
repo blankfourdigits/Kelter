@@ -30,7 +30,7 @@ struct LibraryView: View {
                             game: game,
                             cover: model.coverImage(for: game, in: bottle),
                             antiCheat: model.antiCheatHints[bottle.id]?[game.appID],
-                            antiCheatMessage: model.config?.antiCheat?.message ?? ""
+                            antiCheatMessage: loc(model.config?.antiCheat?.message ?? "")
                         ) {
                             model.play(game, in: bottle)
                         }
@@ -46,9 +46,9 @@ struct LibraryView: View {
     private var summary: String {
         guard let games else { return "Spiele werden gesucht …" }
         switch games.count {
-        case 0: return "Keine installierten Spiele gefunden. Spiele installierst du in Steam."
-        case 1: return "1 installiertes Spiel"
-        default: return "\(games.count) installierte Spiele"
+        case 0: return loc("Keine installierten Spiele gefunden. Spiele installierst du in Steam.")
+        case 1: return loc("1 installiertes Spiel")
+        default: return loc("%@ installierte Spiele", "\(games.count)")
         }
     }
 }
@@ -78,9 +78,9 @@ private struct GameTile: View {
                     .foregroundStyle(.orange)
                     .lineLimit(2)
                     .frame(width: 130, alignment: .leading)
-                    .help("\(antiCheatMessage)\n\nGefunden: \(antiCheat.evidence.joined(separator: "; "))")
+                    .help(loc("%@\n\nGefunden: %@", antiCheatMessage, antiCheat.evidence.joined(separator: "; ")))
             }
-            Button(game.isFullyInstalled ? "Spielen" : "Wird installiert …") {
+            Button(game.isFullyInstalled ? loc("Spielen") : loc("Wird installiert …")) {
                 if antiCheat != nil {
                     confirmAntiCheat = true
                 } else {
@@ -91,7 +91,7 @@ private struct GameTile: View {
             .frame(width: 130)
         }
         .confirmationDialog(
-            "\(game.name) nutzt \(antiCheat?.systems.joined(separator: ", ") ?? "einen Anti-Cheat-Schutz")",
+            loc("%@ nutzt %@", game.name, antiCheat?.systems.joined(separator: ", ") ?? loc("einen Anti-Cheat-Schutz")),
             isPresented: $confirmAntiCheat
         ) {
             Button("Trotzdem starten", action: play)
@@ -99,7 +99,7 @@ private struct GameTile: View {
         } message: {
             Text(antiCheatMessage)
         }
-        .help("\(game.name) – \(ByteCountFormatter.string(fromByteCount: game.sizeOnDisk, countStyle: .file))")
+        .help(game.name + " – " + ByteCountFormatter.string(fromByteCount: game.sizeOnDisk, countStyle: .file))
         .contextMenu {
             Button("Im Finder zeigen") {
                 NSWorkspace.shared.activateFileViewerSelecting([game.installURL])

@@ -18,13 +18,13 @@ public enum WineInstallError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .checksumMismatch(let name, let expected, let actual):
-            return "Die Prüfsumme von \(name) stimmt nicht.\nErwartet: \(expected)\nErhalten: \(actual)"
+            return loc("Die Prüfsumme von %@ stimmt nicht.\nErwartet: %@\nErhalten: %@", "\(name)", "\(expected)", "\(actual)")
         case .extractionFailed(let name, let status):
-            return "\(name) konnte nicht entpackt werden (tar-Status \(status))."
+            return loc("%@ konnte nicht entpackt werden (tar-Status %@).", "\(name)", "\(status)")
         case .binaryMissing(let path):
-            return "Nach dem Entpacken fehlt \(path). Passen die Pfade in runtimes.json zum Archiv?"
+            return loc("Nach dem Entpacken fehlt %@. Passen die Pfade in runtimes.json zum Archiv?", "\(path)")
         case .unsafePath(let path):
-            return "Der Pfad \"\(path)\" in runtimes.json ist nicht zulässig."
+            return loc("Der Pfad \"%@\" in runtimes.json ist nicht zulässig.", "\(path)")
         }
     }
 }

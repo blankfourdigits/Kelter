@@ -74,7 +74,7 @@ struct BottleDetailView: View {
                         Picker("Grafik", selection: graphicsBackend) {
                             ForEach(graphicsChoices, id: \.self) { backend in
                                 if model.config?.pauseReason(for: backend) != nil {
-                                    Text("\(backend.displayName) – pausiert").tag(backend)
+                                    Text(loc("%@ – pausiert", backend.displayName)).tag(backend)
                                 } else {
                                     Text(backend.displayName).tag(backend)
                                 }
@@ -155,7 +155,7 @@ struct BottleDetailView: View {
             Button("Abbrechen", role: .cancel) {}
         }
         .confirmationDialog(
-            "Bottle \"\(bottle.name)\" wirklich löschen?",
+            loc("Bottle „%@“ wirklich löschen?", bottle.name),
             isPresented: $showDelete
         ) {
             Button("Endgültig löschen", role: .destructive) {
@@ -209,7 +209,7 @@ struct BottleDetailView: View {
                         }
                     Menu("Vorschläge") {
                         ForEach(Array(model.steamArgumentPresets.enumerated()), id: \.offset) { _, preset in
-                            Button(preset.name) {
+                            Button(loc(preset.name)) {
                                 steamArgumentsText = CommandLineArguments.join(preset.arguments)
                                 model.setSteamArguments(preset.arguments, for: bottle)
                             }
@@ -350,7 +350,7 @@ struct BottleDetailView: View {
 
     private func chooseFile() {
         let panel = NSOpenPanel()
-        panel.title = "Windows-Programm auswählen"
+        panel.title = loc("Windows-Programm auswählen")
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.allowedContentTypes = ["exe", "msi"].compactMap { UTType(filenameExtension: $0) }

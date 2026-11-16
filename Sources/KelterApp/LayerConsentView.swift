@@ -17,13 +17,13 @@ struct LayerConsentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("\(layer.name) einrichten")
+            Text(loc("%@ einrichten", layer.name))
                 .font(.title2)
 
             if let license = layer.license {
-                Text(license.summary)
+                Text(loc(license.summary))
                     .fixedSize(horizontal: false, vertical: true)
-                Link(license.name, destination: license.url)
+                Link(loc(license.name), destination: license.url)
                 Toggle("Ich habe die Lizenz gelesen und stimme ihr zu.", isOn: $agreed)
             }
 
@@ -49,7 +49,7 @@ struct LayerConsentView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Alternative: direkt laden")
                     .font(.headline)
-                Text("Kelter lädt Apples Dateien aus dem Paket von Gcenx (\(layer.url.host ?? "")) und prüft die Prüfsumme.")
+                Text(loc("Kelter lädt Apples Dateien aus dem Paket von Gcenx (%@) und prüft die Prüfsumme.", layer.url.host ?? ""))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack {
@@ -81,8 +81,8 @@ struct LayerConsentView: View {
 
     private func chooseDiskImage() {
         let panel = NSOpenPanel()
-        panel.title = "\(layer.name): Apples Paket auswählen"
-        panel.message = "Die DMG-Datei oder das bereits geöffnete Laufwerk auswählen."
+        panel.title = loc("%@: Apples Paket auswählen", layer.name)
+        panel.message = loc("Die DMG-Datei oder das bereits geöffnete Laufwerk auswählen.")
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false

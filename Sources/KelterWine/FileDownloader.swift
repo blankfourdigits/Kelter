@@ -1,4 +1,5 @@
 import Foundation
+import KelterCore
 
 public enum DownloadError: LocalizedError, Equatable {
     case badStatus(Int)
@@ -6,7 +7,7 @@ public enum DownloadError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .badStatus(let code):
-            return "Der Download ist fehlgeschlagen (HTTP \(code))."
+            return loc("Der Download ist fehlgeschlagen (HTTP %@).", "\(code)")
         }
     }
 }

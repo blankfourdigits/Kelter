@@ -34,10 +34,10 @@ public enum GraphicsBackendKind: String, Codable, CaseIterable, Sendable {
 
     public var displayName: String {
         switch self {
-        case .wined3d: return "Wine (eingebaut)"
-        case .dxmt: return "DXMT (DirectX 10/11 über Metal)"
-        case .d3dmetal: return "D3DMetal (DirectX 11/12, Apple)"
-        case .dxvk: return "DXVK (DirectX 10/11 über Vulkan)"
+        case .wined3d: return loc("Wine (eingebaut)")
+        case .dxmt: return loc("DXMT (DirectX 10/11 über Metal)")
+        case .d3dmetal: return loc("D3DMetal (DirectX 11/12, Apple)")
+        case .dxvk: return loc("DXVK (DirectX 10/11 über Vulkan)")
         }
     }
 

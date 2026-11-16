@@ -199,7 +199,7 @@ struct BottleHomeView: View {
                     .frame(width: 8, height: 8)
                 Text(statusText)
                 Text("·").foregroundStyle(.tertiary)
-                Text("Grafik: \(bottle.settings.graphicsBackend.shortName)")
+                Text(loc("Grafik: %@", bottle.settings.graphicsBackend.shortName))
             }
             .font(.callout)
             .foregroundStyle(.secondary)
@@ -207,8 +207,8 @@ struct BottleHomeView: View {
     }
 
     private var statusText: String {
-        if !steamInstalled { return running ? "Läuft" : "Bereit" }
-        return running ? "Steam läuft" : "Steam ist aus"
+        if !steamInstalled { return running ? loc("Läuft") : loc("Bereit") }
+        return running ? loc("Steam läuft") : loc("Steam ist aus")
     }
 
     private var noSteam: some View {
@@ -254,7 +254,7 @@ struct BottleHomeView: View {
                         game: game,
                         cover: model.coverImage(for: game, in: bottle),
                         antiCheat: model.antiCheatHints[bottle.id]?[game.appID],
-                        antiCheatMessage: model.config?.antiCheat?.message ?? ""
+                        antiCheatMessage: loc(model.config?.antiCheat?.message ?? "")
                     ) {
                         model.play(game, in: bottle)
                     }
@@ -297,7 +297,7 @@ struct GameCard: View {
                                 .padding(.vertical, 3)
                                 .background(.orange, in: Capsule())
                                 .foregroundStyle(.white)
-                                .help("\(antiCheat.systems.joined(separator: ", ")): \(antiCheatMessage)")
+                                .help(antiCheat.systems.joined(separator: ", ") + ": " + antiCheatMessage)
                             Spacer()
                         }
                         Spacer()
@@ -320,7 +320,7 @@ struct GameCard: View {
                     .lineLimit(1)
                 Text(game.isFullyInstalled
                      ? ByteCountFormatter.string(fromByteCount: game.sizeOnDisk, countStyle: .file)
-                     : "Wird installiert …")
+                     : loc("Wird installiert …"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -333,7 +333,7 @@ struct GameCard: View {
             }
         }
         .confirmationDialog(
-            "\(game.name) nutzt \(antiCheat?.systems.joined(separator: ", ") ?? "einen Anti-Cheat-Schutz")",
+            loc("%@ nutzt %@", game.name, antiCheat?.systems.joined(separator: ", ") ?? loc("einen Anti-Cheat-Schutz")),
             isPresented: $confirmAntiCheat
         ) {
             Button("Trotzdem starten", action: play)
@@ -376,10 +376,10 @@ extension GraphicsBackendKind {
     /// Short name for status lines.
     var shortName: String {
         switch self {
-        case .wined3d: return "Wine (OpenGL)"
-        case .dxmt: return "DXMT"
-        case .d3dmetal: return "D3DMetal"
-        case .dxvk: return "DXVK"
+        case .wined3d: return loc("Wine (OpenGL)")
+        case .dxmt: return loc("DXMT")
+        case .d3dmetal: return loc("D3DMetal")
+        case .dxvk: return loc("DXVK")
         }
     }
 }
