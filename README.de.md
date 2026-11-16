@@ -16,10 +16,13 @@ fertige, gepflegte Builds aus dem Netz; Herkunft, Version und Prüfsumme stehen
 in einer Konfigurationsdatei. Proprietäre Bestandteile liefert Kelter nicht
 mit.
 
+<p align="center">
+  <img src="docs/kelter-demo.gif" width="800" alt="Ein Klick auf Half-Life 2 in Kelters Bibliothek startet das Spiel über Steam">
+</p>
+
 > **Stand:** frühe Version (0.1). Steam, die Spielebibliothek und DirectX
-> 9–11 laufen; DirectX 12 noch nicht. Es gibt noch keine fertige App zum
-> Herunterladen, Kelter wird aus dem Quelltext gebaut (zwei Befehle, siehe
-> [Installieren](#installieren)).
+> 9–11 laufen; DirectX 12 noch nicht. Die App gibt es zum
+> [Herunterladen](#installieren), oder du baust sie aus dem Quelltext.
 
 Kelter ist ein unabhängiges Projekt und steht in keiner Verbindung zu Valve,
 Apple oder CodeWeavers. Steam, macOS, DirectX und CrossOver sind Marken ihrer
@@ -82,6 +85,24 @@ Erfahrungen mit weiteren Spielen sind willkommen, siehe [Mitmachen](#mitmachen).
 
 ## Installieren
 
+### Herunterladen
+
+1. `Kelter-<Version>.zip` aus dem
+   [neuesten Release](https://github.com/blankfourdigits/Kelter/releases/latest)
+   laden und entpacken.
+2. `Kelter.app` in den Programme-Ordner ziehen.
+3. **Erster Start:** Kelter ist freie Software und nicht von Apple
+   beglaubigt. macOS blockiert deshalb den ersten Start mit der Meldung, die
+   App lasse sich nicht überprüfen. Auf **Fertig** klicken, dann
+   **Systemeinstellungen → Datenschutz & Sicherheit** öffnen, nach unten
+   scrollen, bei der Meldung zu Kelter auf **Trotzdem öffnen** klicken und
+   bestätigen. Das ist nur einmal nötig.
+
+   Alternativ im Terminal:
+   `xattr -dr com.apple.quarantine /Applications/Kelter.app`
+
+### Aus dem Quelltext bauen
+
 ```sh
 git clone https://github.com/blankfourdigits/Kelter.git
 cd Kelter
@@ -90,13 +111,18 @@ open build/Kelter.app
 ```
 
 `make-app.sh` baut Kelter und legt `build/Kelter.app` an. Die App lässt sich
-von dort in den Programme-Ordner ziehen. Sie ist nur lokal signiert, für
-diesen Mac.
+von dort in den Programme-Ordner ziehen. Eine selbst gebaute App startet ohne
+den Gatekeeper-Schritt oben.
+
+### Grafik DXMT
 
 Für DXMT braucht Kelter zusätzlich zwei angepasste Wine-Dateien, die auf dem
-Mac gebaut werden (etwa eine Minute):
+Mac gebaut werden (etwa eine Minute). Dafür ist vorerst der Quelltext nötig,
+auch wenn du die App heruntergeladen hast:
 
 ```sh
+git clone https://github.com/blankfourdigits/Kelter.git
+cd Kelter
 brew install bison mingw-w64
 bash Tools/wine-patches/build.sh
 ```
@@ -112,6 +138,10 @@ bash Tools/wine-patches/build.sh
    Bottle. Ein Klick auf ein Cover startet das Spiel über Steam.
    „Steam-Client öffnen“ öffnet nur das Steam-Fenster, etwa zum Installieren.
    Ein grüner Punkt neben der Bottle zeigt, dass gerade etwas darin läuft.
+   Die Bibliothek stammt aus Steams Dateien und ist deshalb auch da, wenn
+   Steam geschlossen ist.
+
+   <img src="docs/kelter-library.png" width="800" alt="Kelters Bibliothek: links die Bottles, rechts die Spiele mit Covern">
 3. **Einstellungen der Bottle** (Zahnrad oben rechts):
    - *Allgemein:* Name, Windows-Version, Windows-Programm starten,
      Wine-Konfiguration, Bottle löschen

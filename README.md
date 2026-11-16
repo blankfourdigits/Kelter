@@ -15,9 +15,13 @@ Kelter is only the front end. It downloads Wine and the graphics layers as
 ready-made, maintained builds; source, version and checksum are listed in a
 configuration file. Kelter ships no proprietary components.
 
+<p align="center">
+  <img src="docs/kelter-demo.gif" width="800" alt="Clicking Half-Life 2 in Kelter's library starts the game through Steam">
+</p>
+
 > **Status:** early version (0.1). Steam, the game library and DirectX 9–11
-> work; DirectX 12 does not yet. There is no ready-made app to download yet;
-> Kelter is built from source (two commands, see [Install](#install)).
+> work; DirectX 12 does not yet. [Download](#install) the app or build it
+> from source.
 
 Kelter is an independent project and is not affiliated with Valve, Apple or
 CodeWeavers. Steam, macOS, DirectX and CrossOver are trademarks of their
@@ -80,6 +84,23 @@ Reports on more games are welcome, see [Contributing](#contributing).
 
 ## Install
 
+### Download
+
+1. Download `Kelter-<version>.zip` from the
+   [latest release](https://github.com/blankfourdigits/Kelter/releases/latest)
+   and unzip it.
+2. Move `Kelter.app` to your Applications folder.
+3. **First start:** Kelter is free software and not notarized by Apple, so
+   macOS blocks the first start with a message that it can't check the app.
+   Click **Done**, open **System Settings → Privacy & Security**, scroll down
+   and click **Open Anyway** next to the message about Kelter, then confirm.
+   This is needed only once.
+
+   Alternatively, in Terminal:
+   `xattr -dr com.apple.quarantine /Applications/Kelter.app`
+
+### Build from source
+
 ```sh
 git clone https://github.com/blankfourdigits/Kelter.git
 cd Kelter
@@ -88,12 +109,17 @@ open build/Kelter.app
 ```
 
 `make-app.sh` builds Kelter and creates `build/Kelter.app`, which you can move
-to your Applications folder. It is signed only locally, for this Mac.
+to your Applications folder. A self-built app starts without the Gatekeeper
+step above.
+
+### DXMT graphics
 
 DXMT also needs two adjusted Wine files that are built on your Mac (about a
-minute):
+minute). For now this needs the source, also if you downloaded the app:
 
 ```sh
+git clone https://github.com/blankfourdigits/Kelter.git
+cd Kelter
 brew install bison mingw-w64
 bash Tools/wine-patches/build.sh
 ```
@@ -108,7 +134,10 @@ bash Tools/wine-patches/build.sh
 2. **Library:** Bottles are listed on the left, the selected bottle's games on
    the right. Click a cover to start the game through Steam. "Open Steam
    client" opens only the Steam window, for example to install games. A green
-   dot next to a bottle shows that something is running in it.
+   dot next to a bottle shows that something is running in it. The library is
+   read from Steam's files, so it is there even while Steam is closed.
+
+   <img src="docs/kelter-library.png" width="800" alt="Kelter's library: bottles on the left, game covers on the right">
 3. **Bottle settings** (gear at the top right):
    - *General:* name, Windows version, run a Windows program, Wine
      configuration, delete the bottle
