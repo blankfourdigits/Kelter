@@ -1,390 +1,346 @@
+<p align="center">
+  <img src="Tools/app-icon/AppIcon-preview.png" width="128" alt="Kelter-Icon: eine schlichte Weinpresse">
+</p>
+
 # Kelter
 
-Eine freie Mac-App, die Windows-Spiele aus der Steam-Bibliothek über
-[Wine](https://www.winehq.org) auf Apple-Silicon-Macs startet. Kelter ist nur
-die Oberfläche: Wine und die Grafikschichten werden als fertige Builds geladen.
+Kelter startet Windows-Spiele aus deiner Steam-Bibliothek auf Macs mit Apple
+Silicon. Es richtet [Wine](https://www.winehq.org) und den Windows-Client von
+Steam mit wenigen Klicks ein, zeigt deine Spiele mit ihren Covern und
+startet sie über Steam. Eine freie Alternative zu CrossOver, unter der GPLv3.
 
-Lizenz: GPLv3 (siehe `LICENSE`). Kelter enthält keinen Code und keine Grafiken
-von CrossOver und liefert keine proprietären Bestandteile mit.
+Kelter ist nur die Oberfläche. Wine und die Grafikschichten lädt es als
+fertige, gepflegte Builds aus dem Netz; Herkunft, Version und Prüfsumme stehen
+in einer Konfigurationsdatei. Proprietäre Bestandteile liefert Kelter nicht
+mit.
 
-## Stand
+> **Stand:** frühe Version (0.1). Steam, die Spielebibliothek und DirectX
+> 9–11 laufen; DirectX 12 noch nicht. Es gibt noch keine fertige App zum
+> Herunterladen, Kelter wird aus dem Quelltext gebaut (zwei Befehle, siehe
+> [Installieren](#installieren)).
 
-| Schritt | Inhalt | Status |
+Kelter ist ein unabhängiges Projekt und steht in keiner Verbindung zu Valve,
+Apple oder CodeWeavers. Steam, macOS, DirectX und CrossOver sind Marken ihrer
+jeweiligen Inhaber.
+
+## Inhalt
+
+- [Was funktioniert](#was-funktioniert)
+- [Voraussetzungen](#voraussetzungen)
+- [Installieren](#installieren)
+- [Bedienung](#bedienung)
+- [Wenn ein Spiel nicht startet](#wenn-ein-spiel-nicht-startet)
+- [Grenzen](#grenzen)
+- [Technik](#technik)
+- [Mitmachen](#mitmachen)
+- [Herkunft und Lizenzen](#herkunft-und-lizenzen)
+
+## Was funktioniert
+
+Getestet auf einem MacBook Air (M5) mit macOS 26.6, Wine Staging 11.21.
+
+| Bereich | Stand | Auf echtem Mac geprüft |
 | --- | --- | --- |
-| 1 | Wine-Download, Rosetta-Prüfung, Bottles, Log | läuft |
-| 2 | Steam-Einrichtung und Start | läuft |
-| 3 | Grafik | DXMT läuft (DirectX 10/11, getestet mit Blasphemous 2). DirectX 9 über Wine (OpenGL). D3DMetal (DirectX 12) eingebaut, aber pausiert: Steam stürzt damit ab |
-| 4 | Spielebibliothek, Einstellungen pro Spiel, Winetricks | Bibliothek mit Covern, Start und Anti-Cheat-Hinweis, Editoren für Umgebung und DLL-Overrides, Winetricks. Einstellungen pro Spiel zurückgestellt |
+| Einrichtung: Rosetta 2, Wine laden, Bottles anlegen | fertig | ja |
+| Steam installieren, anmelden, starten, sauber beenden | fertig | ja |
+| Spielebibliothek mit Covern, Start per Klick, Suche | fertig | ja |
+| Grafik „Wine (eingebaut)“ (DirectX 9–11 über OpenGL) | fertig | ja (Half-Life 2) |
+| Grafik „DXMT“ (DirectX 10/11 über Metal) | fertig | ja (Blasphemous 2, 60 FPS) |
+| Grafik „D3DMetal“ (DirectX 11/12, Apple) | eingebaut, pausiert: Steam stürzt damit ab | ja, mit diesem Ergebnis |
+| Winetricks (Visual C++, Schriften …) | fertig | ja (Test-Bottle) |
+| Umgebungsvariablen und DLL-Overrides pro Bottle | fertig | Oberfläche ja |
+| Hinweis auf Kernel-Anti-Cheat | fertig | noch nicht mit einem betroffenen Spiel |
+| Oberfläche auf Deutsch und Englisch | fertig | ja |
+| Einstellungen pro Spiel | zurückgestellt | – |
+| Controller | nicht dokumentiert | – |
+
+### Getestete Spiele
+
+| Spiel | DirectX | Grafik in Kelter | Ergebnis |
+| --- | --- | --- | --- |
+| Blasphemous 2 | 11 | DXMT | läuft, 60 FPS |
+| Half-Life 2 (mit Episoden) | 9 | Wine (eingebaut) | läuft, gelegentliche Ruckler beim Nachladen |
+
+Erfahrungen mit weiteren Spielen sind willkommen, siehe [Mitmachen](#mitmachen).
 
 ## Voraussetzungen
 
-- Mac mit Apple Silicon, macOS 15 oder neuer
-- Xcode (einmal geöffnet, Lizenz bestätigt)
-- Rosetta 2. Kelter bietet die Installation an; von Hand geht es mit
-  `softwareupdate --install-rosetta --agree-to-license`
+**Zum Benutzen**
 
-## Bauen und starten
+- Mac mit Apple Silicon (M1 oder neuer), macOS 15 oder neuer
+- Rosetta 2 (Kelter bietet die Installation an)
+- rund 2 GB freier Platz für Wine, dazu der Platz für deine Spiele
 
-Im Terminal, im Ordner dieses Projekts:
+**Zum Bauen**
 
-```sh
-swift build          # kompilieren
-swift test           # Tests ausführen
-swift run Kelter     # App starten
-```
+- Xcode oder die Command Line Tools mit Swift 5.9 oder neuer
+- Für Winetricks: [Homebrew](https://brew.sh) und `brew install cabextract`
+- Nur für die Grafikschicht DXMT: `brew install bison mingw-w64`
+  (siehe [Kelters Anpassungen an Wine](#kelters-anpassungen-an-wine))
 
-Eine richtige App zum Doppelklicken entsteht mit:
+## Installieren
 
 ```sh
+git clone https://github.com/blankfourdigits/Kelter.git
+cd Kelter
 bash scripts/make-app.sh
 open build/Kelter.app
 ```
 
-Alternativ `Package.swift` in Xcode öffnen und das Schema `Kelter` starten.
+`make-app.sh` baut Kelter und legt `build/Kelter.app` an. Die App lässt sich
+von dort in den Programme-Ordner ziehen. Sie ist nur lokal signiert, für
+diesen Mac.
 
-## Erste Schritte in der App
-
-1. Beim ersten Start führt Kelter durch die Einrichtung: Rosetta 2, dann Wine
-   (rund 250 MB). Danach legt „Steam einrichten“ eine Bottle an und
-   installiert Steam darin.
-2. Links stehen die Bottles, rechts die Spiele der gewählten Bottle mit ihren
-   Covern. Ein Klick auf ein Cover startet das Spiel über Steam.
-   „Steam-Client öffnen“ oben rechts öffnet nur das Steam-Fenster, etwa zum
-   Installieren neuer Spiele.
-3. Das Zahnrad öffnet die Einstellungen der Bottle: Allgemein (Name,
-   Windows-Version, Programme, Löschen), Grafik, Winetricks und Erweitert
-   (Startparameter, Umgebung, DLL-Overrides, Fehlersuche).
-4. Eine `.exe` oder `.msi` lässt sich auf das Fenster ziehen und startet in der
-   Bottle.
-
-### Sprache
-
-Kelter gibt es auf Deutsch und Englisch. Umstellen unter **Kelter →
-Einstellungen …** (⌘,): „Wie das System“, Deutsch oder English. macOS
-wechselt die Sprache einer App beim Start; „Jetzt neu starten“ erledigt das.
-Das Log bleibt deutsch, es ist ein technisches Protokoll.
-
-Für Mitwirkende: Der deutsche Text ist der Schlüssel, die englischen
-Übersetzungen stehen in `Resources/en.lproj/Localizable.strings`. Feste
-Texte in SwiftUI (`Text("…")`, `Button("…")` …) übersetzt SwiftUI selbst;
-Texte mit Platzhaltern oder aus Variablen laufen über `loc("… %@ …", wert)`.
-Der Test `LocalizationTests` findet jeden angezeigten Text ohne Übersetzung.
-
-### Testansicht
-
-**Darstellung → Testansicht** (⌥⌘T) zeigt Kelters ursprüngliche Ansicht:
-alle Schalter einer Bottle auf einer Seite und darunter das Live-Log mit
-„Kopieren“, „Logdatei zeigen“ und „Diagnose sammeln …“. Für die Fehlersuche
-gedacht, nicht für den Alltag. Kelter merkt sich die Wahl.
-
-### App-Icon
-
-Das Icon (eine schlichte Weinpresse, „Kelter“) zeichnet
-`Tools/app-icon/make-icon.swift` und legt es als `Resources/AppIcon.icns` ab;
-`scripts/make-app.sh` bindet es ein. Neu zeichnen:
-
-```sh
-swift Tools/app-icon/make-icon.swift
-```
-
-## Steam
-
-"Steam einrichten" (Gamecontroller-Knopf oben links) legt eine Bottle namens
-Steam an, lädt den Windows-Installer von Valve, installiert ihn und startet
-Steam. Beim ersten Start aktualisiert sich Steam selbst; das dauert einige
-Minuten.
-
-### Spielebibliothek
-
-Unter „Spiele" zeigt Kelter die Spiele, die Steam in der Bottle installiert
-hat. Kelter liest dafür Steams eigene Dateien (`steamapps/libraryfolders.vdf`
-und `appmanifest_*.acf`), auch aus Bibliotheken auf anderen Laufwerken. Die
-Cover stammen aus Steams Zwischenspeicher (`appcache/librarycache`), es wird
-nichts heruntergeladen. „Spielen" startet das Spiel über
-`steam://rungameid/<id>`: Läuft Steam schon, übernimmt es den Start, sonst
-startet Kelter Steam mit allen Korrekturen und dann das Spiel. Programme, die
-keine Spiele sind (`steam.hiddenAppIDs` in `runtimes.json`), blendet Kelter aus.
-
-**Anti-Cheat:** Viele Mehrspieler-Spiele nutzen einen Schutz gegen
-Schummeln, der tief im System läuft (Kernel-Anti-Cheat) und unter Wine auf
-dem Mac nicht funktioniert, etwa Ricochet (Call of Duty), BattlEye oder Easy
-Anti-Cheat. Kelter markiert solche Spiele orange und fragt vor dem Start
-nach. Erkannt wird das an einer Liste von Spiel-IDs und an typischen Dateien
-oder Ordnern im Spielordner (`antiCheat` in `runtimes.json`). Das ist ein
-Hinweis, keine Sperre: „Trotzdem starten" bleibt möglich.
-
-### Warum Steam eine Hilfsbibliothek braucht
-
-Das Steam-Fenster ist eine eingebettete Chromium-Oberfläche. Chromium zeichnet
-aus einem zweiten Prozess in das Fenster, und Wines Mac-Treiber kann das nicht
-darstellen: Das Fenster bleibt schwarz. Chromiums Schalter `--in-process-gpu`
-verlegt das Zeichnen in den Hauptprozess, aber Steam reicht seinen eigenen
-Startparameter `-cef-in-process-gpu` nicht an Chromium weiter (auf einem Mac
-mit Wine Staging 11.21 und dem Steam-Client vom November 2026 nachgeprüft).
-
-Kelter legt deshalb vor jedem Steam-Start eine kleine Hilfsbibliothek in die
-Bottle:
-
-- `windows/system32/winmm.dll` ist die Hilfsbibliothek aus
-  `Resources/steam-ui-fix/`. Ein Registrierungseintrag sorgt dafür, dass nur
-  `steamwebhelper.exe` sie lädt; alle anderen Programme benutzen weiter Wines
-  eigenes winmm.
-- `windows/system32/winmm_orig.dll` ist eine Kopie von Wines winmm. Die
-  Hilfsbibliothek leitet jeden Aufruf dorthin weiter.
-- Beim Laden hängt sie die Browser-Parameter aus `runtimes.json`
-  (`steam.uiFix.browserArguments`, Standard `--in-process-gpu`) an die
-  Kommandozeile von Steams Browser-Prozess an.
-
-An Steams eigenen Dateien ändert Kelter nichts, Steam-Updates machen die
-Korrektur also nicht rückgängig. Abschalten lässt sie sich mit
-`"enabled": false` unter `steam.uiFix`.
-
-Der Quelltext liegt in `Tools/steam-ui-fix/winmm_proxy.c`. Neu bauen:
-
-```sh
-bash Tools/steam-ui-fix/build.sh    # braucht clang, lld-link und llvm-dlltool
-```
-
-Zusätzlich startet Kelter Steam mit `-cef-disable-gpu
--cef-disable-gpu-compositing`. Die Oberfläche wird dann ohne
-Grafikbeschleunigung gezeichnet; mit ihr stürzt Chromiums Grafikteil unter
-Wines eingebautem Direct3D ab. Das betrifft nur das Steam-Fenster, nicht die
-Spiele.
-
-### Steam-Overlay
-
-Steam lädt in jedes Spiel seine Overlay-Bibliothek `gameoverlayrenderer.dll`.
-Unter Wine auf dem Mac bleibt das Spiel danach stehen: Half-Life 2 lud nach
-ihr keine weitere Datei mehr und beendete sich nach rund einer Minute. Kelter
-schaltet die Bibliothek deshalb für Steam und alle daraus gestarteten Spiele
-ab (`steam.dllOverrides` in `runtimes.json`). Das Overlay im Spiel (Shift+Tab)
-gibt es dadurch nicht.
-
-"Steam beenden" bittet Steam, sich zu schließen, und beendet danach alle
-Wine-Prozesse der Bottle.
-
-## Umgebung und DLL-Overrides
-
-Unter „Umgebung und DLL-Overrides" in einer Bottle lassen sich eigene
-Umgebungsvariablen und DLL-Overrides setzen. Sie gelten für alle Programme
-der Bottle, also auch für Steam und alle Spiele, ab ihrem nächsten Start.
-
-- **Umgebungsvariablen:** Name und Wert, etwa `WINEDEBUG` für mehr Meldungen
-  im Log. `WINEPREFIX` und `WINEDLLOVERRIDES` setzt Kelter selbst; für
-  Letzteres gibt es den eigenen Editor.
-- **DLL-Overrides:** ob Wine für eine Bibliothek (`d3d11`, `winmm` …) seine
-  eigene Version oder eine Windows-Version aus dem Spielordner lädt. Namen
-  werden klein und ohne `.dll` gespeichert. Die Einträge der Bottle haben
-  Vorrang vor denen aus `runtimes.json` (etwa dem abgeschalteten
-  Steam-Overlay).
-
-## Winetricks
-
-Manche Spiele brauchen Windows-Bibliotheken, die Wine nicht mitbringt, etwa
-die Visual-C++-Laufzeit oder Standardschriften. Unter „Winetricks" in einer
-Bottle installiert Kelter die häufigsten mit einem Klick; andere Pakete
-lassen sich mit Namen eintragen (Liste: `winetricks list-all`). Kelter lädt
-Winetricks beim ersten Mal in der Version aus `runtimes.json` und prüft die
-Prüfsumme. Heruntergeladene Installer landen in
-`Downloads/winetricks-cache` und werden für andere Bottles wiederverwendet.
-
-Viele Pakete brauchen das Programm `cabextract`. Einmalig:
-
-```sh
-brew install cabextract
-```
-
-## Wenn ein Spiel nicht startet
-
-1. In der Bottle "Ausführliches Wine-Log" einschalten und Steam neu starten.
-   Wine schreibt dann mit, welche Bibliotheken es lädt, wo Fehler auftreten
-   und welche Windows-Funktionen ihm fehlen. Das Log wird dadurch schnell
-   groß, deshalb danach wieder ausschalten.
-2. Das Spiel starten und warten, bis es sich beendet oder hängen bleibt.
-3. Im Log-Bereich "Diagnose sammeln …" drücken und einen Ordner wählen.
-   Kelter legt dort einen Ordner `Kelter-Diagnose-<Datum>-<Zeit>` an mit:
-   Kelters Log, den Einstellungen der Bottle, Steams eigenen Logs, der Liste
-   der laufenden Wine-Prozesse, der Liste der installierten Spiele und den
-   Konsolen-Logs von Source-Spielen (Startoption `-condebug`).
-
-Der Ordner bleibt auf dem Mac. Steams Logs können den Kontonamen enthalten.
-
-## Wo Kelter Daten ablegt
-
-Alles liegt unter `~/Library/Application Support/Kelter/`:
-
-| Pfad | Inhalt |
-| --- | --- |
-| `Runtimes/wine/<Version>/` | das entpackte Wine |
-| `Runtimes/wine-variants/` | Kopien von Wine mit einer Grafikschicht |
-| `Runtimes/wine-files/` | selbst gebaute Wine-Dateien (Mac-Treiber, ntdll) |
-| `Runtimes/winetricks/` | das Winetricks-Skript |
-| `Runtimes/graphics/` | Grafikschichten (DXMT, die D3DMetal-Dateien von Apple) |
-| `Bottles/<ID>/bottle.json` | Name und Einstellungen einer Bottle |
-| `Bottles/<ID>/prefix/` | die Windows-Umgebung (WINEPREFIX) |
-| `Logs/kelter.log` | Ausgabe von Kelter und Wine |
-| `runtimes.json` | optional: eigene Konfiguration, hat Vorrang |
-
-Um Kelter vollständig zu entfernen, genügt es, diesen Ordner zu löschen.
-
-## Konfiguration: `runtimes.json`
-
-Welches Wine-Build geladen wird, steht in `Resources/runtimes.json`, nicht im
-Code. Für ein anderes Build die Datei nach
-`~/Library/Application Support/Kelter/runtimes.json` kopieren und anpassen:
-
-| Feld | Bedeutung |
-| --- | --- |
-| `version`, `url`, `sha256` | Version, Download-Adresse und Prüfsumme des Archivs |
-| `archiveRoot` | oberster Ordner im Archiv |
-| `binDirectory`, `libDirectory` | Lage von `wine` und der Bibliotheken darin |
-| `supportsESync`, `supportsMSync` | ob das Build diese Schalter kennt |
-
-Unter `support` steht ein zweites Paket, das zum Wine-Build gehört: die
-Bibliotheken, die Wine zur Laufzeit lädt, und die Grafikschichten.
-
-| Feld | Bedeutung |
-| --- | --- |
-| `libraryPaths` | Ordner mit Laufzeitbibliotheken (FreeType, GnuTLS, MoltenVK …) |
-| `vulkanDriverFile` | Beschreibung des Vulkan-Treibers (MoltenVK) |
-| `renderers` | Grafikschichten: Kennung, Umgebungsvariable des Wine-Builds, Ordner |
-| `removeAfterInstall` | Pfade, die nach dem Entpacken gelöscht werden |
-| `environment` | zusätzliche Umgebungsvariablen für jeden Wine-Prozess |
-
-## Wine-Build und Grafik
-
-Voreingestellt ist Wine Staging 11.21 von Gcenx, ohne Zusatzpaket und ohne
-ESync oder MSync. Pro Bottle lässt sich die Grafik wählen:
-
-| Auswahl | DirectX 9 | DirectX 10/11 | DirectX 12 |
-| --- | --- | --- | --- |
-| Wine (eingebaut) | OpenGL | OpenGL | nicht unterstützt |
-| DXMT | OpenGL | DXMT (Metal) | nicht unterstützt |
-| D3DMetal (pausiert) | OpenGL | D3DMetal (Metal) | D3DMetal (Metal), nur 64-Bit |
-
-Wine sucht seine eingebauten Bibliotheken zuerst im eigenen Ordner. Eine
-Grafikschicht, die `d3d11.dll` ersetzt, muss deshalb in einem Wine-Baum liegen.
-Kelter verändert dafür nicht das eine Wine, das alle Bottles benutzen, sondern
-legt pro Schicht eine Kopie an (`Runtimes/wine-variants/`) und startet eine
-Bottle mit dem Baum, der zu ihrer Auswahl passt. Auf APFS ist die Kopie ein
-Klon und belegt kaum zusätzlichen Platz. Welche Schichten es gibt, steht unter
-`graphicsLayers` in `runtimes.json`.
-
-Bibliotheken, die eine Schicht zusätzlich mitbringt (bei DXMT `winemetal.dll`),
-legt Kelter beim Start von Steam außerdem in die Windows-Ordner der Bottle
-(`prefixLibraries`). Wine lädt eine eingebaute Bibliothek nur, wenn es dort
-eine Datei dieses Namens gibt.
-
-### Kelters Anpassungen an Wine
-
-DXMT und D3DMetal brauchen zwei Dinge, die das normale Wine 11 nicht hat:
-
-- **Mac-Treiber (`winemac.so`):** DXMT und D3DMetal legen ihre Metal-Ansicht
-  über eine Funktionstabelle `macdrv_functions` an, die nur CrossOvers Wine
-  anbietet. Ohne sie meldet DXMT „Failed to create metal view". Patch:
-  `Tools/wine-patches/0001-winemac-macdrv-functions.patch`.
-- **`ntdll.dll`:** Apples D3DMetal-Bibliotheken wurden für ein älteres Wine
-  gebaut und rufen `__wine_unix_call` auf, das Wine seit Version 9.9 nicht
-  mehr anbietet. Patch: `Tools/wine-patches/0002-ntdll-export-wine-unix-call.patch`.
-
-`Tools/wine-patches/build.sh` baut nur diese zwei Dateien aus Wine plus
-Wine Staging in der Version aus `runtimes.json` (`winePatches`). Einmalig
-nötig (Homebrew):
+Für DXMT braucht Kelter zusätzlich zwei angepasste Wine-Dateien, die auf dem
+Mac gebaut werden (etwa eine Minute):
 
 ```sh
 brew install bison mingw-w64
-```
-
-Dann im Kelter-Ordner:
-
-```sh
 bash Tools/wine-patches/build.sh
 ```
 
-Das dauert beim ersten Mal etwa eine Minute (plus Download des Quelltexts)
-und legt die Dateien nach `Runtimes/wine-files/<Wine>-<Revision>/`. Kelter
-kopiert sie nur in die Wine-Kopien für DXMT und D3DMetal; das Wine, das
-alle anderen Bottles benutzen, bleibt unverändert. Fehlen sie, sagt Kelter
-das beim Auswählen der Grafik und nennt den Befehl. Welche Schicht welche
-Datei braucht, steht unter `graphicsLayers[].wineFiles`. Eine neue Revision
-legt neue Kopien an.
+## Bedienung
 
-Der Mac-Treiber-Patch stützt sich auf die Patches von NNikolaG/bridgewine
-(0006, 0007) und codeWonderland/neutron (`tools/wine-dxmt`), beide MIT, und
-auf die Schnittstelle aus CrossOvers `winemac.drv`. Beide Patches stehen wie
-Wine unter der LGPL.
+1. **Erster Start:** Kelter führt durch die Einrichtung: Rosetta 2, dann
+   Wine (rund 250 MB Download). Danach legt „Steam einrichten“ eine Bottle
+   an, lädt den Steam-Installer von Valve und startet Steam. Beim ersten
+   Start aktualisiert sich Steam selbst; das dauert einige Minuten. Dann im
+   Steam-Fenster anmelden und Spiele installieren.
+2. **Bibliothek:** Links stehen die Bottles, rechts die Spiele der gewählten
+   Bottle. Ein Klick auf ein Cover startet das Spiel über Steam.
+   „Steam-Client öffnen“ öffnet nur das Steam-Fenster, etwa zum Installieren.
+   Ein grüner Punkt neben der Bottle zeigt, dass gerade etwas darin läuft.
+3. **Einstellungen der Bottle** (Zahnrad oben rechts):
+   - *Allgemein:* Name, Windows-Version, Windows-Programm starten,
+     Wine-Konfiguration, Bottle löschen
+   - *Grafik:* Wine (eingebaut) oder DXMT, FPS-Anzeige, Retina-Modus
+   - *Winetricks:* Visual C++, DirectX-Zusätze, Schriften mit einem Klick
+   - *Erweitert:* Startparameter für Steam, Umgebungsvariablen,
+     DLL-Overrides, ausführliches Log
+4. **Andere Windows-Programme:** eine `.exe` oder `.msi` auf das Fenster
+   ziehen; sie startet in der gewählten Bottle.
+5. **Sprache:** Kelter → Einstellungen … (⌘,) oder das Zahnrad unten in der
+   Seitenleiste: „Wie das System“, Deutsch oder English. Gilt nach einem
+   Neustart, den Kelter anbietet.
 
-### D3DMetal (DirectX 12)
+**Welche Grafik?** DXMT ist für die meisten Spiele die richtige Wahl: schnell
+für DirectX 10 und 11, DirectX 9 läuft dabei weiter über Wine. „Wine
+(eingebaut)“ funktioniert mit allem, ist aber langsamer.
 
-> **Pausiert.** Mit D3DMetal stürzt `steam.exe` beim Start ab: Steam lädt
-> `dxgi.dll`, in der D3DMetal-Kopie ist das Apples Version, und ein Thread
-> daraus stürzt in `pthread_setname_np` ab, weil das Register `GS` auf den
-> falschen Speicher zeigt. Vermutete Ursache: D3DMetal wurde für ein älteres
-> Wine gebaut, das auf dem Mac anders zwischen Windows- und Mac-Teil
-> umschaltet als Wine 11. In `runtimes.json` steht deshalb `paused` bei
-> D3DMetal; Kelter bietet es nicht zur Auswahl an. Möglicher nächster
-> Schritt: nachsehen, wie CrossOvers freier Quelltext das löst.
+**Startparameter für ein einzelnes Spiel** setzt du in Steam selbst:
+Rechtsklick auf das Spiel → Eigenschaften → Startoptionen.
 
+**Anti-Cheat:** Spiele mit einem Schutz gegen Schummeln, der tief im System
+läuft (Kernel-Anti-Cheat wie Ricochet, BattlEye oder Easy Anti-Cheat),
+markiert Kelter orange und fragt vor dem Start nach. Unter Wine auf dem Mac
+laufen sie in der Regel nicht.
 
-D3DMetal ist Apples Übersetzung von DirectX 11/12 nach Metal aus dem Game
-Porting Toolkit. Es gehört Apple und ist **nicht** Teil von Kelter. Apples
-Lizenz erlaubt die Nutzung nur, um Spiele für Apple-Geräte zu entwickeln, zu
-testen oder zu bewerten, und die Weitergabe nur ohne kommerziellen Zweck;
-Apples Dateien dürfen nicht verändert oder zerlegt werden. Kelter verändert
-sie nicht und liefert sie nicht mit.
+## Wenn ein Spiel nicht startet
 
-Wer bei einer Bottle „D3DMetal" wählt, sieht zuerst Apples Lizenz und muss
-zustimmen. Danach gibt es zwei Wege:
+1. In den Einstellungen der Bottle unter *Erweitert* „Ausführliches
+   Wine-Log“ einschalten und Steam neu starten.
+2. Das Spiel starten und warten, bis es sich beendet oder hängen bleibt.
+3. **Darstellung → Testansicht** (⌥⌘T) öffnen. Dort steht das Live-Log, und
+   „Diagnose sammeln …“ legt einen Ordner `Kelter-Diagnose-<Datum>-<Zeit>` an:
+   Kelters Log, die Einstellungen der Bottle, Steams Logs, laufende
+   Wine-Prozesse, installierte Spiele und Systemangaben.
+4. Das ausführliche Log danach wieder ausschalten, es wird schnell groß.
 
-1. **Empfohlen:** Das Game Porting Toolkit mit der eigenen Apple-ID von
-   <https://developer.apple.com/download/all/?q=game%20porting%20toolkit>
-   laden und in Kelter die DMG-Datei (oder das schon geöffnete Laufwerk)
-   auswählen. Fragt das Image beim Öffnen nach einer Lizenz, öffnet Kelter es
-   nicht selbst: dann im Finder öffnen, bestätigen und das Laufwerk wählen.
-2. **Alternative:** Kelter lädt das Paket von Gcenx (Prüfsumme in
-   `runtimes.json`).
+Der Diagnose-Ordner bleibt auf deinem Mac. Steams Logs können deinen
+Kontonamen enthalten; prüfe den Ordner, bevor du ihn teilst.
 
-Kelter übernimmt nur D3DMetals eigene Dateien (`include` in
-`runtimes.json`): `D3DMetal.framework`, `libd3dshared.dylib` und die
-Bibliotheken `d3d10`, `d3d11`, `d3d12`, `dxgi`, `atidxx64`, `nvapi64`,
-`nvngx`, `nvngx-on-metalfx`. D3DMetal läuft nur für 64-Bit-Programme;
-32-Bit-Programme in derselben Bottle nutzen Wines eigene Grafik.
+Häufige Fälle:
 
-Kelter kann auch ein Wine-Build mit Zusatzpaket benutzen (Abschnitt `support`
-in `runtimes.json`): Dann lässt sich pro Bottle wählen, ob Direct3D über DXMT
-oder DXVK läuft, und DirectX 8/9 gehen über D9VK. Erprobt wurde das mit der
-Sikarugir-Engine (Wine 11.0) und dem Sikarugir-Template 1.0.15. Auf einem
-MacBook Air mit macOS 26.6 brach dort aber jeder Wine-Prozess gleich nach dem
-Laden von ntdll ab (`run_wineboot failed to start wineboot 1`), unabhängig von
-den gesetzten Umgebungsvariablen. `Tools/wine-test.sh` stellt das nach. Solange
-die Ursache offen ist, bleibt es beim Gcenx-Build.
+- **Fehlende Windows-Bibliotheken:** In *Winetricks* „Visual C++ 2015–2022“
+  oder „Direct3D-Shader-Compiler“ installieren. Meldet Kelter, dass Visual
+  C++ schon in neuerer Version installiert ist, hat Steam es bereits
+  mitgebracht; dann ist nichts zu tun.
+- **Schwarzes Bild oder Absturz beim Start:** die andere Grafik ausprobieren.
 
-## Architektur
+## Grenzen
+
+- **DirectX 12** läuft noch nicht. Apples D3DMetal ist eingebaut, aber
+  pausiert, weil Steam damit abstürzt (siehe [D3DMetal](#d3dmetal-directx-12)).
+- **Kernel-Anti-Cheat** läuft unter Wine nicht; betroffen sind viele
+  Mehrspieler-Spiele, etwa Call of Duty, Destiny 2 oder PUBG.
+- **Das Steam-Overlay** (Shift+Tab im Spiel) ist abgeschaltet, weil Spiele
+  damit unter Wine hängen bleiben.
+- **DirectX 9** läuft über OpenGL und ist bei anspruchsvollen Spielen
+  langsamer.
+- **Controller** sind noch nicht getestet und dokumentiert.
+- **Einstellungen pro Spiel** (eigene Grafik oder Umgebung je Spiel) gibt es
+  noch nicht; Einstellungen gelten pro Bottle.
+- Nur **Apple Silicon**; Intel-Macs werden nicht unterstützt.
+
+## Technik
+
+### Aufbau
 
 ```
 Sources/
-  KelterCore/   Pfade, Konfiguration, Bottle-Verwaltung, Logdatei (nur Foundation)
-  KelterWine/   Wine laden, entpacken und starten; Rosetta-Prüfung
-  KelterSteam/  Steam installieren, starten und beenden; Fensterkorrektur
-  KelterApp/    SwiftUI-Oberfläche
+  KelterCore/   Pfade, Konfiguration, Bottles, Logdatei, Übersetzung (nur Foundation)
+  KelterWine/   Wine laden und starten, Wine-Kopien mit Grafikschicht,
+                Winetricks, Diagnose, Laufzeit-Erkennung
+  KelterSteam/  Steam installieren, starten, beenden; Fensterkorrektur;
+                Steams Dateien lesen (VDF), Bibliothek, Anti-Cheat-Erkennung
+  KelterApp/    SwiftUI-Oberfläche: Bibliothek, Einstellungen, Testansicht
+Resources/      runtimes.json, Übersetzungen, Icon, Hilfsbibliothek für Steam
 Tools/
   steam-ui-fix/ Quelltext und Bauskript der Hilfsbibliothek für das Steam-Fenster
-Tests/
-  KelterCoreTests/   BottleStore, Konfiguration, Pfade, Log
-  KelterWineTests/   Umgebungsvariablen, Pfade, Prüfsumme
-  KelterSteamTests/  Steam-Pfade, Startparameter, Fensterkorrektur
+  wine-patches/ Kelters zwei Patches für Wine und ihr Bauskript
+  app-icon/     zeichnet das App-Icon
+Tests/          XCTest; Wine selbst wird in Tests nie gestartet
 ```
 
-- `WineRunner` ist die einzige Stelle, die Wine startet. Er setzt `WINEPREFIX`
-  und die Umgebungsvariablen der Bottle.
+- `WineRunner` ist die einzige Stelle, die Wine startet. Er setzt
+  `WINEPREFIX`, die Umgebung der Bottle und wählt den Wine-Baum passend zur
+  Grafik.
 - Wine schreibt in eine Logdatei statt in eine Pipe, weil seine
   Hintergrundprozesse länger leben als das gestartete Programm. Die Oberfläche
   liest die Datei mit.
 - `BottleStore` benennt Ordner nach einer ID, nicht nach dem Namen. Umbenennen
   verschiebt deshalb nie eine Windows-Umgebung.
+- Ob in einer Bottle etwas läuft, erkennt Kelter an der Verbindung von Wines
+  Hintergrunddienst (`/tmp/.wine-<uid>/server-<dev>-<inode>/socket`).
 
-## Grenzen
+### Wo Kelter Daten ablegt
 
-- Spiele mit Kernel-Anti-Cheat laufen unter Wine nicht.
-- DirectX-12-Spiele brauchen Apples D3DMetal. Kelter liefert es nicht mit und
-  wird es aus einem selbst geladenen Game Porting Toolkit übernehmen.
+Alles liegt unter `~/Library/Application Support/Kelter/`:
+
+| Pfad | Inhalt |
+| --- | --- |
+| `Bottles/<ID>/bottle.json` | Name und Einstellungen einer Bottle |
+| `Bottles/<ID>/prefix/` | die Windows-Umgebung (WINEPREFIX) |
+| `Runtimes/wine/<Version>/` | das entpackte Wine |
+| `Runtimes/wine-variants/` | Kopien von Wine mit einer Grafikschicht |
+| `Runtimes/wine-files/` | Kelters gebaute Wine-Dateien |
+| `Runtimes/graphics/` | Grafikschichten (DXMT, ggf. D3DMetal) |
+| `Runtimes/winetricks/` | das Winetricks-Skript |
+| `Downloads/` | Downloads, darunter der Winetricks-Zwischenspeicher |
+| `Logs/kelter.log` | Ausgabe von Kelter und Wine |
+| `runtimes.json` | optional: eigene Konfiguration, hat Vorrang |
+
+Um Kelter vollständig zu entfernen, genügt es, diesen Ordner und die App zu
+löschen.
+
+### Konfiguration: `runtimes.json`
+
+Was Kelter lädt, steht in `Resources/runtimes.json`, nicht im Code. Für
+eigene Anpassungen die Datei nach
+`~/Library/Application Support/Kelter/runtimes.json` kopieren und ändern.
+
+| Abschnitt | Inhalt |
+| --- | --- |
+| `schemaVersion` | Aufbau der Datei; steigt bei jeder Strukturänderung |
+| `wine` | Wine-Build: Name, Version, URL, Prüfsumme, Ordner im Archiv, ESync/MSync |
+| `winePatches` | Version und Revision von Kelters Wine-Anpassungen, Bauskript |
+| `graphicsLayers` | Grafikschichten: Download, Prüfsumme, welche Dateien wohin, welche Wine-Anpassungen sie brauchen; bei D3DMetal Lizenz, Disk-Image, `paused` |
+| `steam` | Installer, Startparameter und Vorschläge, Fensterkorrektur (`uiFix`), DLL-Overrides (Overlay aus), ausgeblendete Programme (`hiddenAppIDs`) |
+| `antiCheat` | Spiel-IDs und typische Dateien für den Anti-Cheat-Hinweis |
+| `winetricks` | Version, URL, Prüfsumme, angebotene Pakete, benötigte Programme |
+| `support` | Zusatzpaket für Wine-Builds mit eigenen Grafikschichten (derzeit nicht genutzt) |
+
+### Steam unter Wine
+
+**Das Steam-Fenster war schwarz.** Es ist eine eingebettete
+Chromium-Oberfläche, die aus einem zweiten Prozess zeichnet; Wines Mac-Treiber
+kann das nicht darstellen. Chromiums Schalter `--in-process-gpu` hilft, aber
+Steam reicht ihn nicht an Chromium weiter. Kelter legt deshalb vor jedem
+Steam-Start eine kleine Hilfsbibliothek (`winmm.dll`) in die Bottle, die nur
+`steamwebhelper.exe` lädt. Sie leitet alle Aufrufe an Wines eigenes winmm
+weiter und hängt den Schalter an die Kommandozeile an. Steams eigene Dateien
+bleiben unverändert. Quelltext: `Tools/steam-ui-fix/winmm_proxy.c`, neu bauen
+mit `bash Tools/steam-ui-fix/build.sh` (braucht clang, lld-link und
+llvm-dlltool).
+
+Zusätzlich startet Kelter Steam mit `-cef-disable-gpu
+-cef-disable-gpu-compositing`; mit Grafikbeschleunigung stürzt Chromiums
+Grafikteil unter Wine ab. Das betrifft nur das Steam-Fenster, nicht die
+Spiele.
+
+**Das Steam-Overlay** (`gameoverlayrenderer.dll`) ließ Spiele hängen und ist
+deshalb abgeschaltet (`steam.dllOverrides`).
+
+**Spiele starten:** Kelter liest Steams Dateien (`libraryfolders.vdf`,
+`appmanifest_*.acf`) auch aus Bibliotheken auf anderen Laufwerken, nimmt die
+Cover aus Steams Zwischenspeicher und startet ein Spiel mit
+`steam.exe steam://rungameid/<id>`. Läuft Steam schon, übernimmt es den Start.
+
+### Grafik
+
+| Auswahl | DirectX 9 | DirectX 10/11 | DirectX 12 |
+| --- | --- | --- | --- |
+| Wine (eingebaut) | OpenGL | OpenGL | – |
+| DXMT | OpenGL | Metal (DXMT) | – |
+| D3DMetal (pausiert) | OpenGL | Metal (D3DMetal) | Metal (D3DMetal), nur 64-Bit |
+
+Wine sucht seine eingebauten Bibliotheken zuerst im eigenen Ordner. Eine
+Grafikschicht, die `d3d11.dll` ersetzt, muss deshalb in einem Wine-Baum liegen.
+Kelter legt pro Schicht eine Kopie von Wine an (auf APFS ein Klon, der kaum
+Platz belegt) und startet jede Bottle mit dem Baum, der zu ihrer Wahl passt.
+Das Wine der anderen Bottles bleibt unverändert.
+
+#### Kelters Anpassungen an Wine
+
+DXMT braucht eine Funktionstabelle in Wines Mac-Treiber (`macdrv_functions`),
+die nur CrossOvers Wine anbietet; ohne sie meldet DXMT „Failed to create metal
+view“. Für D3DMetal kommt eine zweite Anpassung in `ntdll.dll` dazu. Beide
+Patches liegen in `Tools/wine-patches/`, stehen wie Wine unter der LGPL und
+werden mit `bash Tools/wine-patches/build.sh` aus Wine plus Wine Staging in
+der Version aus `runtimes.json` gebaut. Kelter kopiert die Ergebnisse nur in
+die Wine-Kopien der Grafikschichten. Fehlen sie, nennt Kelter beim Auswählen
+den Befehl zum Bauen.
+
+#### D3DMetal (DirectX 12)
+
+D3DMetal ist Apples Übersetzung von DirectX 11/12 nach Metal aus dem Game
+Porting Toolkit. Es gehört Apple und ist **nicht** Teil von Kelter. Apples
+Lizenz erlaubt die Nutzung nur, um Spiele für Apple-Geräte zu entwickeln, zu
+testen oder zu bewerten, und die Weitergabe nur ohne kommerziellen Zweck.
+Kelter zeigt die Lizenz vor dem Laden, verändert Apples Dateien nicht und
+liefert sie nicht mit. Bezugswege: Apples eigenes Disk-Image (mit eigener
+Apple-ID) oder ein Download von Gcenx.
+
+**Derzeit pausiert:** Mit D3DMetal stürzt `steam.exe` beim Start ab. Apples
+`dxgi.dll` startet einen Thread, der in macOS abstürzt; vermutlich, weil
+Wine 11 auf dem Mac anders zwischen Windows- und Mac-Teil umschaltet als das
+ältere Wine, für das D3DMetal gebaut wurde. Die Auswahl ist deshalb gesperrt
+(`paused` in `runtimes.json`). Hinweise, wie CrossOver das löst, sind
+willkommen.
+
+#### Verworfen
+
+- **Sikarugir-Engine** (Wine 11.0 mit Zusatzpaket für D9VK, DXMT, DXVK,
+  D3DMetal): Auf dem Testgerät brach jeder Wine-Prozess gleich nach dem Laden
+  von ntdll ab (`run_wineboot failed to start wineboot 1`), unabhängig von den
+  Umgebungsvariablen. `Tools/wine-test.sh` stellt das nach. Der Code für
+  solche Zusatzpakete (`support` in `runtimes.json`) ist noch vorhanden.
+- **DXVK für DirectX 9:** Die macOS-Fassung von DXVK kann nur DirectX 10/11.
+
+### Übersetzen
+
+Der deutsche Text ist der Schlüssel; die englischen Übersetzungen stehen in
+`Resources/en.lproj/Localizable.strings`. Feste Texte in SwiftUI
+(`Text("…")`, `Button("…")` …) übersetzt SwiftUI selbst, alles andere läuft
+über `loc("… %@ …", wert)`. Der Test `LocalizationTests` meldet jeden
+angezeigten Text ohne Übersetzung. Das Log bleibt deutsch.
+
+Zum Ausprobieren ohne Umstellen: `open build/Kelter.app --args -AppleLanguages '(en)'`.
+
+### App-Icon
+
+`swift Tools/app-icon/make-icon.swift` zeichnet das Icon und legt es als
+`Resources/AppIcon.icns` ab.
+
+## Mitmachen
+
+Beiträge sind willkommen, besonders Erfahrungsberichte zu Spielen (welches
+Spiel, welche Grafik, was passiert) und Hilfe bei D3DMetal. Wie man baut,
+testet und was dabei gilt, steht in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Herkunft und Lizenzen
+
+Kelter steht unter der [GPLv3](LICENSE). Kelter enthält keinen Code von
+CrossOver und keine proprietären Bestandteile. Welche fremden Projekte Kelter
+lädt oder auf welchen Vorarbeiten es aufbaut, steht in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

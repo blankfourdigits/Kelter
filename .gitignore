@@ -9,3 +9,8 @@ steam-prozesse.txt
 diagnose/
 Kelter-Diagnose-*/
 wine-test.txt
+
+# Local settings of Claude Code and editors
+.claude/
+.vscode/
+.idea/
