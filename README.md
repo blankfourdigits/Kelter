@@ -79,8 +79,9 @@ Reports on more games are welcome, see [Contributing](#contributing).
 
 - Xcode or the Command Line Tools with Swift 5.9 or later
 - For Winetricks: [Homebrew](https://brew.sh) and `brew install cabextract`
-- Only for the DXMT graphics layer: `brew install bison mingw-w64`
-  (see [Kelter's changes to Wine](#kelters-changes-to-wine))
+- Only to build Kelter's Wine files yourself (otherwise Kelter downloads
+  them): `brew install bison mingw-w64`, see
+  [Kelter's changes to Wine](#kelters-changes-to-wine)
 
 ## Install
 
@@ -111,18 +112,6 @@ open build/Kelter.app
 `make-app.sh` builds Kelter and creates `build/Kelter.app`, which you can move
 to your Applications folder. A self-built app starts without the Gatekeeper
 step above.
-
-### DXMT graphics
-
-DXMT also needs two adjusted Wine files that are built on your Mac (about a
-minute). For now this needs the source, also if you downloaded the app:
-
-```sh
-git clone https://github.com/blankfourdigits/Kelter.git
-cd Kelter
-brew install bison mingw-w64
-bash Tools/wine-patches/build.sh
-```
 
 ## Using Kelter
 
@@ -308,11 +297,14 @@ bottles stays untouched.
 DXMT needs a function table in Wine's macOS driver (`macdrv_functions`) that
 only CrossOver's Wine offers; without it, DXMT reports "Failed to create metal
 view". D3DMetal additionally needs a change in `ntdll.dll`. Both patches are in
-`Tools/wine-patches/`, are licensed under the LGPL like Wine, and are built
-with `bash Tools/wine-patches/build.sh` from Wine plus Wine Staging in the
-version listed in `runtimes.json`. Kelter copies the results only into the
-Wine copies of the graphics layers. If they are missing, Kelter names the
-build command when you choose the graphics.
+`Tools/wine-patches/` and are licensed under the LGPL like Wine.
+`bash Tools/wine-patches/build.sh` builds the two files from Wine plus Wine
+Staging in the version listed in `runtimes.json`. GitHub runs this script for
+every revision (`.github/workflows/wine-files.yml`) and publishes the files
+together with the complete source as a release; when you choose DXMT, Kelter
+downloads them and checks the checksum from `runtimes.json`. Files you built
+yourself take precedence (needs `brew install bison mingw-w64`). Kelter
+copies the files only into the Wine copies of the graphics layers.
 
 #### D3DMetal (DirectX 12)
 
