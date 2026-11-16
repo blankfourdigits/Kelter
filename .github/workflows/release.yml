@@ -1,0 +1,71 @@
+# Builds Kelter.app for a version tag (v0.1.0, v0.2.0, …), packs it as a
+# zip and creates a *draft* release on GitHub. The draft is checked and
+# published by hand on the Releases page.
+#
+#   git tag v0.1.0 && git push origin v0.1.0
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version from tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag $GITHUB_REF_NAME is not of the form v1.2.3" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Test
+        run: swift test
+
+      - name: Build the app bundle
+        run: KELTER_VERSION="${{ steps.version.outputs.version }}" bash scripts/make-app.sh
+
+      - name: Pack
+        id: pack
+        run: |
+          ZIP="Kelter-${{ steps.version.outputs.version }}.zip"
+          ditto -c -k --keepParent build/Kelter.app "$ZIP"
+          shasum -a 256 "$ZIP" > "$ZIP.sha256"
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > notes.md <<'NOTES'
+          ## Install
+
+          1. Download `Kelter-*.zip` below and unzip it.
+          2. Move `Kelter.app` to your Applications folder.
+          3. Kelter is not notarized by Apple. On the first start macOS blocks
+             it: open **System Settings → Privacy & Security** and click
+             **Open Anyway** next to the message about Kelter.
+
+          Requires a Mac with Apple Silicon and macOS 15 or newer. See the
+          README for what works and what doesn't.
+
+          ## Changes
+
+          NOTES
+          gh release create "$GITHUB_REF_NAME" \
+            --draft \
+            --title "Kelter ${{ steps.version.outputs.version }}" \
+            --notes-file notes.md \
+            --generate-notes \
+            "${{ steps.pack.outputs.zip }}" \
+            "${{ steps.pack.outputs.zip }}.sha256"

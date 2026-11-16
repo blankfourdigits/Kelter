@@ -1,11 +1,16 @@
 #!/bin/bash
 # Builds Kelter in release mode and wraps it in build/Kelter.app.
 # Usage: ./scripts/make-app.sh
+#        KELTER_VERSION=0.2.0 ./scripts/make-app.sh   (the release workflow)
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-VERSION="0.1.0"
+VERSION="${KELTER_VERSION:-0.1.0}"
+if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "Ungültige Version: $VERSION (erwartet z. B. 0.1.0)" >&2
+    exit 1
+fi
 APP="build/Kelter.app"
 
 swift build -c release
@@ -54,7 +59,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
-# Ad-hoc signature: enough to run on this Mac.
+# Ad-hoc signature over the whole bundle. Not notarized: on other Macs the
+# first start has to be allowed once in System Settings.
 codesign --force --sign - "$APP"
 
 # macOS remembers app icons by path; register the new build so the Dock and
