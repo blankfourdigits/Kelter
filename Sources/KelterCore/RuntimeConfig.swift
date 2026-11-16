@@ -192,9 +192,10 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
     public var wine: Wine
     /// Kelter's own changes to Wine (Tools/wine-patches), which some
     /// graphics layers need, for example Wine's macOS driver with the
-    /// functions DXMT and D3DMetal look up. They are built on the Mac by a
-    /// script from the repository (no foreign binaries are shipped) into
-    /// `Runtimes/wine-files/<wineVersion>-<version>/`.
+    /// functions DXMT and D3DMetal look up. They live in
+    /// `Runtimes/wine-files/<wineVersion>-<version>/`: built on the Mac by a
+    /// script from the repository, or downloaded as built from that script
+    /// by the repository's own workflow.
     public struct WinePatches: Codable, Equatable, Sendable {
         /// Shown in messages.
         public var name: String
@@ -204,12 +205,25 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
         public var wineVersion: String
         /// The script that builds the files, relative to the project folder.
         public var buildScript: String
+        /// Optional download of the same files, built from this repository
+        /// by the `wine-files` workflow. Files built locally take precedence.
+        public var url: URL?
+        public var sha256: String?
 
-        public init(name: String, version: String, wineVersion: String, buildScript: String) {
+        public init(
+            name: String,
+            version: String,
+            wineVersion: String,
+            buildScript: String,
+            url: URL? = nil,
+            sha256: String? = nil
+        ) {
             self.name = name
             self.version = version
             self.wineVersion = wineVersion
             self.buildScript = buildScript
+            self.url = url
+            self.sha256 = sha256
         }
     }
 

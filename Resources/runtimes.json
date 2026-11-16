@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 14,
+  "schemaVersion": 15,
   "wine": {
     "name": "Wine Staging (Gcenx macOS build)",
     "version": "11.21",

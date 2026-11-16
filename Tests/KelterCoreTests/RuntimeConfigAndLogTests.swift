@@ -15,7 +15,7 @@ final class RuntimeConfigTests: XCTestCase {
     func testBundledConfigIsValid() throws {
         let config = try RuntimeConfig.load(from: bundledConfig)
 
-        XCTAssertEqual(config.schemaVersion, 14)
+        XCTAssertEqual(config.schemaVersion, 15)
         XCTAssertFalse(config.wine.version.isEmpty)
         XCTAssertEqual(config.wine.url.scheme, "https")
         // The version becomes a folder name.
@@ -23,6 +23,24 @@ final class RuntimeConfigTests: XCTestCase {
         XCTAssertEqual(config.wine.sha256?.count, 64)
         XCTAssertFalse(config.wine.archiveRoot.isEmpty)
         XCTAssertFalse(config.wine.binDirectory.hasPrefix("/"))
+    }
+
+    func testBundledWinePatchesDownloadIsPinned() throws {
+        let patches = try XCTUnwrap(RuntimeConfig.load(from: bundledConfig).winePatches)
+        // A download is optional, but if there is one it must be checked.
+        guard let url = patches.url else { return }
+        XCTAssertEqual(url.scheme, "https")
+        XCTAssertEqual(patches.sha256?.count, 64)
+        // The archive name carries Wine version and revision, so an archive
+        // left in Downloads/ is never mistaken for another revision.
+        XCTAssertTrue(url.lastPathComponent.contains("\(patches.wineVersion)-\(patches.version)"))
+    }
+
+    func testWinePatchesWithoutDownloadStillDecode() throws {
+        let json = #"{ "name": "W", "version": "2", "wineVersion": "11.21", "buildScript": "b.sh" }"#
+        let patches = try JSONDecoder().decode(RuntimeConfig.WinePatches.self, from: Data(json.utf8))
+        XCTAssertNil(patches.url)
+        XCTAssertNil(patches.sha256)
     }
 
     func testBundledSupportPackageIsValid() throws {

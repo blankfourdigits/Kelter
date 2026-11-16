@@ -48,14 +48,18 @@ final class WineVariantTests: XCTestCase {
         )
     }
 
-    private func patches(wineVersion: String = "11.21") -> RuntimeConfig.WinePatches {
+    private func patches(wineVersion: String = "11.21", url: URL? = nil) -> RuntimeConfig.WinePatches {
         RuntimeConfig.WinePatches(
             name: "Wine-Anpassungen",
             version: "2",
             wineVersion: wineVersion,
-            buildScript: "Tools/wine-patches/build.sh"
+            buildScript: "Tools/wine-patches/build.sh",
+            url: url,
+            sha256: url == nil ? nil : String(repeating: "a", count: 64)
         )
     }
+
+    private let filesURL = URL(string: "https://example.invalid/kelter-wine-files-11.21-2.tar.xz")!
 
     private func layerWithWineFiles() -> RuntimeConfig.GraphicsLayer {
         var layer = layer()
@@ -121,6 +125,50 @@ final class WineVariantTests: XCTestCase {
                          buildScript: "Tools/wine-patches/build.sh")
             )
             XCTAssertTrue(error.localizedDescription.contains("bash Tools/wine-patches/build.sh"))
+        }
+    }
+
+    func testPlanWithoutWineFilesNeedsNothing() throws {
+        XCTAssertEqual(
+            try WineVariantInstaller.planWineFiles(
+                layer: layer(), patches: patches(url: filesURL), wine: wineConfig(), paths: paths),
+            .notNeeded)
+    }
+
+    func testPlanDownloadsMissingFilesIfConfigured() throws {
+        XCTAssertEqual(
+            try WineVariantInstaller.planWineFiles(
+                layer: layerWithWineFiles(), patches: patches(url: filesURL), wine: wineConfig(), paths: paths),
+            .download(filesURL, sha256: String(repeating: "a", count: 64)))
+    }
+
+    func testPlanPrefersFilesThatAreThere() throws {
+        // Built locally (or downloaded before): no download.
+        try write("driver", to: wineFilesSource.appendingPathComponent("x86_64-unix/winemac.so"))
+        XCTAssertEqual(
+            try WineVariantInstaller.planWineFiles(
+                layer: layerWithWineFiles(), patches: patches(url: filesURL), wine: wineConfig(), paths: paths),
+            .ready)
+    }
+
+    func testPlanWithoutDownloadNamesTheBuildScript() {
+        XCTAssertThrowsError(try WineVariantInstaller.planWineFiles(
+            layer: layerWithWineFiles(), patches: patches(), wine: wineConfig(), paths: paths)
+        ) { error in
+            guard case .missing? = error as? WineFilesError else {
+                return XCTFail("expected .missing, got \(error)")
+            }
+        }
+    }
+
+    func testPlanNeverDownloadsForAnotherWine() {
+        XCTAssertThrowsError(try WineVariantInstaller.planWineFiles(
+            layer: layerWithWineFiles(), patches: patches(wineVersion: "11.20", url: filesURL),
+            wine: wineConfig(), paths: paths)
+        ) { error in
+            guard case .wrongWineVersion? = error as? WineFilesError else {
+                return XCTFail("expected .wrongWineVersion, got \(error)")
+            }
         }
     }
 

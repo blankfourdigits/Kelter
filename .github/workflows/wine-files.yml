@@ -1,0 +1,99 @@
+# Builds Kelter's changed Wine files (Tools/wine-patches) and creates a
+# *draft* pre-release with them and the complete corresponding source, so
+# Kelter can download them instead of every user building them.
+#
+# The tag names Wine version and revision from "winePatches" in
+# Resources/runtimes.json:
+#
+#   git tag wine-files-11.21-2 && git push origin wine-files-11.21-2
+#
+# After publishing, put the archive's URL and SHA-256 into "winePatches".
+name: Wine files
+
+on:
+  push:
+    tags: ['wine-files-*']
+
+permissions:
+  contents: write
+
+jobs:
+  wine-files:
+    runs-on: macos-15
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tag against runtimes.json
+        id: version
+        run: |
+          EXPECTED="$(python3 -I -c '
+          import json, sys
+          p = json.load(open(sys.argv[1]))["winePatches"]
+          print(p["wineVersion"] + "-" + p["version"])
+          ' Resources/runtimes.json)"
+          if [ "$GITHUB_REF_NAME" != "wine-files-$EXPECTED" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match runtimes.json (wine-files-$EXPECTED)" >&2
+            exit 1
+          fi
+          echo "name=$EXPECTED" >> "$GITHUB_OUTPUT"
+
+      - name: Install build tools
+        run: |
+          /usr/bin/arch -x86_64 /usr/bin/true 2>/dev/null \
+            || sudo softwareupdate --install-rosetta --agree-to-license
+          brew install bison mingw-w64
+
+      - name: Build
+        env:
+          WORK: ${{ runner.temp }}/wine-build
+        run: bash Tools/wine-patches/build.sh "$RUNNER_TEMP/wine-files"
+
+      - name: Pack files and source
+        id: pack
+        env:
+          WORK: ${{ runner.temp }}/wine-build
+        run: |
+          NAME="${{ steps.version.outputs.name }}"
+          WINE_VERSION="${NAME%-*}"
+          FILES="kelter-wine-files-$NAME.tar.xz"
+          SOURCE="kelter-wine-source-$NAME.tar.xz"
+          export COPYFILE_DISABLE=1   # no AppleDouble ._ files for extended attributes
+          tar -C "$RUNNER_TEMP/wine-files" -cJf "$FILES" x86_64-unix x86_64-windows
+          # Exactly what Kelter expects, nothing else.
+          LISTING="$(tar -tJf "$FILES" | grep -v '/$' | sort)"
+          printf '%s\n' "$LISTING"
+          [ "$LISTING" = "$(printf 'x86_64-unix/winemac.so\nx86_64-windows/ntdll.dll')" ]
+          # Wine + Wine Staging + Kelter's patches as built (LGPL source).
+          tar -C "$WORK" --exclude .git -cJf "$SOURCE" "src-$WINE_VERSION"
+          shasum -a 256 "$FILES" "$SOURCE" > "kelter-wine-$NAME.sha256"
+          cat "kelter-wine-$NAME.sha256"
+          echo "files=$FILES" >> "$GITHUB_OUTPUT"
+          echo "source=$SOURCE" >> "$GITHUB_OUTPUT"
+          echo "sums=kelter-wine-$NAME.sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Create draft pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NAME="${{ steps.version.outputs.name }}"
+          cat > notes.md <<NOTES
+          Kelter's changed Wine files for Wine ${NAME%-*}, revision ${NAME##*-}.
+          Kelter downloads them by itself for the DXMT graphics; there is
+          nothing to install by hand.
+
+          - \`winemac.so\`: Wine's macOS driver with \`macdrv_functions\` (DXMT)
+          - \`ntdll.dll\`: ntdll with \`__wine_unix_call\` exported (D3DMetal)
+
+          Built by GitHub Actions from Wine ${NAME%-*}, Wine Staging ${NAME%-*}
+          and the patches in \`Tools/wine-patches/\` at commit ${GITHUB_SHA}.
+          Licensed under the LGPL 2.1 or later, like Wine; the complete
+          source is attached as \`kelter-wine-source-$NAME.tar.xz\`.
+          NOTES
+          gh release create "$GITHUB_REF_NAME" \
+            --draft --prerelease --latest=false \
+            --title "Wine files $NAME" \
+            --notes-file notes.md \
+            "${{ steps.pack.outputs.files }}" \
+            "${{ steps.pack.outputs.source }}" \
+            "${{ steps.pack.outputs.sums }}"

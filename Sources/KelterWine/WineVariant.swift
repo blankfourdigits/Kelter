@@ -173,8 +173,24 @@ public final class WineVariantInstaller: @unchecked Sendable {
     ) async throws -> WineInstallation {
         let libraryTarget = layer.libraryTarget == "."
             ? nil : try ArchiveInstaller.safeRelativePath(layer.libraryTarget)
-        // Fail before downloading anything if Kelter's Wine files are missing.
-        try Self.checkWineFiles(layer: layer, patches: patches, wine: wine, paths: paths, fileManager: fileManager)
+        // Kelter's Wine files first: fail before downloading the layer if
+        // they are missing and can't be downloaded either.
+        if case .download(let url, let sha256) = try Self.planWineFiles(
+            layer: layer, patches: patches, wine: wine, paths: paths, fileManager: fileManager),
+           let patches {
+            try await ArchiveInstaller(paths: paths, log: log).install(
+                ArchivePackage(
+                    name: patches.name,
+                    version: patches.version,
+                    url: url,
+                    sha256: sha256,
+                    target: paths.wineFilesDirectory(wineVersion: patches.wineVersion, version: patches.version)
+                ),
+                onPhase: onPhase
+            )
+            // The archive has to contain what the layer needs.
+            try Self.checkWineFiles(layer: layer, patches: patches, wine: wine, paths: paths, fileManager: fileManager)
+        }
 
         // 1. The layer itself.
         if source != nil || !Self.hasLayerFiles(paths: paths, layer: layer, fileManager: fileManager) {
@@ -392,6 +408,37 @@ public final class WineVariantInstaller: @unchecked Sendable {
                 name: patches.name, layer: layer.name, files: missing, buildScript: patches.buildScript)
         }
         return source
+    }
+
+    /// What has to happen with Kelter's Wine files before a copy of Wine
+    /// for `layer` can be built.
+    enum WineFilesPlan: Equatable {
+        /// The layer needs none.
+        case notNeeded
+        /// They are there, built locally or downloaded before.
+        case ready
+        /// They are missing and runtimes.json says where to get them.
+        case download(URL, sha256: String?)
+    }
+
+    /// Decides between using, downloading and asking to build the files.
+    /// Throws `WineFilesError.missing` (naming the build script) only if
+    /// there is nothing to download.
+    static func planWineFiles(
+        layer: RuntimeConfig.GraphicsLayer,
+        patches: RuntimeConfig.WinePatches?,
+        wine: RuntimeConfig.Wine,
+        paths: AppPaths,
+        fileManager: FileManager = .default
+    ) throws -> WineFilesPlan {
+        do {
+            let source = try checkWineFiles(
+                layer: layer, patches: patches, wine: wine, paths: paths, fileManager: fileManager)
+            return source == nil ? .notNeeded : .ready
+        } catch let error as WineFilesError {
+            guard case .missing = error, let url = patches?.url else { throw error }
+            return .download(url, sha256: patches?.sha256)
+        }
     }
 
     /// Copies the changed Wine files the layer needs over the ones in
