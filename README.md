@@ -90,7 +90,9 @@ Reports on more games are welcome, see [Contributing](#contributing).
 1. Download `Kelter-<version>.zip` from the
    [latest release](https://github.com/blankfourdigits/Kelter/releases/latest)
    and unzip it.
-2. Move `Kelter.app` to your Applications folder.
+2. Move `Kelter.app` to your Applications folder **before** the first start.
+   Started straight from Downloads, macOS runs it from a hidden, read-only
+   copy at a new place each time.
 3. **First start:** Kelter is free software and not notarized by Apple, so
    macOS blocks the first start with a message that it can't check the app.
    Click **Done**, open **System Settings → Privacy & Security**, scroll down

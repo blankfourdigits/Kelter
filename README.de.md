@@ -91,7 +91,9 @@ Erfahrungen mit weiteren Spielen sind willkommen, siehe [Mitmachen](#mitmachen).
 1. `Kelter-<Version>.zip` aus dem
    [neuesten Release](https://github.com/blankfourdigits/Kelter/releases/latest)
    laden und entpacken.
-2. `Kelter.app` in den Programme-Ordner ziehen.
+2. `Kelter.app` **vor** dem ersten Start in den Programme-Ordner ziehen.
+   Direkt aus „Downloads“ gestartet, führt macOS die App aus einer
+   versteckten, schreibgeschützten Kopie aus, jedes Mal an einem anderen Ort.
 3. **Erster Start:** Kelter ist freie Software und nicht von Apple
    beglaubigt. macOS blockiert deshalb den ersten Start mit der Meldung, die
    App lasse sich nicht überprüfen. Auf **Fertig** klicken, dann
