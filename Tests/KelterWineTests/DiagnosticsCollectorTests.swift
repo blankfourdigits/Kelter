@@ -1,5 +1,6 @@
 import Foundation
 import XCTest
+import KelterCore
 @testable import KelterWine
 
 final class DiagnosticsCollectorTests: XCTestCase {
@@ -81,7 +82,8 @@ final class DiagnosticsCollectorTests: XCTestCase {
             runtimeConfig: config,
             bottleDirectory: bottleJSON.deletingLastPathComponent(),
             steamDirectory: steam,
-            notes: ["Wine: Test 1.0"]
+            notes: ["Wine: Test 1.0"],
+            processList: { "  PID ELAPSED COMMAND\n  200 01:00 wineserver\n" }
         )
         let folder = try DiagnosticsCollector().collect(input, into: output, now: Date(timeIntervalSince1970: 0))
 
@@ -107,6 +109,7 @@ final class DiagnosticsCollectorTests: XCTestCase {
 
         XCTAssertTrue(try read(folder.appendingPathComponent("prozesse.txt")).contains("PID"))
         XCTAssertFalse(FileManager.default.fileExists(atPath: folder.appendingPathComponent("fehler.txt").path))
+        XCTAssertTrue(try read(folder.appendingPathComponent("datenschutz.txt")).contains("nichts gefunden"))
 
         // The originals are untouched.
         XCTAssertEqual(try read(log), "log line\n")
@@ -114,7 +117,7 @@ final class DiagnosticsCollectorTests: XCTestCase {
 
     func testCollectNotesWhatIsMissingInsteadOfFailing() throws {
         let missingLog = root.appendingPathComponent("nowhere/kelter.log")
-        let input = DiagnosticsCollector.Input(logFile: missingLog)
+        let input = DiagnosticsCollector.Input(logFile: missingLog, processList: { "  PID COMMAND\n" })
 
         let folder = try DiagnosticsCollector().collect(input, into: root)
 
@@ -123,5 +126,94 @@ final class DiagnosticsCollectorTests: XCTestCase {
         // The parts that do not depend on the log are still there.
         XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("system.txt").path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("prozesse.txt").path))
+    }
+
+    func testCollectReplacesPersonalDetailsInEveryFile() throws {
+        let log = try write("$ tar -xf /Users/alex/Downloads/wine.tar\n", to: "app/Logs/kelter.log")
+        let steam = root.appendingPathComponent("app/Bottles/abc/prefix/drive_c/Steam", isDirectory: true)
+        let connection = try write(
+            "[Logged On] [U:1:39734314] Logging on, bind 192.168.1.50:27036\n",
+            to: "app/Bottles/abc/prefix/drive_c/Steam/logs/connection_log.txt"
+        )
+        _ = try write(
+            "Saving to C:\\users\\alex\\AppData, account 39734314, LOCAL_HOSTNAME=macbook-von-alex\n",
+            to: "app/Bottles/abc/prefix/drive_c/Steam/logs/sub/steamsysinfo.txt"
+        )
+        _ = try write(
+            "] status\nname: AlexGamer steamid: [U:1:39734314]\n",
+            to: "app/Bottles/abc/prefix/drive_c/Steam/steamapps/common/HL2/hl2/console.log"
+        )
+
+        let input = DiagnosticsCollector.Input(
+            logFile: log,
+            steamDirectory: steam,
+            notes: ["Konfiguration: /Users/alex/Documents/Kelter/Resources/runtimes.json"],
+            identity: PrivacyRedactor.Identity(userName: "alex", hostNames: ["MacBook von Alex"]),
+            processList: { "  PID ELAPSED COMMAND\n  200 01:00 wineserver\n" }
+        )
+        let folder = try DiagnosticsCollector().collect(input, into: root)
+
+        let collected = try FileManager.default.subpathsOfDirectory(atPath: folder.path)
+            .map { folder.appendingPathComponent($0) }
+            .filter { (try? $0.resourceValues(forKeys: [.isRegularFileKey]))?.isRegularFile == true }
+            .filter { $0.lastPathComponent != "prozesse.txt" && $0.lastPathComponent != "datenschutz.txt" }
+        XCTAssertGreaterThanOrEqual(collected.count, 5)
+        for file in collected {
+            let text = try read(file)
+            XCTAssertFalse(text.contains("39734314"), file.lastPathComponent)
+            XCTAssertFalse(text.contains("192.168.1.50"), file.lastPathComponent)
+            XCTAssertFalse(text.contains("users\\alex"), file.lastPathComponent)
+            XCTAssertFalse(text.contains("Users/alex"), file.lastPathComponent)
+            XCTAssertFalse(text.contains("macbook-von-alex"), file.lastPathComponent)
+        }
+        XCTAssertEqual(
+            try read(folder.appendingPathComponent("steam-logs/connection_log.txt")),
+            "[Logged On] [U:1:<account-1>] Logging on, bind <lan-ip-1>:27036\n"
+        )
+        // The number seen as [U:1:…] in one file is also replaced bare in another.
+        XCTAssertTrue(try read(folder.appendingPathComponent("steam-logs/sub/steamsysinfo.txt")).contains("account <account-1>"))
+        let notice = try read(folder.appendingPathComponent("datenschutz.txt"))
+        XCTAssertTrue(notice.contains("Steam-Kontonummer: 3"))
+        XCTAssertTrue(notice.contains("Bitte sieh die Dateien durch"))
+        // The originals are untouched.
+        XCTAssertEqual(try read(connection), "[Logged On] [U:1:39734314] Logging on, bind 192.168.1.50:27036\n")
+    }
+
+    func testLargeFilesKeepBeginningAndEnd() throws {
+        var text = "start line\n"
+        for index in 0..<2_000 { text += "middle line \(index)\n" }
+        text += "last line\n"
+        let url = try write(text, to: "big.txt")
+
+        let result = try DiagnosticsCollector.readText(url, maxBytes: 1_000, headBytes: 300)
+        guard case .text(let shortened, _, let cut) = result else { return XCTFail("not text") }
+        XCTAssertTrue(cut)
+        XCTAssertTrue(shortened.hasPrefix("start line\n"))
+        XCTAssertTrue(shortened.hasSuffix("last line\n"))
+        XCTAssertTrue(shortened.contains("Bytes in der Mitte ausgelassen"))
+        XCTAssertLessThan(shortened.utf8.count, 1_200)
+        // Cut at line ends: every line is whole.
+        for line in shortened.split(separator: "\n") {
+            XCTAssertTrue(line.hasPrefix("start") || line.hasPrefix("middle line ") || line.hasPrefix("last") || line.hasPrefix("[…"))
+        }
+
+        guard case .text(let whole, _, let wholeCut) = try DiagnosticsCollector.readText(url, maxBytes: 1_000_000, headBytes: 300)
+        else { return XCTFail("not text") }
+        XCTAssertFalse(wholeCut)
+        XCTAssertEqual(whole, text)
+    }
+
+    func testBinaryFilesAreLeftOutAndLatin1IsKept() throws {
+        let binary = root.appendingPathComponent("dump.bin")
+        try Data([0x4D, 0x44, 0x00, 0x01, 0x02]).write(to: binary)
+        XCTAssertEqual(try DiagnosticsCollector.readText(binary, maxBytes: 100, headBytes: 10), .notText)
+
+        let latin = root.appendingPathComponent("latin.txt")
+        let bytes = Data([0x47, 0x72, 0xFC, 0xDF, 0x65, 0x0A]) // "Grüße" in Latin-1
+        try bytes.write(to: latin)
+        guard case .text(let text, let encoding, _) = try DiagnosticsCollector.readText(latin, maxBytes: 100, headBytes: 10)
+        else { return XCTFail("not text") }
+        XCTAssertEqual(encoding, .isoLatin1)
+        XCTAssertEqual(text.data(using: encoding), bytes)
     }
 }

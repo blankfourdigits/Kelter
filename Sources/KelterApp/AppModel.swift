@@ -440,7 +440,28 @@ final class AppModel: ObservableObject {
     func copyLogToClipboard() {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        pasteboard.setString(logText, forType: .string)
+        pasteboard.setString(privacyRedactor().redact(logText), forType: .string)
+    }
+
+    /// Personal details known for the selected bottle and this Mac, for
+    /// text that leaves Kelter.
+    private func privacyIdentity(steamDirectory: URL?) -> PrivacyRedactor.Identity {
+        let mac = PrivacyRedactor.Identity.currentMac()
+        guard let steamDirectory else { return mac }
+        return SteamPrivacy.identity(adding: steamDirectory, to: mac)
+    }
+
+    private func privacyRedactor() -> PrivacyRedactor {
+        var steamDirectory: URL?
+        if let bottle = selectedBottle, let config {
+            let prefix = store.prefixURL(for: bottle.id)
+            if SteamLocation.isInstalled(prefix: prefix, config: config.steam) {
+                steamDirectory = SteamLocation.directory(prefix: prefix, config: config.steam)
+            }
+        }
+        let redactor = PrivacyRedactor(identity: privacyIdentity(steamDirectory: steamDirectory))
+        redactor.learn(from: logText)
+        return redactor
     }
 
     func clearLogView() {
@@ -501,7 +522,8 @@ final class AppModel: ObservableObject {
             runtimeConfig: configSource,
             bottleDirectory: bottle.map { store.directory(for: $0.id) },
             steamDirectory: steamDirectory,
-            notes: notes
+            notes: notes,
+            identity: privacyIdentity(steamDirectory: steamDirectory)
         )
         let log = self.log
         Task {

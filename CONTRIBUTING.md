@@ -13,8 +13,9 @@ form when you open a new issue; it asks for:
 - the graphics chosen in Kelter (Wine built-in, DXMT)
 - what happens: runs, graphics glitches, crashes when …, doesn't start
 - for problems: the relevant lines from the log (View → Test view). Please
-  look through the folder from "Collect diagnostics …" before sharing it;
-  Steam's logs may contain your account name.
+  look through the folder from "Collect diagnostics …" before sharing it.
+  Kelter replaces the personal details it recognises (see
+  `datenschutz.txt` in the folder), but it can miss some.
 
 Problems in Kelter itself go into a **Bug report**. Security problems please
 report privately, see [SECURITY.md](SECURITY.md).

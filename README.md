@@ -169,9 +169,15 @@ under Wine on the Mac.
    installed games and system information.
 4. Turn the verbose log off again afterwards; it grows quickly.
 
-The diagnostics folder stays on your Mac. Steam's logs may contain your
-account name; check the folder before sharing it. Kelter's log is written in
-German.
+The diagnostics folder stays on your Mac. While collecting, Kelter replaces
+personal details it can recognise (SteamIDs and account numbers, Steam login
+and display names, your Mac user name in paths, your full name, the computer
+name, local network addresses, session IDs) with placeholders such as
+`<steamid-1>`. Large logs keep their beginning and end. `datenschutz.txt` in
+the folder lists what was replaced and what was not. The search only knows
+these patterns and can miss things, for example names in game output, so
+please look through the folder before sharing it. "Copy" in the log window
+cleans the text the same way. Kelter's log is written in German.
 
 Common cases:
 

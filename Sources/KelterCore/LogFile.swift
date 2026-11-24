@@ -9,10 +9,14 @@ import Foundation
 /// simply follows it with `LogTailer`.
 public final class LogFile: @unchecked Sendable {
     public let url: URL
+    /// Kelter's own lines write paths below this folder as `~/…`, so the
+    /// log does not carry the Mac user name. Wine's output is not touched.
+    public let homeDirectory: String
     private let lock = NSLock()
 
-    public init(url: URL) {
+    public init(url: URL, homeDirectory: String = NSHomeDirectory()) {
         self.url = url
+        self.homeDirectory = homeDirectory
     }
 
     /// Creates the file and moves an oversized old log aside.
@@ -35,7 +39,7 @@ public final class LogFile: @unchecked Sendable {
     public func append(_ text: String) {
         lock.lock()
         defer { lock.unlock() }
-        let data = Data(text.utf8)
+        let data = Data(PrivacyRedactor.abbreviatingHome(text, home: homeDirectory).utf8)
         if let handle = try? FileHandle(forWritingTo: url) {
             defer { try? handle.close() }
             _ = try? handle.seekToEnd()

@@ -173,8 +173,15 @@ laufen sie in der Regel nicht.
    Wine-Prozesse, installierte Spiele und Systemangaben.
 4. Das ausführliche Log danach wieder ausschalten, es wird schnell groß.
 
-Der Diagnose-Ordner bleibt auf deinem Mac. Steams Logs können deinen
-Kontonamen enthalten; prüfe den Ordner, bevor du ihn teilst.
+Der Diagnose-Ordner bleibt auf deinem Mac. Beim Sammeln ersetzt Kelter
+persönliche Angaben, die es erkennt (SteamIDs und Kontonummern, Steam-Anmelde-
+und Anzeigenamen, deinen Mac-Benutzernamen in Pfaden, deinen vollständigen
+Namen, den Rechnernamen, Adressen im eigenen Netz, Sitzungskennungen), durch
+Platzhalter wie `<steamid-1>`. Große Logs behalten Anfang und Ende.
+`datenschutz.txt` im Ordner nennt, was ersetzt wurde und was nicht. Die Suche
+kennt nur diese Muster und kann etwas übersehen, etwa Namen in Ausgaben von
+Spielen; sieh den Ordner deshalb durch, bevor du ihn teilst. „Kopieren“ im
+Log-Fenster bereinigt den Text genauso.
 
 Häufige Fälle:
 
