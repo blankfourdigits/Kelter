@@ -15,7 +15,9 @@
     "name": "Kelters Anpassungen an Wine (Mac-Treiber, ntdll)",
     "version": "3",
     "wineVersion": "11.21",
-    "buildScript": "Tools/wine-patches/build.sh"
+    "buildScript": "Tools/wine-patches/build.sh",
+    "url": "https://github.com/blankfourdigits/Kelter/releases/download/wine-files-11.21-3/kelter-wine-files-11.21-3.tar.xz",
+    "sha256": "355bc92d09846d53a75b4876ae55b8aab838fa6f1974e72775d0c98d7f30a62a"
   },
   "graphicsLayers": [
     {
