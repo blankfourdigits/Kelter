@@ -760,6 +760,12 @@ final class AppModel: ObservableObject {
 
         Task {
             do {
+                // The copy may have been removed while Kelter was running;
+                // look again instead of starting Wine from a missing folder.
+                if let layer {
+                    self.wineVariants[backend] = WineVariantInstaller.locate(
+                        paths: paths, wine: config.wine, layer: layer, patches: config.winePatches)
+                }
                 // Without its copy of Wine (removed, or a new revision of
                 // the layer) the bottle would quietly run on plain Wine.
                 if let layer, self.wineVariants[backend] == nil {
