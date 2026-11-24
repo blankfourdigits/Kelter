@@ -20,7 +20,7 @@ mit.
   <img src="docs/kelter-demo.gif" width="800" alt="Ein Klick auf Half-Life 2 in Kelters Bibliothek startet das Spiel über Steam">
 </p>
 
-> **Stand:** frühe Version (0.1). Steam, die Spielebibliothek und DirectX
+> **Stand:** frühe Version (0.2). Steam, die Spielebibliothek und DirectX
 > 9–11 laufen; DirectX 12 noch nicht. Die App gibt es zum
 > [Herunterladen](#installieren), oder du baust sie aus dem Quelltext.
 
@@ -56,6 +56,8 @@ Getestet auf einem MacBook Air (M5) mit macOS 26.6, Wine Staging 11.21.
 | Umgebungsvariablen und DLL-Overrides pro Bottle | fertig | Oberfläche ja |
 | Hinweis auf Kernel-Anti-Cheat | fertig | noch nicht mit einem betroffenen Spiel |
 | Oberfläche auf Deutsch und Englisch | fertig | ja |
+| Spiele deinstallieren, auf Wunsch mit lokalen Spielständen | fertig | ja (Persona 5 Royal) |
+| Diagnose mit ersetzten persönlichen Angaben | fertig | ja |
 | Einstellungen pro Spiel | zurückgestellt | – |
 | Controller | nicht dokumentiert | – |
 
@@ -65,6 +67,7 @@ Getestet auf einem MacBook Air (M5) mit macOS 26.6, Wine Staging 11.21.
 | --- | --- | --- | --- |
 | Blasphemous 2 | 11 | DXMT | läuft, 60 FPS |
 | Half-Life 2 (mit Episoden) | 9 | Wine (eingebaut) | läuft, gelegentliche Ruckler beim Nachladen |
+| Persona 5 Royal | 11 | DXMT | startet; sein Kopierschutz brauchte eine Korrektur in Kelters Wine-Dateien |
 
 Erfahrungen mit weiteren Spielen sind willkommen, siehe [Mitmachen](#mitmachen).
 
@@ -214,16 +217,18 @@ Häufige Fälle:
 
 ```
 Sources/
-  KelterCore/   Pfade, Konfiguration, Bottles, Logdatei, Übersetzung (nur Foundation)
+  KelterCore/   Pfade, Konfiguration, Bottles, Logdatei, Übersetzung,
+                persönliche Angaben aus Logs entfernen, Kelter deinstallieren
   KelterWine/   Wine laden und starten, Wine-Kopien mit Grafikschicht,
                 Winetricks, Diagnose, Laufzeit-Erkennung
   KelterSteam/  Steam installieren, starten, beenden; Fensterkorrektur;
-                Steams Dateien lesen (VDF), Bibliothek, Anti-Cheat-Erkennung
+                Steams Dateien lesen (VDF), Bibliothek, Anti-Cheat-Erkennung,
+                Spiele deinstallieren, erkennen, wann ein Spiel läuft
   KelterApp/    SwiftUI-Oberfläche: Bibliothek, Einstellungen, Testansicht
 Resources/      runtimes.json, Übersetzungen, Icon, Hilfsbibliothek für Steam
 Tools/
   steam-ui-fix/ Quelltext und Bauskript der Hilfsbibliothek für das Steam-Fenster
-  wine-patches/ Kelters zwei Patches für Wine und ihr Bauskript
+  wine-patches/ Kelters Patches für Wine und ihr Bauskript
   app-icon/     zeichnet das App-Icon
 Tests/          XCTest; Wine selbst wird in Tests nie gestartet
 ```
@@ -249,7 +254,7 @@ Alles liegt unter `~/Library/Application Support/Kelter/`:
 | `Bottles/<ID>/prefix/` | die Windows-Umgebung (WINEPREFIX) |
 | `Runtimes/wine/<Version>/` | das entpackte Wine |
 | `Runtimes/wine-variants/` | Kopien von Wine mit einer Grafikschicht |
-| `Runtimes/wine-files/` | Kelters gebaute Wine-Dateien |
+| `Runtimes/wine-files/` | Kelters Wine-Dateien, geladen oder selbst gebaut |
 | `Runtimes/graphics/` | Grafikschichten (DXMT, ggf. D3DMetal) |
 | `Runtimes/winetricks/` | das Winetricks-Skript |
 | `Downloads/` | Downloads, darunter der Winetricks-Zwischenspeicher |
@@ -302,7 +307,9 @@ deshalb abgeschaltet (`steam.dllOverrides`).
 **Spiele starten:** Kelter liest Steams Dateien (`libraryfolders.vdf`,
 `appmanifest_*.acf`) auch aus Bibliotheken auf anderen Laufwerken, nimmt die
 Cover aus Steams Zwischenspeicher und startet ein Spiel mit
-`steam.exe steam://rungameid/<id>`. Läuft Steam schon, übernimmt es den Start.
+`steam.exe -silent steam://rungameid/<id>`, sodass Steam im Hintergrund
+bleibt. Läuft Steam schon, übernimmt es den Start. Ob das Spiel läuft, liest
+Kelter aus Steams `logs/gameprocess_log.txt`.
 
 ### Grafik
 
@@ -320,12 +327,18 @@ Das Wine der anderen Bottles bleibt unverändert.
 
 #### Kelters Anpassungen an Wine
 
-DXMT braucht eine Funktionstabelle in Wines Mac-Treiber (`macdrv_functions`),
-die nur CrossOvers Wine anbietet; ohne sie meldet DXMT „Failed to create metal
-view“. Für D3DMetal kommt eine zweite Anpassung in `ntdll.dll` dazu. Beide
-Patches liegen in `Tools/wine-patches/` und stehen wie Wine unter der LGPL.
-`bash Tools/wine-patches/build.sh` baut die zwei Dateien aus Wine plus Wine
-Staging in der Version aus `runtimes.json`. GitHub führt dieses Skript für
+Die Patches in `Tools/wine-patches/` stehen wie Wine unter der LGPL:
+
+| Patch | Wozu |
+| --- | --- |
+| 0001 `winemac` | DXMT braucht eine Funktionstabelle in Wines Mac-Treiber (`macdrv_functions`), die nur CrossOvers Wine anbietet; ohne sie meldet DXMT „Failed to create metal view“ |
+| 0002 `ntdll.dll` | exportiert wieder `__wine_unix_call`, das Apples D3DMetal-Bibliotheken importieren |
+| 0003 `ntdll.so` | Programme, die Windows-Systemaufrufe direkt ausführen (etwa der Kopierschutz von Persona 5 Royal), stürzten auf macOS ab |
+| 0004 `ntdll.so` | zeigt Vulkan auf Wines MoltenVK, wie es Gcenx' Build tut; sonst bleibt Steams Fenster leer |
+| 0005 `ntdll.so` | hält den Mac wach, solange ein Programm das verlangt; vorher konnte er bei Steam-Downloads einschlafen |
+
+`bash Tools/wine-patches/build.sh` baut `winemac.so`, `ntdll.so` und
+`ntdll.dll` aus Wine plus Wine Staging in der Version aus `runtimes.json`. GitHub führt dieses Skript für
 jede Revision aus (`.github/workflows/wine-files.yml`) und veröffentlicht
 die Dateien zusammen mit dem vollständigen Quelltext als Release; wählst du
 DXMT, lädt Kelter sie und prüft die Prüfsumme aus `runtimes.json`. Selbst

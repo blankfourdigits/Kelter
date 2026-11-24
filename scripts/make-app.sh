@@ -1,12 +1,15 @@
 #!/bin/bash
 # Builds Kelter in release mode and wraps it in build/Kelter.app.
 # Usage: ./scripts/make-app.sh
-#        KELTER_VERSION=0.2.0 ./scripts/make-app.sh   (the release workflow)
+#        KELTER_VERSION=0.2.1 ./scripts/make-app.sh   (the release workflow)
+# Without KELTER_VERSION, the version comes from the newest v* tag.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-VERSION="${KELTER_VERSION:-0.1.0}"
+LAST_TAG="$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)"
+VERSION="${KELTER_VERSION:-${LAST_TAG#v}}"
+VERSION="${VERSION:-0.0.0}"
 if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     echo "Ungültige Version: $VERSION (erwartet z. B. 0.1.0)" >&2
     exit 1

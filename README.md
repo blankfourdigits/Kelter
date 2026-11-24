@@ -19,7 +19,7 @@ configuration file. Kelter ships no proprietary components.
   <img src="docs/kelter-demo.gif" width="800" alt="Clicking Half-Life 2 in Kelter's library starts the game through Steam">
 </p>
 
-> **Status:** early version (0.1). Steam, the game library and DirectX 9–11
+> **Status:** early version (0.2). Steam, the game library and DirectX 9–11
 > work; DirectX 12 does not yet. [Download](#install) the app or build it
 > from source.
 
@@ -55,6 +55,8 @@ Tested on a MacBook Air (M5) with macOS 26.6 and Wine Staging 11.21.
 | Environment variables and DLL overrides per bottle | done | user interface yes |
 | Warning about kernel anti-cheat | done | not yet with an affected game |
 | User interface in German and English | done | yes |
+| Uninstalling games, optionally with local saves | done | yes (Persona 5 Royal) |
+| Diagnostics with personal details replaced | done | yes |
 | Settings per game | postponed | – |
 | Controllers | not documented | – |
 
@@ -64,6 +66,7 @@ Tested on a MacBook Air (M5) with macOS 26.6 and Wine Staging 11.21.
 | --- | --- | --- | --- |
 | Blasphemous 2 | 11 | DXMT | runs, 60 FPS |
 | Half-Life 2 (with episodes) | 9 | Wine (built-in) | runs, occasional stutter while loading |
+| Persona 5 Royal | 11 | DXMT | starts; its copy protection needed a fix in Kelter's Wine files |
 
 Reports on more games are welcome, see [Contributing](#contributing).
 
@@ -209,16 +212,18 @@ Common cases:
 
 ```
 Sources/
-  KelterCore/   paths, configuration, bottles, log file, translation (Foundation only)
+  KelterCore/   paths, configuration, bottles, log file, translation,
+                removing personal details from logs, uninstalling Kelter
   KelterWine/   downloading and running Wine, Wine copies with a graphics layer,
                 Winetricks, diagnostics, detecting running Wine
   KelterSteam/  installing, starting and quitting Steam; window fix;
-                reading Steam's files (VDF), library, anti-cheat detection
+                reading Steam's files (VDF), library, anti-cheat detection,
+                uninstalling games, telling when a game runs
   KelterApp/    SwiftUI interface: library, settings, test view
 Resources/      runtimes.json, translations, icon, helper library for Steam
 Tools/
   steam-ui-fix/ source and build script of the helper library for Steam's window
-  wine-patches/ Kelter's two patches for Wine and their build script
+  wine-patches/ Kelter's patches for Wine and their build script
   app-icon/     draws the app icon
 Tests/          XCTest; Wine itself is never started in tests
 ```
@@ -243,7 +248,7 @@ Everything lives in `~/Library/Application Support/Kelter/`:
 | `Bottles/<ID>/prefix/` | the Windows environment (WINEPREFIX) |
 | `Runtimes/wine/<version>/` | the unpacked Wine |
 | `Runtimes/wine-variants/` | copies of Wine with a graphics layer |
-| `Runtimes/wine-files/` | Kelter's built Wine files |
+| `Runtimes/wine-files/` | Kelter's Wine files, downloaded or built yourself |
 | `Runtimes/graphics/` | graphics layers (DXMT, D3DMetal if chosen) |
 | `Runtimes/winetricks/` | the Winetricks script |
 | `Downloads/` | downloads, including the Winetricks cache |
@@ -291,8 +296,10 @@ therefore turned off (`steam.dllOverrides`).
 
 **Starting games:** Kelter reads Steam's files (`libraryfolders.vdf`,
 `appmanifest_*.acf`), including libraries on other drives, takes the covers
-from Steam's cache and starts a game with `steam.exe steam://rungameid/<id>`.
-If Steam is already running, it takes over the start.
+from Steam's cache and starts a game with
+`steam.exe -silent steam://rungameid/<id>`, so Steam stays in the background.
+If Steam is already running, it takes over the start. Steam's
+`logs/gameprocess_log.txt` tells Kelter when the game is running.
 
 ### Graphics
 
@@ -310,12 +317,19 @@ bottles stays untouched.
 
 #### Kelter's changes to Wine
 
-DXMT needs a function table in Wine's macOS driver (`macdrv_functions`) that
-only CrossOver's Wine offers; without it, DXMT reports "Failed to create metal
-view". D3DMetal additionally needs a change in `ntdll.dll`. Both patches are in
-`Tools/wine-patches/` and are licensed under the LGPL like Wine.
-`bash Tools/wine-patches/build.sh` builds the two files from Wine plus Wine
-Staging in the version listed in `runtimes.json`. GitHub runs this script for
+The patches in `Tools/wine-patches/` are licensed under the LGPL like Wine:
+
+| Patch | Why |
+| --- | --- |
+| 0001 `winemac` | DXMT needs a function table in Wine's macOS driver (`macdrv_functions`) that only CrossOver's Wine offers; without it, DXMT reports "Failed to create metal view" |
+| 0002 `ntdll.dll` | exports `__wine_unix_call` again, which Apple's D3DMetal libraries import |
+| 0003 `ntdll.so` | programs that make Windows system calls directly (for example the copy protection of Persona 5 Royal) crashed on macOS |
+| 0004 `ntdll.so` | points Vulkan at Wine's MoltenVK, as Gcenx's build does; without it Steam's window stays blank |
+| 0005 `ntdll.so` | keeps the Mac awake while a program asks for it; before, the Mac could fall asleep during Steam downloads |
+
+`bash Tools/wine-patches/build.sh` builds `winemac.so`, `ntdll.so` and
+`ntdll.dll` from Wine plus Wine Staging in the version listed in
+`runtimes.json`. GitHub runs this script for
 every revision (`.github/workflows/wine-files.yml`) and publishes the files
 together with the complete source as a release; when you choose DXMT, Kelter
 downloads them and checks the checksum from `runtimes.json`. Files you built

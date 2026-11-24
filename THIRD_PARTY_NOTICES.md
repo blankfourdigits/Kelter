@@ -19,6 +19,8 @@ The Wine patches build on earlier work, credited in the patch files:
   `tools/wine-dxmt/winemac-dxmt.patch` (MIT license)
 - the interface of CrossOver's `winemac.drv` as DXMT and D3DMetal expect it
   (no CrossOver code was copied)
+- patch 0004 reproduces the behaviour of a change in Gcenx's macOS builds of
+  Wine (LGPL), see [Gcenx/macOS_Wine_builds](https://github.com/Gcenx/macOS_Wine_builds)
 
 ## Downloaded at run time
 
@@ -29,7 +31,7 @@ listed in `Resources/runtimes.json`.
 | Part | Source | License |
 | --- | --- | --- |
 | Wine Staging (macOS build) | [Gcenx/macOS_Wine_builds](https://github.com/Gcenx/macOS_Wine_builds) | Wine: LGPL-2.1-or-later; the package contains further free libraries under their own licenses (among them MoltenVK, GStreamer, wine-mono, wine-gecko) |
-| Kelter's Wine files (`winemac.so`, `ntdll.dll`), only for DXMT | built from Wine, Wine Staging and `Tools/wine-patches/` by this repository's workflow `wine-files.yml`; published as a release of this repository together with the complete source | LGPL-2.1-or-later |
+| Kelter's Wine files (`winemac.so`, `ntdll.so`, `ntdll.dll`), only for the graphics layers | built from Wine, Wine Staging and `Tools/wine-patches/` by this repository's workflow `wine-files.yml`; published as a release of this repository together with the complete source | LGPL-2.1-or-later |
 | Wine and Wine Staging source (only when building the Wine patches yourself) | [gitlab.winehq.org](https://gitlab.winehq.org/wine) | LGPL-2.1-or-later |
 | DXMT | [3Shain/dxmt](https://github.com/3Shain/dxmt), © Feifan He for CodeWeavers | LGPL-2.1-or-later |
 | Winetricks | [Winetricks/winetricks](https://github.com/Winetricks/winetricks) | LGPL-2.1 |

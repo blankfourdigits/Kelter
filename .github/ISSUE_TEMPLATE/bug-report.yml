@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         For problems with a specific game, please use the game report form instead.
-        Please check your log excerpt before posting: Steam's logs may contain your account name.
+        Please check your log excerpt before posting. Kelter's "Copy" button and "Collect diagnostics …" replace the personal details they recognise (see `datenschutz.txt`), but they can miss some.
   - type: textarea
     id: what
     attributes:
@@ -33,7 +33,7 @@ body:
     id: kelter
     attributes:
       label: Kelter version or commit
-      placeholder: "0.1.0 / main from 2026-11-16"
+      placeholder: "0.2.1 / main from 2026-11-24"
   - type: textarea
     id: log
     attributes:

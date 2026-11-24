@@ -20,6 +20,8 @@ In scope is Kelter's own code in this repository, for example:
 - how Kelter starts Wine, Winetricks and Steam (arguments, environment)
 - the Steam helper library in `Tools/steam-ui-fix/` and Kelter's Wine patches
   in `Tools/wine-patches/`
+- deleting files: uninstalling games, uninstalling Kelter
+- removing personal details from the diagnostics folder and copied log text
 
 Out of scope are problems in the projects Kelter downloads (Wine, DXMT,
 Winetricks, Steam, Apple's Game Porting Toolkit) and in Windows programs run
