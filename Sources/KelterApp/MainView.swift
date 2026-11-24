@@ -269,6 +269,7 @@ struct BottleHomeView: View {
                         cover: model.coverImage(for: game, in: bottle),
                         antiCheat: model.antiCheatHints[bottle.id]?[game.appID],
                         antiCheatMessage: loc(model.config?.antiCheat?.message ?? ""),
+                        launchState: model.launchState(of: game, in: bottle),
                         uninstall: { gameToUninstall = game }
                     ) {
                         model.play(game, in: bottle)
@@ -287,22 +288,53 @@ struct GameCard: View {
     let cover: URL?
     let antiCheat: AntiCheatHint?
     let antiCheatMessage: String
+    /// Set from the click until the game has ended again.
+    let launchState: AppModel.GameLaunchState?
     let uninstall: () -> Void
     let play: () -> Void
 
     @State private var hovering = false
+    @State private var pressed = false
     @State private var confirmAntiCheat = false
+
+    private var canStart: Bool { game.isFullyInstalled && launchState == nil }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             ZStack {
                 coverImage
-                if hovering && game.isFullyInstalled {
+                if launchState == .starting {
+                    Color.black.opacity(0.55)
+                    VStack(spacing: 10) {
+                        ProgressView()
+                            .controlSize(.large)
+                            .tint(.white)
+                        Text("Wird gestartet …")
+                            .font(.callout.weight(.semibold))
+                            .foregroundStyle(.white)
+                    }
+                    .transition(.opacity)
+                } else if launchState == .running {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Label("Läuft", systemImage: "play.fill")
+                                .font(.caption.weight(.semibold))
+                                .padding(.horizontal, 9)
+                                .padding(.vertical, 4)
+                                .background(.green, in: Capsule())
+                                .foregroundStyle(.white)
+                            Spacer()
+                        }
+                    }
+                    .padding(8)
+                } else if hovering && game.isFullyInstalled {
                     Color.black.opacity(0.35)
                     Image(systemName: "play.circle.fill")
                         .font(.system(size: 52))
                         .foregroundStyle(.white)
                         .shadow(radius: 6)
+                        .scaleEffect(pressed ? 0.8 : 1)
                 }
                 if let antiCheat {
                     VStack {
@@ -325,8 +357,10 @@ struct GameCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary))
             .shadow(color: .black.opacity(hovering ? 0.3 : 0.15), radius: hovering ? 10 : 4, y: hovering ? 6 : 2)
-            .scaleEffect(hovering ? 1.03 : 1)
+            .scaleEffect(pressed ? 0.95 : (hovering ? 1.03 : 1))
             .animation(.easeOut(duration: 0.15), value: hovering)
+            .animation(.spring(response: 0.18, dampingFraction: 0.55), value: pressed)
+            .animation(.easeInOut(duration: 0.25), value: launchState)
             .onHover { hovering = $0 }
             .onTapGesture(perform: start)
 
@@ -334,16 +368,14 @@ struct GameCard: View {
                 Text(game.name)
                     .font(.callout.weight(.medium))
                     .lineLimit(1)
-                Text(game.isFullyInstalled
-                     ? ByteCountFormatter.string(fromByteCount: game.sizeOnDisk, countStyle: .file)
-                     : loc("Wird installiert …"))
+                Text(subtitle)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(launchState == nil ? AnyShapeStyle(.secondary) : AnyShapeStyle(.green))
             }
         }
         .contextMenu {
             Button("Spielen", action: start)
-                .disabled(!game.isFullyInstalled)
+                .disabled(!canStart)
             Button("Im Finder zeigen") {
                 NSWorkspace.shared.activateFileViewerSelecting([game.installURL])
             }
@@ -361,8 +393,23 @@ struct GameCard: View {
         }
     }
 
+    private var subtitle: String {
+        switch launchState {
+        case .starting: return loc("Wird gestartet …")
+        case .running: return loc("Läuft")
+        case nil:
+            return game.isFullyInstalled
+                ? ByteCountFormatter.string(fromByteCount: game.sizeOnDisk, countStyle: .file)
+                : loc("Wird installiert …")
+        }
+    }
+
     private func start() {
-        guard game.isFullyInstalled else { return }
+        guard canStart else { return }
+        // Something to feel and see right away; starting takes a while.
+        NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
+        pressed = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.14) { pressed = false }
         if antiCheat != nil {
             confirmAntiCheat = true
         } else {

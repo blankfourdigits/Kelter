@@ -759,3 +759,6 @@
 "Lokale Spielstände ebenfalls löschen" = "Also delete local saves";
 "Spielstände in der Steam-Cloud bleiben erhalten und kommen bei einer Neuinstallation zurück." = "Saves in the Steam Cloud are kept and come back when you reinstall.";
 "Der Installationsordner „%@“ aus Steams Manifest ist nicht zulässig. Kelter löscht nichts." = "The install folder “%@” in Steam's manifest is not allowed. Kelter deletes nothing.";
+
+/* Starting a game (KelterApp/MainView.swift) */
+"Wird gestartet …" = "Starting …";

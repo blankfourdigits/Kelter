@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 15,
+  "schemaVersion": 16,
   "wine": {
     "name": "Wine Staging (Gcenx macOS build)",
     "version": "11.21",
@@ -131,7 +131,11 @@
     },
     "hiddenAppIDs": [
       228980
-    ]
+    ],
+    "gameLaunchArguments": [
+      "-silent"
+    ],
+    "gameProcessLog": "logs/gameprocess_log.txt"
   },
   "antiCheat": {
     "message": "Dieses Spiel nutzt einen Schutz gegen Schummeln, der unter Wine auf dem Mac in der Regel nicht läuft. Meist startet dann das Spiel oder sein Mehrspieler-Modus nicht. Ein Versuch ist möglich; Kelter kann aber nicht ausschließen, dass der Schutz Wine als Manipulation wertet.",

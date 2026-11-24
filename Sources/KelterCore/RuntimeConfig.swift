@@ -166,6 +166,12 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
         /// Apps Steam installs that are not games (for example the
         /// Steamworks redistributables); the library leaves them out.
         public var hiddenAppIDs: [Int]?
+        /// Added when Kelter starts a game, e.g. `-silent`: Steam starts in
+        /// the background without its window, only the game appears.
+        public var gameLaunchArguments: [String]?
+        /// Steam's log of the game processes it tracks, relative to the
+        /// folder with `steam.exe`; tells Kelter when a game is running.
+        public var gameProcessLog: String?
 
         public init(
             installerURL: URL,
@@ -175,7 +181,9 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
             argumentPresets: [ArgumentPreset],
             uiFix: UIFix,
             dllOverrides: [String: String]? = nil,
-            hiddenAppIDs: [Int]? = nil
+            hiddenAppIDs: [Int]? = nil,
+            gameLaunchArguments: [String]? = nil,
+            gameProcessLog: String? = nil
         ) {
             self.installerURL = installerURL
             self.installerArguments = installerArguments
@@ -185,6 +193,8 @@ public struct RuntimeConfig: Codable, Equatable, Sendable {
             self.uiFix = uiFix
             self.dllOverrides = dllOverrides
             self.hiddenAppIDs = hiddenAppIDs
+            self.gameLaunchArguments = gameLaunchArguments
+            self.gameProcessLog = gameProcessLog
         }
     }
 

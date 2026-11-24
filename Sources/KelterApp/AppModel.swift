@@ -228,6 +228,73 @@ final class AppModel: ObservableObject {
         runningBottles.contains(bottle.id)
     }
 
+    // MARK: Game launches
+
+    enum GameLaunchState: Equatable {
+        /// Kelter asked Steam to start the game; nothing runs yet.
+        case starting
+        /// Steam tracks a process of the game.
+        case running
+    }
+
+    /// Games started from Kelter, per bottle, until they end.
+    @Published private(set) var gameLaunches: [Bottle.ID: [Int: GameLaunchState]] = [:]
+    private var launchStarted: [Bottle.ID: [Int: Date]] = [:]
+    private var launchWatchers: [Bottle.ID: Task<Void, Never>] = [:]
+    /// How long a game may take from the click until Steam runs it (first
+    /// start: Steam itself, updates, shader caches, a launcher).
+    private let launchTimeout: TimeInterval = 300
+
+    func launchState(of game: SteamApp, in bottle: Bottle) -> GameLaunchState? {
+        gameLaunches[bottle.id]?[game.appID]
+    }
+
+    /// Marks the game as starting and follows Steam's process log until it
+    /// runs and ends again.
+    private func trackLaunch(of game: SteamApp, in bottle: Bottle, steamDirectory: URL, logPath: String) {
+        gameLaunches[bottle.id, default: [:]][game.appID] = .starting
+        launchStarted[bottle.id, default: [:]][game.appID] = Date()
+        guard launchWatchers[bottle.id] == nil else { return }
+        // Created before Steam starts the game, so its first line counts.
+        var processLog = SteamGameProcessLog(file: steamDirectory.appendingPathComponent(logPath))
+        let bottleID = bottle.id
+        launchWatchers[bottleID] = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                guard let self else { return }
+                processLog = await Task.detached { [processLog] in
+                    var copy = processLog
+                    _ = copy.poll()
+                    return copy
+                }.value
+                var launches = self.gameLaunches[bottleID] ?? [:]
+                for (appID, state) in launches {
+                    let started = self.launchStarted[bottleID]?[appID] ?? Date()
+                    if processLog.isRunning(appID: appID) {
+                        launches[appID] = .running
+                    } else if state == .running
+                                || Date().timeIntervalSince(started) > self.launchTimeout
+                                || (state == .starting && self.errorMessage != nil) {
+                        launches[appID] = nil
+                    }
+                }
+                // Wine stopped (Steam quit): nothing of it runs any more.
+                if !self.runningBottles.contains(bottleID),
+                   launches.values.contains(.running) {
+                    launches = launches.filter { $0.value == .starting }
+                }
+                if launches != (self.gameLaunches[bottleID] ?? [:]) {
+                    self.gameLaunches[bottleID] = launches.isEmpty ? nil : launches
+                }
+                if launches.isEmpty {
+                    self.launchWatchers[bottleID] = nil
+                    self.launchStarted[bottleID] = nil
+                    return
+                }
+            }
+        }
+    }
+
     /// A binding to one setting of a bottle, always reading the stored
     /// bottle so two quick changes cannot overwrite each other.
     func settingBinding<Value>(_ bottle: Bottle, _ keyPath: WritableKeyPath<BottleSettings, Value>) -> Binding<Value> {
@@ -774,7 +841,14 @@ final class AppModel: ObservableObject {
         if let hint = antiCheatHints[bottle.id]?[game.appID] {
             log.append("Hinweis: \(hint.systems.joined(separator: ", ")) (\(hint.evidence.joined(separator: "; "))).\n")
         }
-        launchSteam(in: bottle, extraArguments: [SteamLibrary.runGameArgument(appID: game.appID)])
+        guard let config, busyMessage == nil else { return }
+        if let logPath = config.steam.gameProcessLog {
+            let steamDirectory = SteamLocation.directory(prefix: store.prefixURL(for: bottle.id), config: config.steam)
+            trackLaunch(of: game, in: bottle, steamDirectory: steamDirectory, logPath: logPath)
+        }
+        // Steam starts without its window; only the game appears.
+        launchSteam(in: bottle, extraArguments: (config.steam.gameLaunchArguments ?? [])
+                    + [SteamLibrary.runGameArgument(appID: game.appID)])
     }
 
     func launchSteam(in bottle: Bottle, extraArguments: [String] = []) {

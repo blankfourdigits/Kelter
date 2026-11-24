@@ -15,7 +15,9 @@ final class RuntimeConfigTests: XCTestCase {
     func testBundledConfigIsValid() throws {
         let config = try RuntimeConfig.load(from: bundledConfig)
 
-        XCTAssertEqual(config.schemaVersion, 15)
+        XCTAssertEqual(config.schemaVersion, 16)
+        XCTAssertEqual(config.steam.gameLaunchArguments, ["-silent"])
+        XCTAssertEqual(config.steam.gameProcessLog, "logs/gameprocess_log.txt")
         XCTAssertFalse(config.wine.version.isEmpty)
         XCTAssertEqual(config.wine.url.scheme, "https")
         // The version becomes a folder name.
