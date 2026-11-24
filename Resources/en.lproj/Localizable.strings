@@ -762,3 +762,15 @@
 
 /* Starting a game (KelterApp/MainView.swift) */
 "Wird gestartet …" = "Starting …";
+
+/* Removing Kelter (KelterApp/RemoveKelterView.swift, KelterMain.swift, AppModel.swift) */
+"Kelter deinstallieren …" = "Uninstall Kelter …";
+"Kelter vom Mac entfernen?" = "Remove Kelter from this Mac?";
+"Kelter beendet Steam und alle Windows-Programme, löscht Wine, die Grafikschichten, Protokolle und Einstellungen und legt die App in den Papierkorb." = "Kelter quits Steam and all Windows programs, deletes Wine, the graphics layers, logs and settings, and moves the app to the Trash.";
+"Bottles behalten (Steam, Spiele und Spielstände)" = "Keep bottles (Steam, games and saves)";
+"Bleiben im Ordner „Bottles“ liegen (%@). Nach einer Neuinstallation findet Kelter sie wieder." = "Stay in the “Bottles” folder (%@). After reinstalling, Kelter finds them again.";
+"Alle Bottles werden mit gelöscht (%@), auch Spiele und lokale Spielstände." = "All bottles are deleted too (%@), including games and local saves.";
+"Wird gelöscht: %@. Das lässt sich nicht rückgängig machen." = "To be deleted: %@. This can't be undone.";
+"Kelter entfernen" = "Remove Kelter";
+"Kelter wird entfernt …" = "Removing Kelter …";
+"Kelter konnte nicht vollständig entfernt werden: %@" = "Kelter could not be removed completely: %@";

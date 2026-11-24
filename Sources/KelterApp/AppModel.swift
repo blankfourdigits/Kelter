@@ -228,6 +228,55 @@ final class AppModel: ObservableObject {
         runningBottles.contains(bottle.id)
     }
 
+    // MARK: Removing Kelter
+
+    /// Shows the dialog that removes Kelter from the Mac (menu Kelter).
+    @Published var showRemoveKelter = false
+
+    private var userLibrary: URL {
+        FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
+    }
+
+    func kelterRemovalPlan(keepBottles: Bool) -> KelterRemovalPlan {
+        KelterRemoval.plan(paths: paths, library: userLibrary,
+                           bundleIdentifier: Bundle.main.bundleIdentifier, keepBottles: keepBottles)
+    }
+
+    /// Ends Wine in every bottle, deletes Kelter's files (the bottles too,
+    /// unless kept), moves the app to the Trash and quits.
+    func removeKelter(keepBottles: Bool) {
+        guard busyMessage == nil else { return }
+        busyMessage = loc("Kelter wird entfernt …")
+        let runner = self.runner
+        let prefixes = bottles.map { (store.prefixURL(for: $0.id), $0.settings) }
+        let plan = kelterRemovalPlan(keepBottles: keepBottles)
+        Task {
+            runningTimer?.invalidate()
+            if let runner {
+                for (prefix, settings) in prefixes {
+                    _ = try? await runner.killAll(prefix: prefix, settings: settings)
+                }
+            }
+            do {
+                // Nothing may write to the log after this: it would bring
+                // the folder back.
+                try await Task.detached { try KelterRemoval.remove(plan.items) }.value
+            } catch {
+                self.busyMessage = nil
+                self.errorMessage = loc("Kelter konnte nicht vollständig entfernt werden: %@", error.localizedDescription)
+                return
+            }
+            if let identifier = Bundle.main.bundleIdentifier {
+                UserDefaults.standard.removePersistentDomain(forName: identifier)
+            }
+            let app = Bundle.main.bundleURL
+            if app.pathExtension == "app" {
+                _ = try? await NSWorkspace.shared.recycle([app])
+            }
+            NSApp.terminate(nil)
+        }
+    }
+
     // MARK: Game launches
 
     enum GameLaunchState: Equatable {

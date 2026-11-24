@@ -14,6 +14,9 @@ struct KelterMain: App {
                 .frame(minWidth: 860, minHeight: 560)
         }
         .commands {
+            CommandGroup(after: .appSettings) {
+                Button("Kelter deinstallieren …") { model.showRemoveKelter = true }
+            }
             CommandGroup(after: .sidebar) {
                 Toggle("Testansicht", isOn: $showTestView)
                     .keyboardShortcut("t", modifiers: [.command, .option])

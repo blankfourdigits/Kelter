@@ -19,6 +19,10 @@ struct ContentView: View {
             LayerConsentView(consent: consent)
                 .environmentObject(model)
         }
+        .sheet(isPresented: $model.showRemoveKelter) {
+            RemoveKelterView()
+                .environmentObject(model)
+        }
         .alert("Fehler", isPresented: errorIsPresented) {
             Button("OK", role: .cancel) {}
         } message: {
