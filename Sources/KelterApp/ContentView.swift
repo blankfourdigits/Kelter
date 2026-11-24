@@ -43,6 +43,7 @@ struct ContentView: View {
 /// on one page and the live log below.
 struct TestView: View {
     @EnvironmentObject private var model: AppModel
+    @AppStorage("showTestView") private var showTestView = false
     @State private var showNewBottle = false
     @State private var newBottleName = ""
 
@@ -58,6 +59,14 @@ struct TestView: View {
             }
             .navigationSplitViewColumnWidth(min: 180, ideal: 220)
             .toolbar {
+                ToolbarItem {
+                    Button {
+                        showTestView = false
+                    } label: {
+                        Label("Zur normalen Ansicht", systemImage: "rectangle.grid.2x2")
+                    }
+                    .help("Zurück zur normalen Ansicht (⌥⌘T)")
+                }
                 ToolbarItem {
                     Button {
                         model.setUpSteam()
