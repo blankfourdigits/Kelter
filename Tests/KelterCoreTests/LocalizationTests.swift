@@ -144,7 +144,9 @@ final class LocalizationTests: XCTestCase {
     }
 
     func testLanguageChoiceSetsMacOSLanguageForNextStart() throws {
-        let suite = "KelterLanguage-\(UUID().uuidString)"
+        // One fixed name: macOS keeps an empty file per suite in
+        // ~/Library/Preferences even after removePersistentDomain.
+        let suite = "app.kelter.tests.language"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
 
