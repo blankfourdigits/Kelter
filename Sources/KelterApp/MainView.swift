@@ -116,6 +116,7 @@ struct BottleHomeView: View {
     @State private var search = ""
     @State private var showSettings = false
     @State private var dropTargeted = false
+    @State private var gameToUninstall: SteamApp?
 
     private var steamInstalled: Bool { model.isSteamInstalled(in: bottle) }
     private var running: Bool { model.isRunning(bottle) }
@@ -178,6 +179,10 @@ struct BottleHomeView: View {
         .disabled(model.busyMessage != nil)
         .sheet(isPresented: $showSettings) {
             BottleSettingsView(bottle: model.bottles.first { $0.id == bottle.id } ?? bottle)
+                .environmentObject(model)
+        }
+        .sheet(item: $gameToUninstall) { game in
+            UninstallGameView(game: game, bottle: bottle)
                 .environmentObject(model)
         }
         .onAppear { model.refreshLibrary(for: bottle) }
@@ -263,7 +268,8 @@ struct BottleHomeView: View {
                         game: game,
                         cover: model.coverImage(for: game, in: bottle),
                         antiCheat: model.antiCheatHints[bottle.id]?[game.appID],
-                        antiCheatMessage: loc(model.config?.antiCheat?.message ?? "")
+                        antiCheatMessage: loc(model.config?.antiCheat?.message ?? ""),
+                        uninstall: { gameToUninstall = game }
                     ) {
                         model.play(game, in: bottle)
                     }
@@ -281,6 +287,7 @@ struct GameCard: View {
     let cover: URL?
     let antiCheat: AntiCheatHint?
     let antiCheatMessage: String
+    let uninstall: () -> Void
     let play: () -> Void
 
     @State private var hovering = false
@@ -340,6 +347,8 @@ struct GameCard: View {
             Button("Im Finder zeigen") {
                 NSWorkspace.shared.activateFileViewerSelecting([game.installURL])
             }
+            Divider()
+            Button("Deinstallieren …", role: .destructive, action: uninstall)
         }
         .confirmationDialog(
             loc("%@ nutzt %@", game.name, antiCheat?.systems.joined(separator: ", ") ?? loc("einen Anti-Cheat-Schutz")),

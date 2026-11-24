@@ -747,3 +747,15 @@
 
 /* KelterApp/MainView.swift */
 "Kelter-Einstellungen" = "Kelter settings";
+
+/* Uninstalling a game (KelterApp/UninstallGameView.swift, MainView.swift, AppModel.swift, KelterSteam/SteamUninstall.swift) */
+"Deinstallieren …" = "Uninstall …";
+"%@ wird deinstalliert …" = "Uninstalling %@ …";
+"„%@“ deinstallieren?" = "Uninstall “%@”?";
+"Löscht das Spiel (%@) endgültig aus dieser Bottle. Steams eigene Deinstallation wird dabei übersprungen, weil sie bei manchen Spielen unter Wine hängen bleibt." = "Permanently deletes the game (%@) from this bottle. Steam's own uninstaller is skipped because it gets stuck under Wine for some games.";
+"Steam wird dafür beendet." = "Steam will be quit for this.";
+"Endgültig deinstallieren" = "Uninstall permanently";
+"Keine lokalen Spielstände gefunden." = "No local saves found.";
+"Lokale Spielstände ebenfalls löschen" = "Also delete local saves";
+"Spielstände in der Steam-Cloud bleiben erhalten und kommen bei einer Neuinstallation zurück." = "Saves in the Steam Cloud are kept and come back when you reinstall.";
+"Der Installationsordner „%@“ aus Steams Manifest ist nicht zulässig. Kelter löscht nichts." = "The install folder “%@” in Steam's manifest is not allowed. Kelter deletes nothing.";

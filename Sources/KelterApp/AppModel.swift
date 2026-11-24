@@ -730,6 +730,44 @@ final class AppModel: ObservableObject {
         return SteamLibrary.coverImage(appID: game.appID, steamDirectory: steamDirectory)
     }
 
+    /// What uninstalling `game` would remove, for the confirmation dialog.
+    func uninstallPlan(for game: SteamApp, in bottle: Bottle) -> Result<SteamUninstallPlan, Error> {
+        guard let config else { return .failure(CocoaError(.featureUnsupported)) }
+        let prefix = store.prefixURL(for: bottle.id)
+        let steamDirectory = SteamLocation.directory(prefix: prefix, config: config.steam)
+        return Result { try SteamUninstall.plan(for: game, steamDirectory: steamDirectory, prefix: prefix) }
+    }
+
+    /// Uninstalls a game without Steam's own uninstaller, whose clean-up
+    /// programs can hang under Wine. Quits Steam first if it is running.
+    func uninstall(_ game: SteamApp, in bottle: Bottle, deleteSaves: Bool) {
+        guard let config, let runner, busyMessage == nil else { return }
+        let prefix = store.prefixURL(for: bottle.id)
+        let steamDirectory = SteamLocation.directory(prefix: prefix, config: config.steam)
+        let launcher = SteamLauncher(config: config.steam, runner: runner)
+        let wasRunning = runningBottles.contains(bottle.id)
+        let log = self.log
+        busyMessage = loc("%@ wird deinstalliert …", game.name)
+        log.append("\nDeinstalliere \(game.name) (\(game.appID))\(deleteSaves ? " samt lokaler Spielstände" : "").\n")
+        Task {
+            if wasRunning {
+                await launcher.shutdown(prefix: prefix, settings: bottle.settings)
+            }
+            do {
+                try await Task.detached {
+                    let plan = try SteamUninstall.plan(for: game, steamDirectory: steamDirectory, prefix: prefix)
+                    let items = plan.gameItems + (deleteSaves ? plan.saveFolders : [])
+                    try SteamUninstall.remove(items)
+                    for item in items { log.append("Gelöscht: \(item.path)\n") }
+                }.value
+            } catch {
+                self.errorMessage = error.localizedDescription
+            }
+            self.busyMessage = nil
+            self.refreshLibrary(for: bottle)
+        }
+    }
+
     /// Starts a game through Steam (starting Steam first if needed).
     func play(_ game: SteamApp, in bottle: Bottle) {
         log.append("\nStarte \(game.name) (\(game.appID)) über Steam.\n")
