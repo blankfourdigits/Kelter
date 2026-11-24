@@ -6,8 +6,9 @@
 #                             (DXMT, D3DMetal)
 #   x86_64-windows/ntdll.dll  ntdll with __wine_unix_call exported again
 #                             (D3DMetal)
-#   x86_64-unix/ntdll.so      ntdll's Unix side, with direct syscalls of
-#                             programs working on macOS (DXMT, D3DMetal)
+#   x86_64-unix/ntdll.so      ntdll's Unix side: direct syscalls of programs
+#                             work on macOS, and programs can keep the Mac
+#                             awake (DXMT, D3DMetal)
 #
 # They only go into Kelter's copies of Wine for these layers, never into the
 # Wine all bottles use. The source matches the Gcenx "Wine Staging" build

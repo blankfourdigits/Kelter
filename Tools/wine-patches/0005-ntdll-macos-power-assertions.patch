@@ -1,0 +1,88 @@
+ntdll: keep macOS awake while a program asks for it.
+
+NtSetThreadExecutionState() is a stub, so on macOS a Windows program can't
+keep the Mac from idle sleep. Steam asks for this during downloads; under
+Wine the Mac fell asleep mid-download, Steam froze for minutes and lost its
+connection. Hold IOPMAssertions (PreventUserIdleSystemSleep and
+PreventUserIdleDisplaySleep) while the continuous execution state includes
+ES_SYSTEM_REQUIRED or ES_DISPLAY_REQUIRED; they end
+with the process.
+
+For Wine 11.21 with Wine Staging 11.21 applied. LGPL-2.1-or-later like Wine.
+
+--- a/dlls/ntdll/unix/system.c
++++ b/dlls/ntdll/unix/system.c
+@@ -66,6 +66,7 @@
+ # include <IOKit/IOKitLib.h>
+ # include <IOKit/ps/IOPSKeys.h>
+ # include <IOKit/ps/IOPowerSources.h>
++# include <IOKit/pwr_mgt/IOPMLib.h>
+ # include <mach/mach.h>
+ # include <mach/machine.h>
+ # include <mach/mach_init.h>
+@@ -4853,15 +4854,65 @@
+ }
+ 
+ 
++#ifdef __APPLE__
++/* Hold macOS power assertions while the continuous execution state asks
++ * for it, so that for example a download keeps the Mac from idle sleep as
++ * it keeps Windows awake. The assertions end with the process. */
++static void update_power_assertions( EXECUTION_STATE state )
++{
++    static IOPMAssertionID system_assertion = kIOPMNullAssertionID;
++    static IOPMAssertionID display_assertion = kIOPMNullAssertionID;
++    int continuous = (state & ES_CONTINUOUS) != 0;
++    int want_system = continuous && (state & ES_SYSTEM_REQUIRED);
++    int want_display = continuous && (state & ES_DISPLAY_REQUIRED);
++
++    if (want_system && system_assertion == kIOPMNullAssertionID)
++    {
++        if (IOPMAssertionCreateWithName( kIOPMAssertionTypePreventUserIdleSystemSleep, kIOPMAssertionLevelOn,
++                                         CFSTR("Windows program requested it (SetThreadExecutionState)"),
++                                         &system_assertion ) != kIOReturnSuccess)
++            system_assertion = kIOPMNullAssertionID;
++    }
++    else if (!want_system && system_assertion != kIOPMNullAssertionID)
++    {
++        IOPMAssertionRelease( system_assertion );
++        system_assertion = kIOPMNullAssertionID;
++    }
++
++    if (want_display && display_assertion == kIOPMNullAssertionID)
++    {
++        if (IOPMAssertionCreateWithName( kIOPMAssertionTypePreventUserIdleDisplaySleep, kIOPMAssertionLevelOn,
++                                         CFSTR("Windows program requested it (SetThreadExecutionState)"),
++                                         &display_assertion ) != kIOReturnSuccess)
++            display_assertion = kIOPMNullAssertionID;
++    }
++    else if (!want_display && display_assertion != kIOPMNullAssertionID)
++    {
++        IOPMAssertionRelease( display_assertion );
++        display_assertion = kIOPMNullAssertionID;
++    }
++}
++#endif
++
+ /******************************************************************************
+  *              NtSetThreadExecutionState  (NTDLL.@)
+  */
+ NTSTATUS WINAPI NtSetThreadExecutionState( EXECUTION_STATE new_state, EXECUTION_STATE *old_state )
+ {
+     static EXECUTION_STATE current = ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_USER_PRESENT;
++#ifdef __APPLE__
++    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+ 
++    TRACE( "(0x%x, %p)\n", new_state, old_state );
++    pthread_mutex_lock( &lock );
++    *old_state = current;
++    if (!(current & ES_CONTINUOUS) || (new_state & ES_CONTINUOUS)) current = new_state;
++    update_power_assertions( current );
++    pthread_mutex_unlock( &lock );
++#else
+     WARN( "(0x%x, %p): stub, harmless.\n", new_state, old_state );
+     *old_state = current;
+     if (!(current & ES_CONTINUOUS) || (new_state & ES_CONTINUOUS)) current = new_state;
++#endif
+     return STATUS_SUCCESS;
+ }
