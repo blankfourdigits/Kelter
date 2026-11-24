@@ -63,7 +63,7 @@ jobs:
           # Exactly what Kelter expects, nothing else.
           LISTING="$(tar -tJf "$FILES" | grep -v '/$' | sort)"
           printf '%s\n' "$LISTING"
-          [ "$LISTING" = "$(printf 'x86_64-unix/winemac.so\nx86_64-windows/ntdll.dll')" ]
+          [ "$LISTING" = "$(printf 'x86_64-unix/ntdll.so\nx86_64-unix/winemac.so\nx86_64-windows/ntdll.dll')" ]
           # Wine + Wine Staging + Kelter's patches as built (LGPL source).
           tar -C "$WORK" --exclude .git -cJf "$SOURCE" "src-$WINE_VERSION"
           shasum -a 256 "$FILES" "$SOURCE" > "kelter-wine-$NAME.sha256"
@@ -84,6 +84,9 @@ jobs:
 
           - \`winemac.so\`: Wine's macOS driver with \`macdrv_functions\` (DXMT)
           - \`ntdll.dll\`: ntdll with \`__wine_unix_call\` exported (D3DMetal)
+          - \`ntdll.so\`: ntdll's Unix side; programs that make Windows system
+            calls directly (for example the copy protection of some games)
+            work on macOS (DXMT, D3DMetal)
 
           Built by GitHub Actions from Wine ${NAME%-*}, Wine Staging ${NAME%-*}
           and the patches in \`Tools/wine-patches/\` at commit ${GITHUB_SHA}.

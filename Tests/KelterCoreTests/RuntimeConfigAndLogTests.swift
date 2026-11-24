@@ -123,9 +123,9 @@ final class RuntimeConfigTests: XCTestCase {
                 XCTAssertFalse(path.split(separator: "/").contains(".."), path)
             }
         }
-        XCTAssertEqual(config.graphicsLayer(for: .dxmt)?.wineFiles, ["x86_64-unix/winemac.so"])
+        XCTAssertEqual(config.graphicsLayer(for: .dxmt)?.wineFiles, ["x86_64-unix/winemac.so", "x86_64-unix/ntdll.so"])
         XCTAssertEqual(config.graphicsLayer(for: .d3dmetal)?.wineFiles,
-                       ["x86_64-unix/winemac.so", "x86_64-windows/ntdll.dll"])
+                       ["x86_64-unix/winemac.so", "x86_64-unix/ntdll.so", "x86_64-windows/ntdll.dll"])
     }
 
     func testBundledAntiCheatListIsUsable() throws {

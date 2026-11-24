@@ -1,0 +1,30 @@
+ntdll: restore GSBASE after redirecting a direct syscall on macOS.
+
+Programs that issue the syscall instruction themselves (for example the
+copy protection of some games) trap into sigsys_handler(), which sends them
+to __wine_syscall_dispatcher_prolog_end. On macOS, init_handler() switched
+GSBASE to the pthread TSD, and returning from the signal does not switch it
+back. The dispatcher then loads the TEB from %gs:0x30, gets a TSD slot
+instead, and faults when it reads amd64_thread_data()->pthread_teb (address
+0x320), so every direct syscall fails with STATUS_ACCESS_VIOLATION.
+
+Point GSBASE back at the TEB before returning, as leave_handler() does for
+other signals.
+
+For Wine 11.21 with Wine Staging 11.21 applied. LGPL-2.1-or-later like Wine.
+
+--- a/dlls/ntdll/unix/signal_x86_64.c
++++ b/dlls/ntdll/unix/signal_x86_64.c
+@@ -2608,6 +2608,12 @@
+         frame->restore_flags |= CONTEXT_CONTROL;
+     }
+     RIP_sig(sigcontext) = (ULONG64)__wine_syscall_dispatcher_prolog_end_ptr;
++#ifdef __APPLE__
++    /* init_handler() pointed GSBASE at the pthread TSD, and the signal return
++     * does not restore it. The dispatcher continues as if entered from PE
++     * code and reads the TEB through %gs, so point GSBASE back at the TEB. */
++    _thread_set_tsd_base( (uint64_t)data->teb );
++#endif
+ }
+ #endif
+ 

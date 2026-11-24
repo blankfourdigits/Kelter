@@ -6,11 +6,13 @@
 #                             (DXMT, D3DMetal)
 #   x86_64-windows/ntdll.dll  ntdll with __wine_unix_call exported again
 #                             (D3DMetal)
+#   x86_64-unix/ntdll.so      ntdll's Unix side, with direct syscalls of
+#                             programs working on macOS (DXMT, D3DMetal)
 #
 # They only go into Kelter's copies of Wine for these layers, never into the
 # Wine all bottles use. The source matches the Gcenx "Wine Staging" build
-# Kelter downloads; Gcenx adds one Vulkan patch on top that touches neither
-# file.
+# Kelter downloads. Gcenx's own change to ntdll.so (the Vulkan driver path,
+# MoltenVK) is reproduced in 0004; ntdll.so must behave like his.
 #
 # Needs (Homebrew): bison >= 3 ("brew install bison") and MinGW
 # ("brew install mingw-w64"). Builds for x86_64 under Rosetta 2, for
@@ -67,25 +69,37 @@ if [ ! -f "$STAMP" ]; then
     touch "$STAMP"
 fi
 
-# 2. Configure (once) and build only the two files.
+# 2. Configure (again whenever these options change) and build only the
+#    files Kelter replaces. A newer SDK than the deployment target declares
+#    functions older macOS lacks; they are only weakly linked, so Wine would
+#    call a null pointer there. Keep configure from using them.
+CONFIGURE_ARGS=(
+    --host=x86_64-apple-darwin
+    CC="clang -arch x86_64" CXX="clang++ -arch x86_64" OBJC="clang -arch x86_64"
+    --enable-archs=x86_64 --disable-tests
+    --without-x --without-freetype --without-gnutls --without-gstreamer
+    --without-sdl --without-vulkan --without-wayland --without-ffmpeg
+    ac_cv_func_pipe2=no ac_cv_func_dup3=no   # macOS 27 and later
+)
 mkdir -p "$BUILD"
 cd "$BUILD"
-if [ ! -f Makefile ]; then
-    /usr/bin/arch -x86_64 "$SRC/configure" --host=x86_64-apple-darwin \
-        CC="clang -arch x86_64" CXX="clang++ -arch x86_64" OBJC="clang -arch x86_64" \
-        --enable-archs=x86_64 --disable-tests \
-        --without-x --without-freetype --without-gnutls --without-gstreamer \
-        --without-sdl --without-vulkan --without-wayland --without-ffmpeg \
+CONFIGURE_STAMP=".kelter-configure-$(printf '%s\n' "${CONFIGURE_ARGS[@]}" | shasum -a 256 | cut -c1-16)"
+if [ ! -f Makefile ] || [ ! -f "$CONFIGURE_STAMP" ]; then
+    rm -f .kelter-configure-*
+    /usr/bin/arch -x86_64 "$SRC/configure" "${CONFIGURE_ARGS[@]}" \
         > configure.log 2>&1 || { tail -20 configure.log >&2; exit 1; }
+    touch "$CONFIGURE_STAMP"
 fi
 /usr/bin/arch -x86_64 make -j"$(sysctl -n hw.ncpu)" \
-    dlls/winemac.drv/winemac.so dlls/ntdll/x86_64-windows/ntdll.dll > make.log 2>&1 \
+    dlls/winemac.drv/winemac.so dlls/ntdll/x86_64-windows/ntdll.dll dlls/ntdll/ntdll.so \
+    > make.log 2>&1 \
     || { tail -30 make.log >&2; exit 1; }
 
-# 3. Check and hand out. winemac.so is signed ad hoc like the Gcenx build;
-#    ntdll.dll loses its debug information like Wine's release builds.
+# 3. Check and hand out. The .so files are signed ad hoc like the Gcenx
+#    build; ntdll.dll loses its debug information like Wine's release builds.
 WINEMAC="$BUILD/dlls/winemac.drv/winemac.so"
 NTDLL="$BUILD/dlls/ntdll/x86_64-windows/ntdll.dll"
+NTDLL_SO="$BUILD/dlls/ntdll/ntdll.so"
 # Read the whole listing first: grep -q stops early, and with pipefail the
 # interrupted lister would count as a failure.
 WINEMAC_EXPORTS="$(nm -gU "$WINEMAC")"
@@ -94,11 +108,30 @@ grep -q ' _macdrv_functions$' <<<"$WINEMAC_EXPORTS" \
     || { echo "winemac.so exportiert macdrv_functions nicht" >&2; exit 1; }
 grep -q ' __wine_unix_call$' <<<"$NTDLL_EXPORTS" \
     || { echo "ntdll.dll exportiert __wine_unix_call nicht" >&2; exit 1; }
+for lib in "$WINEMAC" "$NTDLL_SO"; do
+    if nm -u "$lib" | grep -qE '^_(pipe2|dup3)$'; then
+        echo "$(basename "$lib") nutzt Funktionen, die es erst ab macOS 27 gibt" >&2; exit 1
+    fi
+done
+# Like Gcenx's ntdll.so: without the Vulkan driver path Steam stays blank.
+NTDLL_SO_STRINGS="$(strings "$NTDLL_SO")"
+grep -q '/vulkan/icd\.d$' <<<"$NTDLL_SO_STRINGS" \
+    || { echo "ntdll.so setzt den Vulkan-Treiberpfad nicht (Patch 0004)" >&2; exit 1; }
+# Wine's other Unix libraries link against @rpath/ntdll.so (Gcenx's own
+# ntdll.so is named plain "ntdll.so"; both resolve to the same file).
+NTDLL_SO_NAME="$(otool -D "$NTDLL_SO" | tail -1)"
+case "$NTDLL_SO_NAME" in
+    ntdll.so|@rpath/ntdll.so) ;;
+    *) echo "ntdll.so hat den unerwarteten Namen \"$NTDLL_SO_NAME\"" >&2; exit 1 ;;
+esac
 
 mkdir -p "$OUT/x86_64-unix" "$OUT/x86_64-windows"
 cp "$WINEMAC" "$OUT/x86_64-unix/winemac.so.new"
 codesign -s - -f "$OUT/x86_64-unix/winemac.so.new" 2>/dev/null
 mv -f "$OUT/x86_64-unix/winemac.so.new" "$OUT/x86_64-unix/winemac.so"
+cp "$NTDLL_SO" "$OUT/x86_64-unix/ntdll.so.new"
+codesign -s - -f "$OUT/x86_64-unix/ntdll.so.new" 2>/dev/null
+mv -f "$OUT/x86_64-unix/ntdll.so.new" "$OUT/x86_64-unix/ntdll.so"
 x86_64-w64-mingw32-strip --strip-debug -o "$OUT/x86_64-windows/ntdll.dll.new" "$NTDLL"
 mv -f "$OUT/x86_64-windows/ntdll.dll.new" "$OUT/x86_64-windows/ntdll.dll"
 

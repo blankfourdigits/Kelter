@@ -1,0 +1,35 @@
+ntdll: point the Vulkan loader at Wine's own MoltenVK manifest on macOS.
+
+Gcenx's macOS builds of Wine, which Kelter uses, ship MoltenVK's driver
+manifest in share/vulkan/icd.d and carry a change in ntdll.so that sets
+VK_DRIVER_FILES to that folder when none of the Vulkan loader's variables
+is set. Kelter replaces ntdll.so in its graphics copies of Wine, so it has
+to do the same; otherwise Vulkan finds no driver, and Steam's browser
+(ANGLE with Vulkan) fails to create its graphics context and stays blank.
+
+Reconstructed from the behaviour of Gcenx's ntdll.so (LGPL); upstream Wine
+has no such code. For Wine 11.21 with Wine Staging 11.21 applied.
+LGPL-2.1-or-later like Wine.
+
+--- a/dlls/ntdll/unix/loader.c
++++ b/dlls/ntdll/unix/loader.c
+@@ -398,6 +398,19 @@
+         bin_dir = build_relative_path( dll_dir, LIBDIR "/wine", BINDIR );
+         data_dir = build_relative_path( dll_dir, LIBDIR "/wine", DATADIR "/wine" );
+         wineloader = build_path( ntdll_dir, "wine" );
++#ifdef __APPLE__
++        /* macOS builds ship MoltenVK's driver manifest in Wine's own
++         * share/vulkan/icd.d. Point the Vulkan loader there, unless the
++         * user chose the drivers. */
++        if (!getenv( "VK_DRIVER_FILES" ) && !getenv( "VK_ICD_FILENAMES" ) && !getenv( "VK_ADD_DRIVER_FILES" ))
++        {
++            char *icd_dir = build_relative_path( dll_dir, LIBDIR "/wine", DATADIR "/vulkan/icd.d" );
++            struct stat st;
++
++            if (!stat( icd_dir, &st ) && S_ISDIR( st.st_mode )) setenv( "VK_DRIVER_FILES", icd_dir, 1 );
++            free( icd_dir );
++        }
++#endif
+     }
+ 
+     set_dll_path();
