@@ -244,7 +244,9 @@ Everything lives in `~/Library/Application Support/Kelter/`:
 | `Logs/kelter.log` | output of Kelter and Wine |
 | `runtimes.json` | optional: your own configuration, takes precedence |
 
-To remove Kelter completely, delete this folder and the app.
+To remove Kelter, use **Kelter → Uninstall Kelter …**. It quits Wine, deletes
+this folder (optionally keeping `Bottles/` with your games and saves), Kelter's
+cache and settings, and moves the app to the Trash.
 
 ### Configuration: `runtimes.json`
 

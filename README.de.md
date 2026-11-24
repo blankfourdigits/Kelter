@@ -249,8 +249,10 @@ Alles liegt unter `~/Library/Application Support/Kelter/`:
 | `Logs/kelter.log` | Ausgabe von Kelter und Wine |
 | `runtimes.json` | optional: eigene Konfiguration, hat Vorrang |
 
-Um Kelter vollständig zu entfernen, genügt es, diesen Ordner und die App zu
-löschen.
+Zum Entfernen gibt es **Kelter → Kelter deinstallieren …**. Das beendet Wine,
+löscht diesen Ordner (auf Wunsch ohne `Bottles/` mit Spielen und
+Spielständen), Kelters Cache und Einstellungen und legt die App in den
+Papierkorb.
 
 ### Konfiguration: `runtimes.json`
 
