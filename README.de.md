@@ -141,7 +141,12 @@ den Gatekeeper-Schritt oben.
      DLL-Overrides, ausführliches Log
 4. **Andere Windows-Programme:** eine `.exe` oder `.msi` auf das Fenster
    ziehen; sie startet in der gewählten Bottle.
-5. **Sprache:** Kelter → Einstellungen … (⌘,) oder das Zahnrad unten in der
+5. **Spiel deinstallieren:** Rechtsklick auf das Cover → „Deinstallieren …“.
+   Kelter löscht das Spiel selbst und auf Wunsch auch die lokalen
+   Spielstände (Spielstände in der Steam-Cloud bleiben). Steams eigene
+   Deinstallation bleibt bei Spielen hängen, die dabei ein 32-Bit-.NET-
+   Aufräumprogramm starten, etwa Persona 5 Royal.
+6. **Sprache:** Kelter → Einstellungen … (⌘,) oder das Zahnrad unten in der
    Seitenleiste: „Wie das System“, Deutsch oder English. Gilt nach einem
    Neustart, den Kelter anbietet.
 
@@ -189,6 +194,8 @@ Häufige Fälle:
   damit unter Wine hängen bleiben.
 - **DirectX 9** läuft über OpenGL und ist bei anspruchsvollen Spielen
   langsamer.
+- **32-Bit-.NET-Programme** hängen unter Wine auf dem Mac (Wine-Bug 58197),
+  etwa manche Launcher und Aufräumprogramme.
 - **Controller** sind noch nicht getestet und dokumentiert.
 - **Einstellungen pro Spiel** (eigene Grafik oder Umgebung je Spiel) gibt es
   noch nicht; Einstellungen gelten pro Bottle.

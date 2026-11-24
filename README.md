@@ -138,7 +138,11 @@ step above.
      overrides, verbose log
 4. **Other Windows programs:** drop an `.exe` or `.msi` onto the window; it
    runs in the selected bottle.
-5. **Language:** Kelter → Settings… (⌘,) or the gear at the bottom of the
+5. **Uninstalling a game:** right-click its cover → "Uninstall …". Kelter
+   deletes the game itself and can also delete its local saves (Steam Cloud
+   saves stay). Steam's own uninstaller gets stuck for games that run a
+   32-bit .NET clean-up tool, such as Persona 5 Royal.
+6. **Language:** Kelter → Settings… (⌘,) or the gear at the bottom of the
    sidebar: "Same as the system", Deutsch or English. Takes effect after a
    restart, which Kelter offers.
 
@@ -186,6 +190,8 @@ Common cases:
 - **The Steam overlay** (Shift+Tab in a game) is turned off because games hang
   with it under Wine.
 - **DirectX 9** runs through OpenGL and is slower in demanding games.
+- **32-bit .NET programs** hang under Wine on macOS (Wine bug 58197), for
+  example some launchers and clean-up tools.
 - **Controllers** are not tested or documented yet.
 - **Settings per game** (own graphics or environment for a game) don't exist
   yet; settings apply per bottle.
